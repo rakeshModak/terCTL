@@ -10,6 +10,12 @@ import {
 import { ACCENTS } from '../../constants/accents'
 import { THEMES } from '../../constants/themes'
 import { TERM_SWATCH } from '../../constants/terminal-schemes'
+import {
+  availableUpdateAtom,
+  checkForUpdateAtom,
+  updateErrorAtom,
+  updateStatusAtom,
+} from '../../store/updater'
 
 const CATS = [
   { id: 'appearance', name: 'Appearance' },
@@ -37,6 +43,21 @@ export function SettingsView() {
   const setAccent = useSetAtom(setAccentAtom)
   const setTheme = useSetAtom(setThemeAtom)
   const setTermScheme = useSetAtom(setTermSchemeAtom)
+  const updateStatus = useAtomValue(updateStatusAtom)
+  const availableUpdate = useAtomValue(availableUpdateAtom)
+  const updateError = useAtomValue(updateErrorAtom)
+  const checkForUpdate = useSetAtom(checkForUpdateAtom)
+
+  const updateLabel =
+    updateStatus === 'checking'
+      ? 'Checking for updates…'
+      : updateStatus === 'uptodate'
+        ? "You're on the latest version."
+        : updateStatus === 'available'
+          ? `Version ${availableUpdate?.version} is available — see the banner to install.`
+          : updateStatus === 'error'
+            ? `Couldn't check for updates: ${updateError}`
+            : 'Keep TerCTL up to date.'
 
   return (
     <div className="flex min-w-0 flex-1 bg-[var(--bg)]">
@@ -206,6 +227,22 @@ export function SettingsView() {
             </div>
           </div>
         )}
+
+        <div className="mt-8 max-w-[720px] border-t border-[var(--border)] pt-5">
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <div className="text-[13px] font-medium">Software update</div>
+              <div className="mt-[2px] text-[11.5px] text-[var(--text-faint)]">{updateLabel}</div>
+            </div>
+            <button
+              className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.04] px-[14px] py-2 text-[12px] font-medium text-[var(--text)] hover:border-[var(--border-strong)] disabled:cursor-default disabled:opacity-60"
+              disabled={updateStatus === 'checking'}
+              onClick={() => checkForUpdate()}
+            >
+              {updateStatus === 'checking' ? 'Checking…' : 'Check for updates'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

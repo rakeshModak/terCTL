@@ -5,10 +5,12 @@ import { ACCENTS } from '../constants/accents'
 import { THEMES } from '../constants/themes'
 import { settingsAtom } from '../store/settings'
 import { refreshAllAtom } from '../store/app'
+import { checkForUpdateAtom } from '../store/updater'
 import { BootSplash } from '../components/chrome/BootSplash'
 import { TitleBar } from '../components/chrome/TitleBar'
 import { ActivityRail } from '../components/chrome/ActivityRail'
 import { Dialogs } from '../components/Dialogs'
+import { UpdateBanner } from '../components/UpdateBanner'
 import { SessionsView } from '../modules/sessions'
 
 export const Route = createRootRoute({
@@ -23,6 +25,7 @@ export const Route = createRootRoute({
 function RootLayout() {
   const { accent, theme } = useAtomValue(settingsAtom)
   const refreshAll = useSetAtom(refreshAllAtom)
+  const checkForUpdate = useSetAtom(checkForUpdateAtom)
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const onSessions = pathname === '/sessions'
 
@@ -30,6 +33,11 @@ function RootLayout() {
   useEffect(() => {
     void refreshAll()
   }, [refreshAll])
+
+  // Quietly check for an app update on launch (surfaces the banner if found).
+  useEffect(() => {
+    void checkForUpdate()
+  }, [checkForUpdate])
 
   // Apply accent + base theme to the document root (CSS derives everything else).
   useEffect(() => {
@@ -53,6 +61,7 @@ function RootLayout() {
         <Outlet />
       </div>
       <Dialogs />
+      <UpdateBanner />
     </div>
   )
 }
