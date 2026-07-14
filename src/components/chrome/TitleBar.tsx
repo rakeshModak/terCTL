@@ -16,7 +16,7 @@ import {
   toggleInspectorAtom,
 } from '../../store/app'
 import { paneSessionIds } from '../../lib/layout'
-import { PALETTE_HINT } from '../../lib/platform'
+import { IS_MAC, PALETTE_HINT } from '../../lib/platform'
 
 const PATH_LABELS: Record<string, string> = {
   '/sessions': 'Terminal',
@@ -77,7 +77,7 @@ export function TitleBar() {
   return (
     <div
       onMouseDown={onMouseDown}
-      className="flex h-[46px] shrink-0 items-center gap-[14px] border-b border-[var(--border-2)] bg-[linear-gradient(180deg,#121620,#0c0e13)] pl-[86px] pr-[14px]"
+      className={`flex h-[46px] shrink-0 items-center gap-[14px] border-b border-[var(--border-2)] bg-[linear-gradient(180deg,#121620,#0c0e13)] ${IS_MAC ? 'pl-[86px] pr-[14px]' : 'pl-[14px] pr-0'}`}
       style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.4)' }}
     >
       <div className="flex shrink-0 items-center gap-[10px]">
@@ -175,6 +175,32 @@ export function TitleBar() {
         </button>
       )}
       <span className="text-[11.5px] text-[var(--text-muted)]" style={{ fontFamily: 'var(--font-mono)' }}>{PALETTE_HINT}</span>
+      {!IS_MAC && <WindowControls />}
+    </div>
+  )
+}
+
+// Minimize / maximize / close, shown only on Windows & Linux (macOS uses its
+// native traffic lights). Full-height buttons flush to the right edge.
+function WindowControls() {
+  const btn = 'flex h-[46px] w-[46px] items-center justify-center text-[var(--text-muted)] transition-colors'
+  return (
+    <div data-no-drag className="flex self-stretch">
+      <button className={`${btn} hover:bg-white/[0.08] hover:text-[var(--text)]`} title="Minimize" onClick={() => void getCurrentWindow().minimize()}>
+        <svg width="10" height="10" viewBox="0 0 10 10">
+          <rect x="0" y="4.5" width="10" height="1" fill="currentColor" />
+        </svg>
+      </button>
+      <button className={`${btn} hover:bg-white/[0.08] hover:text-[var(--text)]`} title="Maximize" onClick={() => void getCurrentWindow().toggleMaximize()}>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
+          <rect x="0.5" y="0.5" width="9" height="9" />
+        </svg>
+      </button>
+      <button className={`${btn} hover:bg-[#e81123] hover:text-white`} title="Close" onClick={() => void getCurrentWindow().close()}>
+        <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+          <path d="M1 1l8 8M9 1l-8 8" />
+        </svg>
+      </button>
     </div>
   )
 }
