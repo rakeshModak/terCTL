@@ -65,6 +65,25 @@ impl SftpManager {
     pub async fn drop_host(&self, host_id: &str) {
         self.conns.lock().await.remove(host_id);
     }
+
+    /// Run an operation against the host's (cached) SFTP connection. If it errors
+    /// — most importantly when the underlying SSH has died — the connection is
+    /// evicted so the next call reconnects (mirrors the metrics self-heal). A
+    /// benign error just costs one reconnect on the following call.
+    async fn with_conn<T, F, Fut>(&self, store: &Store, host_id: &str, op: F) -> Result<T, String>
+    where
+        F: FnOnce(std::sync::Arc<SftpConn>) -> Fut,
+        Fut: std::future::Future<Output = Result<T, String>>,
+    {
+        let conn = self.get(store, host_id).await?;
+        match op(conn).await {
+            Ok(v) => Ok(v),
+            Err(e) => {
+                self.drop_host(host_id).await;
+                Err(e)
+            }
+        }
+    }
 }
 
 fn join_remote(dir: &str, name: &str) -> String {
@@ -81,8 +100,10 @@ pub async fn sftp_home(
     sftp: State<'_, SftpManager>,
     host_id: String,
 ) -> Result<String, String> {
-    let conn = sftp.get(&store, &host_id).await?;
-    conn.sftp.canonicalize(".").await.map_err(|e| e.to_string())
+    sftp.with_conn(&store, &host_id, move |conn| async move {
+        conn.sftp.canonicalize(".").await.map_err(|e| e.to_string())
+    })
+    .await
 }
 
 #[tauri::command]
@@ -92,26 +113,28 @@ pub async fn sftp_list(
     host_id: String,
     path: String,
 ) -> Result<Vec<FileEntry>, String> {
-    let conn = sftp.get(&store, &host_id).await?;
-    let read = conn.sftp.read_dir(&path).await.map_err(|e| e.to_string())?;
-    let mut out = Vec::new();
-    for entry in read {
-        let name = entry.file_name();
-        if name == "." || name == ".." {
-            continue;
+    sftp.with_conn(&store, &host_id, move |conn| async move {
+        let read = conn.sftp.read_dir(&path).await.map_err(|e| e.to_string())?;
+        let mut out = Vec::new();
+        for entry in read {
+            let name = entry.file_name();
+            if name == "." || name == ".." {
+                continue;
+            }
+            let meta = entry.metadata();
+            out.push(FileEntry {
+                path: join_remote(&path, &name),
+                is_dir: meta.is_dir(),
+                is_link: meta.is_symlink(),
+                size: meta.size.unwrap_or(0),
+                modified: meta.mtime.map(|t| t as u64),
+                name,
+            });
         }
-        let meta = entry.metadata();
-        out.push(FileEntry {
-            path: join_remote(&path, &name),
-            is_dir: meta.is_dir(),
-            is_link: meta.is_symlink(),
-            size: meta.size.unwrap_or(0),
-            modified: meta.mtime.map(|t| t as u64),
-            name,
-        });
-    }
-    sort_entries(&mut out);
-    Ok(out)
+        sort_entries(&mut out);
+        Ok(out)
+    })
+    .await
 }
 
 #[tauri::command]
@@ -122,15 +145,17 @@ pub async fn sftp_download(
     remote_path: String,
     local_path: String,
 ) -> Result<(), String> {
-    let conn = sftp.get(&store, &host_id).await?;
-    let mut remote = conn.sftp.open(&remote_path).await.map_err(|e| e.to_string())?;
-    let mut local = tokio::fs::File::create(&local_path)
-        .await
-        .map_err(|e| e.to_string())?;
-    tokio::io::copy(&mut remote, &mut local)
-        .await
-        .map_err(|e| e.to_string())?;
-    Ok(())
+    sftp.with_conn(&store, &host_id, move |conn| async move {
+        let mut remote = conn.sftp.open(&remote_path).await.map_err(|e| e.to_string())?;
+        let mut local = tokio::fs::File::create(&local_path)
+            .await
+            .map_err(|e| e.to_string())?;
+        tokio::io::copy(&mut remote, &mut local)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    })
+    .await
 }
 
 #[tauri::command]
@@ -141,15 +166,17 @@ pub async fn sftp_upload(
     local_path: String,
     remote_path: String,
 ) -> Result<(), String> {
-    let conn = sftp.get(&store, &host_id).await?;
-    let mut local = tokio::fs::File::open(&local_path)
-        .await
-        .map_err(|e| e.to_string())?;
-    let mut remote = conn.sftp.create(&remote_path).await.map_err(|e| e.to_string())?;
-    tokio::io::copy(&mut local, &mut remote)
-        .await
-        .map_err(|e| e.to_string())?;
-    Ok(())
+    sftp.with_conn(&store, &host_id, move |conn| async move {
+        let mut local = tokio::fs::File::open(&local_path)
+            .await
+            .map_err(|e| e.to_string())?;
+        let mut remote = conn.sftp.create(&remote_path).await.map_err(|e| e.to_string())?;
+        tokio::io::copy(&mut local, &mut remote)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    })
+    .await
 }
 
 #[tauri::command]
@@ -159,8 +186,10 @@ pub async fn sftp_mkdir(
     host_id: String,
     path: String,
 ) -> Result<(), String> {
-    let conn = sftp.get(&store, &host_id).await?;
-    conn.sftp.create_dir(&path).await.map_err(|e| e.to_string())
+    sftp.with_conn(&store, &host_id, move |conn| async move {
+        conn.sftp.create_dir(&path).await.map_err(|e| e.to_string())
+    })
+    .await
 }
 
 #[tauri::command]
@@ -171,8 +200,10 @@ pub async fn sftp_rename(
     from: String,
     to: String,
 ) -> Result<(), String> {
-    let conn = sftp.get(&store, &host_id).await?;
-    conn.sftp.rename(&from, &to).await.map_err(|e| e.to_string())
+    sftp.with_conn(&store, &host_id, move |conn| async move {
+        conn.sftp.rename(&from, &to).await.map_err(|e| e.to_string())
+    })
+    .await
 }
 
 #[tauri::command]
