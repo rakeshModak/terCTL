@@ -1,0 +1,12 @@
+/* Tailwind — theme tokens + utilities. Preflight (Tailwind's base reset) is
+   intentionally skipped; the base/element resets live in theme.css alongside the
+   design tokens. All component styling is Tailwind utilities. */
+/* Layer order: base (our button reset) ranks below utilities so Tailwind
+   `border`/`bg-*` classes win over the reset. */
+@layer theme, base, utilities;
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/utilities' layer(utilities);
+
+/* Design tokens (CSS custom properties), theme variants, keyframes, and the
+   base element resets + scrollbars. */
+@import './styles/theme.css';
