@@ -1,6 +1,6 @@
 [package]
 name = "TerCTL"
-version = "1.0.1"
+version = "1.0.2"
 description = "TerCTL — SSH connection manager"
 authors = ["you"]
 edition = "2021"

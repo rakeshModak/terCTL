@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
+import { useAtomValue } from "jotai";
 import { TerctlLoader } from "./TerctlLogo";
+import { appVersionAtom } from "../../store/version";
 
 const LOGO = 150;
 
 export function BootSplash() {
   const [booting, setBooting] = useState(true);
   const [gone, setGone] = useState(false);
+  const version = useAtomValue(appVersionAtom);
 
   useEffect(() => {
     // Hold for one full loader cycle (loader cycle = 2.4s) — the frame
@@ -119,7 +122,7 @@ export function BootSplash() {
           letterSpacing: 0.5,
         }}
       >
-        terctl v1.0 · openssh 9.6
+        terctl{version ? ` v${version}` : ""}
       </div>
     </div>
   );

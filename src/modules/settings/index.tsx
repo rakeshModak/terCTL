@@ -16,6 +16,7 @@ import {
   updateErrorAtom,
   updateStatusAtom,
 } from '../../store/updater'
+import { appVersionAtom } from '../../store/version'
 
 const CATS = [
   { id: 'appearance', name: 'Appearance' },
@@ -46,6 +47,7 @@ export function SettingsView() {
   const updateStatus = useAtomValue(updateStatusAtom)
   const availableUpdate = useAtomValue(availableUpdateAtom)
   const updateError = useAtomValue(updateErrorAtom)
+  const appVersion = useAtomValue(appVersionAtom)
   const checkForUpdate = useSetAtom(checkForUpdateAtom)
 
   const updateLabel =
@@ -231,7 +233,10 @@ export function SettingsView() {
         <div className="mt-8 max-w-[720px] border-t border-[var(--border)] pt-5">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <div className="text-[13px] font-medium">Software update</div>
+              <div className="text-[13px] font-medium">
+                Software update
+                {appVersion && <span className="ml-2 font-normal text-[var(--text-faint)]" style={{ fontFamily: 'var(--font-mono)' }}>v{appVersion}</span>}
+              </div>
               <div className="mt-[2px] text-[11.5px] text-[var(--text-faint)]">{updateLabel}</div>
             </div>
             <button

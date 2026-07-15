@@ -139,6 +139,16 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+  /* Lock the document itself: the app manages its own scroll regions, so the
+     window must never scroll or rubber-band (which shoved the title bar down
+     when overscrolling the terminal). */
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Keep overscroll from chaining out of the terminal's scrollback to the window. */
+.xterm-viewport {
+  overscroll-behavior: contain;
 }
 
 body {

@@ -6,6 +6,7 @@ import { THEMES } from '../constants/themes'
 import { settingsAtom } from '../store/settings'
 import { refreshAllAtom } from '../store/app'
 import { checkForUpdateAtom } from '../store/updater'
+import { loadAppVersionAtom } from '../store/version'
 import { BootSplash } from '../components/chrome/BootSplash'
 import { TitleBar } from '../components/chrome/TitleBar'
 import { ActivityRail } from '../components/chrome/ActivityRail'
@@ -26,6 +27,7 @@ function RootLayout() {
   const { accent, theme } = useAtomValue(settingsAtom)
   const refreshAll = useSetAtom(refreshAllAtom)
   const checkForUpdate = useSetAtom(checkForUpdateAtom)
+  const loadVersion = useSetAtom(loadAppVersionAtom)
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const onSessions = pathname === '/sessions'
 
@@ -38,6 +40,11 @@ function RootLayout() {
   useEffect(() => {
     void checkForUpdate()
   }, [checkForUpdate])
+
+  // Read the real app version once, so the UI never shows a hardcoded number.
+  useEffect(() => {
+    void loadVersion()
+  }, [loadVersion])
 
   // Apply accent + base theme to the document root (CSS derives everything else).
   useEffect(() => {
