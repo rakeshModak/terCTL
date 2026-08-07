@@ -46,7 +46,7 @@ export function UpdateBanner() {
         )}
       </div>
       {downloading ? (
-        <div className="h-[4px] w-full overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="h-[4px] w-full overflow-hidden rounded-full bg-foreground/[0.06]">
           <div className="h-full rounded-full bg-[image:var(--gradient-brand)] transition-[width] duration-200" style={{ width: `${progress}%` }} />
         </div>
       ) : (

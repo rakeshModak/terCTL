@@ -87,24 +87,6 @@ export function ActivityRail() {
           </button>
         )
       })}
-      <div style={{ flex: 1 }} />
-      <div
-        style={{
-          width: 34,
-          height: 34,
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg,#5b9dff,#8b5bff)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 600,
-          fontSize: 12,
-          color: '#eef',
-          border: '2px solid rgba(255,255,255,0.1)',
-        }}
-      >
-        DK
-      </div>
     </div>
   )
 }

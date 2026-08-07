@@ -2,6 +2,8 @@ import { useRef, type MouseEvent } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useRouterState } from '@tanstack/react-router'
 import { useAtomValue, useSetAtom } from 'jotai'
+import { Columns2, Minus, PanelRight, Plus, Square, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { TerctlLogo } from './TerctlLogo'
 import {
   activeTabIdAtom,
@@ -26,6 +28,8 @@ const PATH_LABELS: Record<string, string> = {
   '/settings': 'Settings',
 }
 
+const BAR_SURFACE = 'color-mix(in srgb, var(--brand) 4%, var(--sidebar))'
+
 export function TitleBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const onSessions = pathname === '/sessions'
@@ -40,9 +44,6 @@ export function TitleBar() {
   const setDraggingTab = useSetAtom(setDraggingTabAtom)
   const splitActiveTab = useSetAtom(splitActiveTabAtom)
 
-  // Detect double-click ourselves on the second mousedown (within 400ms) and
-  // toggle zoom directly — the browser's own dblclick event races with window
-  // dragging and fires only intermittently.
   const lastDownRef = useRef(0)
   const onMouseDown = (e: MouseEvent) => {
     if (e.button !== 0) return
@@ -77,18 +78,24 @@ export function TitleBar() {
   return (
     <div
       onMouseDown={onMouseDown}
-      className={`flex h-[46px] shrink-0 items-center gap-[14px] border-b border-[var(--border-2)] bg-[linear-gradient(180deg,#121620,#0c0e13)] ${IS_MAC ? 'pl-[86px] pr-[14px]' : 'pl-[14px] pr-0'}`}
-      style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.4)' }}
+      style={{ background: BAR_SURFACE }}
+      className={cn(
+        'flex h-[46px] shrink-0 items-center gap-3.5 border-b border-border',
+        IS_MAC ? 'pr-3.5 pl-[86px]' : 'pr-0 pl-3.5',
+      )}
     >
-      <div className="flex shrink-0 items-center gap-[10px]">
-        <TerctlLogo size={20} glow={false} />
-        <span className="text-[14.5px] font-semibold tracking-[0.3px] text-[var(--text)]">
-          Ter<span className="text-[var(--text-dim)]">CTL</span>
+      <div className="flex shrink-0 items-center gap-2.5 text-foreground">
+        <TerctlLogo size={20} />
+        <span className="text-sm font-semibold tracking-wide text-foreground">
+          Ter<span className="text-muted-foreground">CTL</span>
         </span>
       </div>
 
       {showTabs ? (
-        <div data-no-drag className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div
+          data-no-drag
+          className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {tabs.map((tab) => {
             const active = tab.id === activeTabId
             const ids = paneSessionIds(tab.layout)
@@ -99,8 +106,12 @@ export function TitleBar() {
             return (
               <div
                 key={tab.id}
-                className={`flex max-w-[190px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border border-transparent px-[10px] py-[6px] text-[12.5px] ${active ? 'bg-[var(--brand-soft-2)] text-[var(--text)]' : 'bg-white/[0.03] text-[var(--text-muted)] hover:bg-white/[0.06]'}`}
-                style={active ? { borderColor: 'color-mix(in srgb, var(--brand) 35%, transparent)' } : undefined}
+                className={cn(
+                  'flex max-w-[190px] cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs whitespace-nowrap transition-colors',
+                  active
+                    ? 'border-primary/35 bg-primary/12 text-foreground'
+                    : 'border-transparent bg-foreground/3 text-muted-foreground hover:bg-foreground/6',
+                )}
                 draggable
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = 'move'
@@ -111,95 +122,114 @@ export function TitleBar() {
                 onClick={() => setActiveTab(tab.id)}
               >
                 {isWorkspace ? (
-                  <span className="flex shrink-0 items-center text-[var(--brand)]" title="Deck">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="16" rx="2" />
-                      <path d="M12 4v16" />
-                    </svg>
-                  </span>
+                  <Columns2 className="size-3 shrink-0 text-primary" aria-label="Deck" />
                 ) : (
                   <span
-                    className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#3ddc97] shadow-[0_0_6px_#3ddc97]"
-                    style={allConnected ? undefined : { background: '#ff5f56', boxShadow: '0 0 6px #ff5f56' }}
+                    className={cn(
+                      'size-1.75 shrink-0 rounded-full',
+                      allConnected ? 'bg-chart-4' : 'bg-destructive',
+                    )}
+                    style={{
+                      boxShadow: `0 0 6px ${allConnected ? 'var(--green)' : 'var(--red)'}`,
+                    }}
                   />
                 )}
                 <span className="overflow-hidden text-ellipsis">{tab.label}</span>
                 {active && !isWorkspace && tabs.length > 1 && (
-                  <span
-                    className="flex shrink-0 items-center text-[var(--text-faint)] hover:text-[var(--brand)]"
+                  <button
+                    type="button"
+                    className="flex shrink-0 items-center text-muted-foreground hover:text-primary"
                     title="Split with neighbor"
                     onClick={(e) => {
                       e.stopPropagation()
                       splitActiveTab()
                     }}
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="16" rx="2" />
-                      <path d="M12 4v16" />
-                    </svg>
-                  </span>
+                    <Columns2 className="size-3.5" />
+                  </button>
                 )}
-                <span
-                  className="shrink-0 text-[11px] text-[var(--text-faint)] hover:text-[var(--red)]"
+                <button
+                  type="button"
+                  className="flex shrink-0 items-center text-muted-foreground hover:text-destructive"
+                  title="Close tab"
                   onClick={(e) => {
                     e.stopPropagation()
                     closeTab(tab.id)
                   }}
                 >
-                  ✕
-                </span>
+                  <X className="size-3" />
+                </button>
               </div>
             )
           })}
-          <button data-no-drag className="h-7 w-7 shrink-0 cursor-pointer rounded-lg bg-white/[0.04] text-base text-[var(--text-muted)] hover:bg-[var(--brand-soft)] hover:text-[var(--brand)]" onClick={() => setNewTabPicker(true)} title="New tab">
-            +
+          <button
+            data-no-drag
+            type="button"
+            className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-foreground/4 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+            onClick={() => setNewTabPicker(true)}
+            title="New tab"
+          >
+            <Plus className="size-4" />
           </button>
         </div>
       ) : (
-        <span className="text-[12.5px] tracking-[0.2px] text-[var(--text-muted)]">{PATH_LABELS[pathname] ?? ''}</span>
+        <span className="text-xs tracking-wide text-muted-foreground">
+          {PATH_LABELS[pathname] ?? ''}
+        </span>
       )}
 
-      <div data-tauri-drag-region className="min-w-[20px] flex-1 self-stretch" />
+      <div data-tauri-drag-region className="min-w-5 flex-1 self-stretch" />
 
       {onSessions && tabs.length > 0 && (
         <button
           data-no-drag
-          className={`flex h-[30px] w-[30px] shrink-0 cursor-pointer items-center justify-center rounded-lg ${showInspector ? 'bg-[var(--brand-soft-2)] text-[var(--brand)]' : 'bg-transparent text-[var(--text-muted)]'}`}
+          type="button"
+          className={cn(
+            'flex size-7.5 shrink-0 items-center justify-center rounded-lg transition-colors',
+            showInspector
+              ? 'bg-primary/12 text-primary'
+              : 'bg-transparent text-muted-foreground hover:text-foreground',
+          )}
           title="Toggle details panel"
           onClick={toggleInspector}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="16" rx="2" />
-            <path d="M15 4v16" />
-          </svg>
+          <PanelRight className="size-4" />
         </button>
       )}
-      <span className="text-[11.5px] text-[var(--text-muted)]" style={{ fontFamily: 'var(--font-mono)' }}>{PALETTE_HINT}</span>
+      <span className="font-mono text-[11.5px] text-muted-foreground">{PALETTE_HINT}</span>
       {!IS_MAC && <WindowControls />}
     </div>
   )
 }
 
-// Minimize / maximize / close, shown only on Windows & Linux (macOS uses its
-// native traffic lights). Full-height buttons flush to the right edge.
 function WindowControls() {
-  const btn = 'flex h-[46px] w-[46px] items-center justify-center text-[var(--text-muted)] transition-colors'
+  const btn =
+    'flex h-[46px] w-[46px] items-center justify-center text-muted-foreground transition-colors'
   return (
     <div data-no-drag className="flex self-stretch">
-      <button className={`${btn} hover:bg-white/[0.08] hover:text-[var(--text)]`} title="Minimize" onClick={() => void getCurrentWindow().minimize()}>
-        <svg width="10" height="10" viewBox="0 0 10 10">
-          <rect x="0" y="4.5" width="10" height="1" fill="currentColor" />
-        </svg>
+      <button
+        type="button"
+        className={cn(btn, 'hover:bg-foreground/8 hover:text-foreground')}
+        title="Minimize"
+        onClick={() => void getCurrentWindow().minimize()}
+      >
+        <Minus className="size-2.5" />
       </button>
-      <button className={`${btn} hover:bg-white/[0.08] hover:text-[var(--text)]`} title="Maximize" onClick={() => void getCurrentWindow().toggleMaximize()}>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
-          <rect x="0.5" y="0.5" width="9" height="9" />
-        </svg>
+      <button
+        type="button"
+        className={cn(btn, 'hover:bg-foreground/8 hover:text-foreground')}
+        title="Maximize"
+        onClick={() => void getCurrentWindow().toggleMaximize()}
+      >
+        <Square className="size-2.5" />
       </button>
-      <button className={`${btn} hover:bg-[#e81123] hover:text-white`} title="Close" onClick={() => void getCurrentWindow().close()}>
-        <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
-          <path d="M1 1l8 8M9 1l-8 8" />
-        </svg>
+      <button
+        type="button"
+        className={cn(btn, 'hover:bg-[#e81123] hover:text-white')}
+        title="Close"
+        onClick={() => void getCurrentWindow().close()}
+      >
+        <X className="size-2.5" />
       </button>
     </div>
   )

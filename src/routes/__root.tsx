@@ -1,7 +1,7 @@
 import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
-import { applyTheme } from '../lib/theme'
+import { applyTheme, watchSystemMode } from '../lib/theme'
 import { settingsAtom } from '../store/settings'
 import { refreshAllAtom } from '../store/app'
 import { checkForUpdateAtom } from '../store/updater'
@@ -17,43 +17,35 @@ export const Route = createRootRoute({
   component: RootLayout,
 })
 
-// The app shell: boot splash, title bar (Deck tabs), activity rail, the
-// persistent terminal workspace, and the active route via <Outlet />.
-//
-// SessionsView is mounted permanently and merely hidden when off '/', so live
-// PTY/SSH terminals survive navigation. The other views render through <Outlet />.
 function RootLayout() {
-  const { accent, theme } = useAtomValue(settingsAtom)
+  const { accent, theme, mode } = useAtomValue(settingsAtom)
   const refreshAll = useSetAtom(refreshAllAtom)
   const checkForUpdate = useSetAtom(checkForUpdateAtom)
   const loadVersion = useSetAtom(loadAppVersionAtom)
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const onSessions = pathname === '/sessions'
 
-  // Load hosts/groups/tags once when the shell mounts.
   useEffect(() => {
     void refreshAll()
-  }, [refreshAll])
+  }, [])
 
-  // Quietly check for an app update on launch (surfaces the banner if found).
   useEffect(() => {
     void checkForUpdate()
-  }, [checkForUpdate])
+  }, [])
 
-  // Read the real app version once, so the UI never shows a hardcoded number.
   useEffect(() => {
     void loadVersion()
-  }, [loadVersion])
+  }, [])
 
-  // Re-derive the shadcn token set whenever the accent or base theme changes.
-  // main.tsx already applied the persisted pair before the first render, so
-  // this only does work on an actual change from Settings.
   useEffect(() => {
-    applyTheme({ accent, theme })
-  }, [accent, theme])
+    const choice = { accent, theme, mode }
+    applyTheme(choice)
+    if (mode !== 'system') return
+    return watchSystemMode(() => applyTheme(choice))
+  }, [accent, theme, mode])
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[var(--bg)] text-[var(--text)]">
+    <div className="flex h-screen flex-col overflow-hidden bg-(--bg) text-(--text)">
       <BootSplash />
       <TitleBar />
       <div className="flex min-h-0 flex-1">

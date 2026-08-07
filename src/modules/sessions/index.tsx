@@ -36,7 +36,7 @@ import {
 const btnAccent =
   'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] bg-[image:var(--gradient-brand)] px-4 py-[10px] text-[13px] font-bold text-[#1a0e0a]'
 const btnGhost =
-  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-[var(--border-strong)] bg-white/[0.03] px-[15px] py-[10px] text-[13px] font-semibold text-[var(--text-bright)] hover:border-[var(--brand-border)]'
+  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-[var(--border-strong)] bg-foreground/[0.03] px-[15px] py-[10px] text-[13px] font-semibold text-[var(--text-bright)] hover:border-[var(--brand-border)]'
 const accentBtnShadow = { boxShadow: '0 4px 16px color-mix(in srgb, var(--brand) 30%, transparent)' } as const
 const cardGradient = 'bg-[linear-gradient(160deg,var(--bg-card-top),var(--bg-card))]'
 const connectCard = `flex max-w-[420px] flex-col items-center gap-3 rounded-2xl border border-[var(--border-2)] ${cardGradient} px-10 py-8 text-center animate-[rise_0.25s_ease_both]`
@@ -222,7 +222,7 @@ export function SessionsView() {
                     <span className="overflow-hidden text-ellipsis whitespace-nowrap">{s.label}</span>
                     <span className="flex-1" />
                     <button
-                      className="shrink-0 cursor-pointer rounded-md bg-transparent px-[6px] py-1 text-[11px] leading-none text-[var(--text-faint)] hover:bg-white/5 hover:text-[var(--red)]"
+                      className="shrink-0 cursor-pointer rounded-md bg-transparent px-[6px] py-1 text-[11px] leading-none text-[var(--text-faint)] hover:bg-foreground/5 hover:text-[var(--red)]"
                       title="Close this pane"
                       onClick={(e) => {
                         e.stopPropagation()
@@ -351,7 +351,7 @@ function Inspector({
           >
             {status === 'reconnecting' ? 'RECONNECTING' : connected ? 'CONNECTED' : 'DISCONNECTED'}
           </span>
-          <button className="h-6 w-6 shrink-0 cursor-pointer rounded-[7px] bg-white/[0.04] text-[var(--text-muted)] hover:bg-[var(--brand-soft-2)] hover:text-[var(--brand)]" onClick={onClose} title="Collapse details">
+          <button className="h-6 w-6 shrink-0 cursor-pointer rounded-[7px] bg-foreground/[0.04] text-[var(--text-muted)] hover:bg-[var(--brand-soft-2)] hover:text-[var(--brand)]" onClick={onClose} title="Collapse details">
             ›
           </button>
         </div>
@@ -370,13 +370,13 @@ function Inspector({
       <MetricsPanel hostId={host.id} connected={connected} />
 
       <div className="grid grid-cols-2 gap-2">
-        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" onClick={onOpenSftp}>
+        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-foreground/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" onClick={onOpenSftp}>
           Open SFTP
         </button>
-        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" title="Coming soon">
+        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-foreground/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" title="Coming soon">
           Port Forward
         </button>
-        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" onClick={onDuplicate}>
+        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-foreground/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" onClick={onDuplicate}>
           Duplicate
         </button>
         <button className="cursor-pointer rounded-[9px] border border-[rgb(255_95_86_/_0.35)] bg-[rgb(255_95_86_/_0.09)] p-[9px] text-[12px] font-semibold text-[var(--red)]" onClick={onDisconnect}>

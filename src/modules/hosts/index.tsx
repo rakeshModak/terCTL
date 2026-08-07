@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useAtomValue, useSetAtom } from 'jotai'
 import {
@@ -7,11 +7,14 @@ import {
   groupsAtom,
   hostsAtom,
   refreshAllAtom,
+  sessionsAtom,
+  setActiveSessionAtom,
   setTagFilterAtom,
   tagFilterAtom,
 } from '../../store/app'
 import { hostsService } from '../../services/hosts.service'
 import type { Group, Host } from '../../models'
+import { ActiveSessions } from './ActiveSessions'
 import { DeleteAlert } from './DeleteAlert'
 import { GroupBreadcrumb } from './GroupBreadcrumb'
 import { GroupCard } from './GroupCard'
@@ -20,6 +23,7 @@ import { HostCard } from './HostCard'
 import { HostFormSheet } from './HostFormSheet'
 import { HostsEmptyState } from './HostsEmptyState'
 import { HostsHeader } from './HostsHeader'
+import { HostsSearch } from './HostsSearch'
 import { SectionHeading } from './SectionHeading'
 import { TagFilterBar } from './TagFilterBar'
 import { useHostsBrowser } from './useHostsBrowser'
@@ -29,15 +33,17 @@ type GroupDialogArgs =
   { mode: 'create'; parentId: string | null } | { mode: 'rename'; group: Group }
 type DeleteTarget = { kind: 'group'; group: Group } | { kind: 'host'; host: Host }
 
-const GRID = 'grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(228px,1fr))]'
+const GRID = 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(258px,1fr))]'
 
 export function HostsPage() {
   const hosts = useAtomValue(hostsAtom)
   const groups = useAtomValue(groupsAtom)
   const allTags = useAtomValue(allTagsAtom)
   const tagFilter = useAtomValue(tagFilterAtom)
+  const sessions = useAtomValue(sessionsAtom)
   const connect = useSetAtom(connectAtom)
   const refreshAll = useSetAtom(refreshAllAtom)
+  const setActiveSession = useSetAtom(setActiveSessionAtom)
   const setTagFilter = useSetAtom(setTagFilterAtom)
   const navigate = useNavigate()
 
@@ -57,6 +63,14 @@ export function HostsPage() {
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
   const view = useHostsBrowser({ hosts, groups, path, query, tagFilter })
+
+  const sessionByHostId = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const s of sessions) if (!map.has(s.hostId)) map.set(s.hostId, s.id)
+    return map
+  }, [sessions])
+
+  const hostsById = useMemo(() => new Map(hosts.map((h) => [h.id, h])), [hosts])
 
   const openCreateHost = (groupId: string | null) => {
     setSheetArgs({ host: undefined, groupId })
@@ -102,23 +116,36 @@ export function HostsPage() {
     await refreshAll()
   }
 
+  const openSession = (sessionId: string) => {
+    setActiveSession(sessionId)
+    navigate({ to: '/sessions' })
+  }
+
   const openHost = (host: Host) => {
+    const existing = sessionByHostId.get(host.id)
+    if (existing) {
+      openSession(existing)
+      return
+    }
     void connect(host)
     navigate({ to: '/sessions' })
   }
 
+  const showSessions = sessions.length > 0 && !view.insideGroup && !view.searching
+
   return (
     <div className="flex-1 overflow-y-auto bg-background">
-      <div className="px-8 pt-5 pb-8">
+      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-8 pt-10 pb-14">
         <HostsHeader
           hostCount={hosts.length}
           groupCount={view.rootGroupCount}
-          query={query}
-          onQueryChange={setQuery}
+          sessionCount={sessions.length}
           onNewGroup={openCreateGroup}
           onNewHost={() => openCreateHost(view.currentGroupId)}
           showActions={!view.isEmpty}
         />
+
+        {!view.isEmpty && <HostsSearch value={query} onChange={setQuery} />}
 
         <TagFilterBar tags={allTags} value={tagFilter} onChange={setTagFilter} />
 
@@ -130,8 +157,12 @@ export function HostsPage() {
         )}
 
         {view.subgroups.length > 0 && (
-          <section className="mb-7">
-            <SectionHeading>{view.insideGroup ? 'Subgroups' : 'Groups'}</SectionHeading>
+          <section className="mb-8">
+            <SectionHeading
+              trailing={`${view.subgroups.length} group${view.subgroups.length === 1 ? '' : 's'}`}
+            >
+              {view.insideGroup ? 'Subgroups' : 'Groups'}
+            </SectionHeading>
             <div className={GRID}>
               {view.subgroups.map((group) => (
                 <GroupCard
@@ -151,7 +182,10 @@ export function HostsPage() {
           <HostsEmptyState onNewHost={() => openCreateHost(null)} onNewGroup={openCreateGroup} />
         ) : (
           <section>
-            <SectionHeading detail={view.currentGroup?.name} count={view.visibleHosts.length}>
+            <SectionHeading
+              detail={view.currentGroup?.name}
+              trailing={`${view.visibleHosts.length} host${view.visibleHosts.length === 1 ? '' : 's'}`}
+            >
               Hosts
             </SectionHeading>
             <div className={GRID}>
@@ -159,12 +193,20 @@ export function HostsPage() {
                 <HostCard
                   key={host.id}
                   host={host}
+                  connected={sessionByHostId.has(host.id)}
                   onConnect={() => openHost(host)}
                   onEdit={() => openEditHost(host)}
                   onDelete={() => askDelete({ kind: 'host', host })}
                 />
               ))}
             </div>
+          </section>
+        )}
+
+        {showSessions && (
+          <section className="mt-9">
+            <SectionHeading trailing={`${sessions.length} open`}>Active sessions</SectionHeading>
+            <ActiveSessions sessions={sessions} hostsById={hostsById} onOpen={openSession} />
           </section>
         )}
       </div>

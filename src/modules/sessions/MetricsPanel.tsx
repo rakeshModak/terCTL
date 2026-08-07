@@ -36,7 +36,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   if (n < 2) {
     return (
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: H, display: 'block' }}>
-        <line x1="0" y1={H - PAD} x2={W} y2={H - PAD} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+        <line x1="0" y1={H - PAD} x2={W} y2={H - PAD} stroke="color-mix(in srgb, var(--foreground) 8%, transparent)" strokeWidth="1" />
       </svg>
     )
   }
@@ -176,7 +176,7 @@ export function MetricsPanel({ hostId, connected }: { hostId: string; connected:
         <span>Memory</span>
         <span className="text-[13px] font-normal text-[var(--text-dim)]" style={mono}>{fmtGb(m.memUsedKb)} / {fmtGb(m.memTotalKb)}</span>
       </div>
-      <div className="h-[7px] overflow-hidden rounded-[5px] bg-white/5" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.35)' }}>
+      <div className="h-[7px] overflow-hidden rounded-[5px] bg-foreground/5" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.35)' }}>
         <div className="h-full rounded-[5px]" style={{ width: `${memPct}%`, background: 'linear-gradient(90deg,#5b9dff,#9585c4)', transition: 'width 0.5s cubic-bezier(0.22,1,0.36,1)', boxShadow: '0 0 10px -2px currentColor' }} />
       </div>
 
@@ -184,7 +184,7 @@ export function MetricsPanel({ hostId, connected }: { hostId: string; connected:
         <span>Disk /</span>
         <span className="text-[13px] font-normal text-[var(--text-dim)]" style={mono}>{fmtGb(m.diskUsedKb)} / {fmtGb(m.diskTotalKb)}</span>
       </div>
-      <div className="h-[7px] overflow-hidden rounded-[5px] bg-white/5" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.35)' }}>
+      <div className="h-[7px] overflow-hidden rounded-[5px] bg-foreground/5" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.35)' }}>
         <div className="h-full rounded-[5px]" style={{ width: `${diskPct}%`, background: 'linear-gradient(90deg,#cba062,#e0736a)', transition: 'width 0.5s cubic-bezier(0.22,1,0.36,1)', boxShadow: '0 0 10px -2px currentColor' }} />
       </div>
 

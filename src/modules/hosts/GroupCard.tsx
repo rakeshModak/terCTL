@@ -22,9 +22,9 @@ export function GroupCard({ group, hostCount, onOpen, onRename, onDelete }: Grou
   return (
     <Card
       size="sm"
-      className="group/group-card relative flex-row items-center gap-3 px-4 transition-colors hover:bg-accent"
+      className="group/group-card relative flex-row items-center gap-3 px-5 py-4 transition-colors hover:bg-accent/50"
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
         <Folder className="size-4" />
       </div>
 

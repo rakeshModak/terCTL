@@ -1,67 +1,21 @@
 :root {
-  color-scheme: dark;
-
-  /* --- Text ramp, brightest -> faintest -------------------------------- */
-  --text: #e8eaee;
-  --text-bright: #cdd3dd;
-  --text-dim: #9aa3b2;
-  --text-muted: #7d8696;
-  --text-faint: #5f6875;
-  --text-faintest: #3a4150;
-
-  /* --- Hairlines. Translucent white, so they read on every base palette. */
-  --border: rgba(255, 255, 255, 0.06);
-  --border-2: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.12);
-
-  /* --- Semantic status -------------------------------------------------- */
-  --green: #3ddc97;
-  --amber: #f5b544;
-  --blue: #5b9dff;
-  --purple: #8b5bff;
-  --purple-2: #a17fff;
-  --red: #ff5f56;
-
-  --font-sans: "Space Grotesk", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
-
-  /* --- shadcn tokens that never vary, aliased onto the above ------------ */
-  --foreground: var(--text);
-  --card-foreground: var(--text);
-  --popover-foreground: var(--text);
-  --secondary-foreground: var(--text);
-  --accent-foreground: var(--text);
-  --muted-foreground: var(--text-muted);
-  --sidebar-foreground: var(--text-dim);
-  --sidebar-accent-foreground: var(--text);
-  --sidebar-border: var(--border);
-  --destructive: var(--red);
-  /* shadcn uses --input as the *border* color of form fields. */
-  --input: var(--border-strong);
-  --chart-3: var(--blue);
-  --chart-4: var(--green);
-  --chart-5: var(--amber);
-
-  /* --- Legacy terCTL surface aliases ------------------------------------ */
-  /* Kept so existing markup keeps working while it migrates to shadcn
-     utilities (bg-card, bg-popover, ...). --bg-deep has no shadcn counterpart
-     and is written directly by src/lib/theme.ts. */
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --text: var(--foreground);
+  --text-muted: var(--muted-foreground);
   --bg: var(--background);
   --bg-panel: var(--sidebar);
   --bg-card: var(--card);
   --bg-card-2: var(--secondary);
   --bg-card-top: var(--popover);
   --bg-inspector-top: var(--sidebar-accent);
-
-  /* --- Brand derivations ------------------------------------------------ */
-  /* --brand / --brand-2 / --brand-contrast come from the accent at runtime;
-     these shades follow from them. shadcn's --accent is a hover *surface*, so
-     the vivid accent lives here and in --primary. */
   --gradient-brand: linear-gradient(135deg, var(--brand), var(--brand-2));
   --brand-soft: color-mix(in srgb, var(--brand) 10%, transparent);
   --brand-soft-2: color-mix(in srgb, var(--brand) 12%, transparent);
   --brand-border: color-mix(in srgb, var(--brand) 40%, transparent);
   --brand-ring: color-mix(in srgb, var(--brand) 15%, transparent);
+  --lift: color-mix(in srgb, var(--foreground) 5%, transparent);
+  --lift-2: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 html,
@@ -70,14 +24,10 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
-  /* Lock the document itself: the app manages its own scroll regions, so the
-     window must never scroll or rubber-band (which shoved the title bar down
-     when overscrolling the terminal). */
   overflow: hidden;
   overscroll-behavior: none;
 }
 
-/* Keep overscroll from chaining out of the terminal's scrollback to the window. */
 .xterm-viewport {
   overscroll-behavior: contain;
 }
@@ -93,9 +43,6 @@ select {
   font-family: inherit;
 }
 
-/* Button reset. Tailwind's preflight zeroes the border and background but not
-   the cursor or color; this finishes the job. Declared in the `base` layer
-   (ranked below `utilities`) so explicit `border`/`bg-*` utilities still win. */
 @layer base {
   button {
     color: inherit;
@@ -108,214 +55,93 @@ select {
   height: 9px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.09);
+  background: color-mix(in srgb, var(--foreground) 20%, transparent);
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: color-mix(in srgb, var(--foreground) 34%, transparent);
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
 @keyframes hblink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 @keyframes bootpulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 @keyframes bootRing {
-  0% {
-    transform: translate(-50%, -50%) scale(0.62);
-    opacity: 0.45;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.75);
-    opacity: 0;
-  }
+  0% { transform: translate(-50%, -50%) scale(0.62); opacity: 0.45; }
+  100% { transform: translate(-50%, -50%) scale(1.75); opacity: 0; }
 }
 @keyframes bootFloaty {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
-/* TerCTL loader: the six frame pieces slide in from their edges, hold, then
-   slide back out (from the Animated Logo Loader handoff). */
+
 @keyframes slideTop {
-  0% {
-    transform: translateY(-40px);
-    opacity: 0;
-  }
-  20%,
-  70% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  92%,
-  100% {
-    transform: translateY(-40px);
-    opacity: 0;
-  }
+  0% { transform: translateY(-40px); opacity: 0; }
+  20%, 70% { transform: translateY(0); opacity: 1; }
+  92%, 100% { transform: translateY(-40px); opacity: 0; }
 }
 @keyframes slideBottom {
-  0% {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  20%,
-  70% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  92%,
-  100% {
-    transform: translateY(40px);
-    opacity: 0;
-  }
+  0% { transform: translateY(40px); opacity: 0; }
+  20%, 70% { transform: translateY(0); opacity: 1; }
+  92%, 100% { transform: translateY(40px); opacity: 0; }
 }
 @keyframes slideLeft {
-  0% {
-    transform: translateX(-40px);
-    opacity: 0;
-  }
-  30%,
-  70% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  92%,
-  100% {
-    transform: translateX(-40px);
-    opacity: 0;
-  }
+  0% { transform: translateX(-40px); opacity: 0; }
+  30%, 70% { transform: translateX(0); opacity: 1; }
+  92%, 100% { transform: translateX(-40px); opacity: 0; }
 }
 @keyframes slideRight {
-  0% {
-    transform: translateX(40px);
-    opacity: 0;
-  }
-  30%,
-  70% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  92%,
-  100% {
-    transform: translateX(40px);
-    opacity: 0;
-  }
+  0% { transform: translateX(40px); opacity: 0; }
+  30%, 70% { transform: translateX(0); opacity: 1; }
+  92%, 100% { transform: translateX(40px); opacity: 0; }
 }
 @keyframes bootBreathe {
-  0%,
-  100% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
 }
 @keyframes bootbar {
-  0% {
-    transform: translateX(-130%);
-  }
-  100% {
-    transform: translateX(340%);
-  }
+  0% { transform: translateX(-130%); }
+  100% { transform: translateX(340%); }
 }
 @keyframes bootword {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes boottype {
-  from {
-    width: 0;
-  }
-  to {
-    width: 21ch;
-  }
+  from { width: 0; }
+  to { width: 21ch; }
 }
 @keyframes bootcaret {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 @keyframes bootline {
-  0%,
-  55% {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  72%,
-  100% {
-    opacity: 1;
-    transform: none;
-  }
+  0%, 55% { opacity: 0; transform: translateY(4px); }
+  72%, 100% { opacity: 1; transform: none; }
 }
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 @keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: none;
-  }
+  from { transform: translateX(100%); }
+  to { transform: none; }
 }
 @keyframes previewIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes stepPulse {
-  0%,
-  100% {
-    opacity: 0.22;
-  }
-  45% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.22; }
+  45% { opacity: 1; }
 }

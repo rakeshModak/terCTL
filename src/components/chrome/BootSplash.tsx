@@ -32,7 +32,7 @@ export function BootSplash() {
         inset: 0,
         zIndex: 200,
         background:
-          "radial-gradient(120% 100% at 50% 42%, color-mix(in srgb, var(--brand) 8%, #0a0c10) 0%, #0a0c10 50%, #070809 100%)",
+          "radial-gradient(120% 100% at 50% 42%, color-mix(in srgb, var(--brand) 8%, var(--background)) 0%, var(--background) 50%, var(--bg-deep) 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -43,7 +43,6 @@ export function BootSplash() {
       }}
     >
       <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        {/* animated frame loader */}
         <TerctlLoader size={LOGO} glow={false} />
 
         {/* wordmark */}
@@ -56,7 +55,6 @@ export function BootSplash() {
           </div>
         </div>
 
-        {/* status line */}
         <div
           style={{
             marginTop: 34,
@@ -66,8 +64,8 @@ export function BootSplash() {
             gap: 10,
             padding: "9px 16px",
             borderRadius: 11,
-            background: "rgba(255,255,255,0.035)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "color-mix(in srgb, var(--foreground) 4%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--foreground) 10%, transparent)",
             fontFamily: "var(--font-mono)",
             fontSize: 13,
           }}
@@ -85,7 +83,6 @@ export function BootSplash() {
           />
         </div>
 
-        {/* progress */}
         <div
           style={{
             marginTop: 26,
@@ -93,7 +90,7 @@ export function BootSplash() {
             width: 240,
             height: 3,
             borderRadius: 3,
-            background: "rgba(255,255,255,0.07)",
+            background: "color-mix(in srgb, var(--foreground) 9%, transparent)",
             overflow: "hidden",
           }}
         >

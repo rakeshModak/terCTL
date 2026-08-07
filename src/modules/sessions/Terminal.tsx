@@ -28,12 +28,12 @@ interface TerminalProps {
 }
 
 const FIND_ICON_BTN =
-  'flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--text-dim)] transition-colors hover:bg-white/10 hover:text-[var(--text)]'
+  'flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--text-dim)] transition-colors hover:bg-foreground/10 hover:text-[var(--text)]'
 const findToggle = (on: boolean) =>
   `flex h-[24px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${
     on
       ? 'bg-[var(--brand)] text-[#0b0d10] shadow-[0_1px_4px_rgb(0_0_0_/_0.3)]'
-      : 'text-[var(--text-faint)] hover:bg-white/10 hover:text-[var(--text)]'
+      : 'text-[var(--text-faint)] hover:bg-foreground/10 hover:text-[var(--text)]'
   }`
 
 export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
@@ -384,7 +384,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   return (
     <>
       {findOpen && (
-        <div className="absolute right-[14px] top-[10px] z-30 flex items-center gap-[6px] rounded-[12px] border border-white/10 bg-[color-mix(in_srgb,var(--bg-card)_84%,transparent)] py-[6px] pl-[10px] pr-[7px] shadow-[0_10px_34px_rgb(0_0_0_/_0.5)] backdrop-blur-md">
+        <div className="absolute right-[14px] top-[10px] z-30 flex items-center gap-[6px] rounded-[12px] border border-foreground/10 bg-[color-mix(in_srgb,var(--bg-card)_84%,transparent)] py-[6px] pl-[10px] pr-[7px] shadow-[0_10px_34px_rgb(0_0_0_/_0.5)] backdrop-blur-md">
           <Search size={14} strokeWidth={2.2} className="shrink-0 text-[var(--text-faint)]" />
           <input
             ref={findInputRef}
@@ -418,7 +418,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
           >
             {findQuery ? (matchCount === 0 ? '0/0' : `${activeIndex + 1}/${matchCount}`) : ''}
           </span>
-          <span className="h-[18px] w-px shrink-0 bg-white/10" />
+          <span className="h-[18px] w-px shrink-0 bg-foreground/10" />
           <button
             type="button"
             title="Match case"
@@ -437,7 +437,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
           >
             <Regex size={14} strokeWidth={2} />
           </button>
-          <span className="h-[18px] w-px shrink-0 bg-white/10" />
+          <span className="h-[18px] w-px shrink-0 bg-foreground/10" />
           <button type="button" title="Previous match  (⇧⏎)" onClick={findPrev} className={FIND_ICON_BTN}>
             <ChevronUp size={16} strokeWidth={2.4} />
           </button>

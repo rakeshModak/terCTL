@@ -1,32 +1,11 @@
-// Base-palette themes — the source of truth for every *surface* color in the
-// app. These feed `themeTokens()` in src/lib/theme.ts, which derives the shadcn
-// surface tokens (--background/--card/--popover/--sidebar/...) from them and
-// writes the result onto <html> at runtime.
-//
-// Adding a theme here is all that is needed: the Settings picker, its swatch,
-// and the shadcn tokens are all generated from this map.
-//
-// The theme-independent colors — the text ramp, hairlines, and semantic status
-// colors — live in src/styles/theme.css, which aliases the matching shadcn
-// tokens onto them (--foreground: var(--text), --destructive: var(--red), ...).
-
-/** Surface ramp for one theme, ordered darkest -> lightest. */
 export interface ThemePalette {
-  /** Value written to <html data-theme>. Empty for the historical default. */
   slug: string
-  /** App canvas.                     -> --background */
   bg: string
-  /** Recessed wells (fields, gutters). No shadcn equivalent -> --bg-deep. */
   bgDeep: string
-  /** Chrome rails and side panels.    -> --sidebar */
   bgPanel: string
-  /** Resting card surface.            -> --card */
   bgCard: string
-  /** Secondary / muted fills.         -> --secondary, --muted */
   bgCard2: string
-  /** Raised + hover surfaces.         -> --popover, --accent */
   bgCardTop: string
-  /** Inspector header, sidebar hover. -> --sidebar-accent */
   bgInspectorTop: string
 }
 
@@ -71,7 +50,6 @@ export const THEMES: Record<string, ThemePalette> = {
     bg: '#140a12', bgDeep: '#0d060b', bgPanel: '#1d0f1a', bgCard: '#241320',
     bgCard2: '#2a1726', bgCardTop: '#311b2c', bgInspectorTop: '#3a2035',
   },
-  // Stark neutral mono, and a green-tinted black.
   Carbon: {
     slug: 'carbon',
     bg: '#0a0a0b', bgDeep: '#050505', bgPanel: '#0f0f11', bgCard: '#141416',
@@ -85,9 +63,3 @@ export const THEMES: Record<string, ThemePalette> = {
 }
 
 export const DEFAULT_THEME = 'Carbon'
-
-/** CSS gradient for a theme's Settings swatch — derived, never hand-written. */
-export function themeSwatch(name: string): string {
-  const p = THEMES[name] ?? THEMES[DEFAULT_THEME]
-  return `linear-gradient(135deg, ${p.bg}, ${p.bgCardTop})`
-}

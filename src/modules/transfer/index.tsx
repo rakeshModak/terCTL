@@ -270,7 +270,7 @@ function HostSelect({
           {hosts.map((h) => (
             <button
               key={h.id}
-              className={`flex w-full cursor-pointer items-center gap-[9px] rounded-lg px-[10px] py-[9px] text-left ${h.id === value ? 'bg-[var(--brand-soft-2)]' : 'bg-transparent hover:bg-white/5'}`}
+              className={`flex w-full cursor-pointer items-center gap-[9px] rounded-lg px-[10px] py-[9px] text-left ${h.id === value ? 'bg-[var(--brand-soft-2)]' : 'bg-transparent hover:bg-foreground/5'}`}
               onClick={() => {
                 onChange(h.id)
                 setOpen(false)
@@ -354,7 +354,7 @@ function Pane({
         </span>
         {path && (
           <button
-            className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--border-2)] bg-white/[0.04] text-[var(--text-muted)] hover:border-[var(--brand-border)] hover:text-[var(--brand)]"
+            className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--border-2)] bg-foreground/[0.04] text-[var(--text-muted)] hover:border-[var(--brand-border)] hover:text-[var(--brand)]"
             onClick={onUp}
             title="Up one level"
           >
@@ -385,7 +385,7 @@ function Pane({
           visible.map((f) => (
             <div
               key={f.path}
-              className={`group flex items-center gap-3 border-b border-white/[0.03] px-[18px] py-[9px] ${selected === f.path ? 'bg-[var(--brand-soft)]' : 'hover:bg-white/[0.03]'}`}
+              className={`group flex items-center gap-3 border-b border-foreground/[0.03] px-[18px] py-[9px] ${selected === f.path ? 'bg-[var(--brand-soft)]' : 'hover:bg-foreground/[0.03]'}`}
               style={selected === f.path ? { boxShadow: 'inset 2px 0 0 var(--brand)' } : undefined}
               onClick={() => setSelected(f.path)}
               onDoubleClick={() => f.isDir && onOpen(f)}
@@ -448,7 +448,7 @@ function PaneMenu({
   return (
     <div className="relative shrink-0" ref={ref}>
       <button
-        className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--border-2)] bg-white/[0.04] text-[var(--text-muted)] hover:border-[var(--brand-border)] hover:text-[var(--brand)] disabled:cursor-default disabled:opacity-40"
+        className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--border-2)] bg-foreground/[0.04] text-[var(--text-muted)] hover:border-[var(--brand-border)] hover:text-[var(--brand)] disabled:cursor-default disabled:opacity-40"
         onClick={() => setOpen((o) => !o)}
         disabled={disabled}
         title="Actions"
