@@ -21,7 +21,7 @@ export function KeysView() {
           >
             Preview · key backend coming soon
           </span>
-          <button className="flex cursor-pointer items-center gap-2 rounded-[10px] border border-[var(--accent-border)] bg-[var(--accent-soft)] px-4 py-[10px] text-[13px] font-semibold text-[var(--accent)]">
+          <button className="flex cursor-pointer items-center gap-2 rounded-[10px] border border-[var(--brand-border)] bg-[var(--brand-soft)] px-4 py-[10px] text-[13px] font-semibold text-[var(--brand)]">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff7a59" strokeWidth="2.4" strokeLinecap="round">
               <path d="M12 5v14M5 12h14" />
             </svg>

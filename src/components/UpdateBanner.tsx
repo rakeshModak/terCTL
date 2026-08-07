@@ -25,7 +25,7 @@ export function UpdateBanner() {
       style={{ boxShadow: '0 20px 50px -18px rgba(0,0,0,0.75)' }}
     >
       <div className="flex items-center gap-[10px]">
-        <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-[var(--accent-soft-2)] text-[var(--accent)]">
+        <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-[var(--brand-soft-2)] text-[var(--brand)]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3v11M7 9l5 5 5-5M5 21h14" />
           </svg>
@@ -47,11 +47,11 @@ export function UpdateBanner() {
       </div>
       {downloading ? (
         <div className="h-[4px] w-full overflow-hidden rounded-full bg-white/[0.06]">
-          <div className="h-full rounded-full bg-[image:var(--gradient-accent)] transition-[width] duration-200" style={{ width: `${progress}%` }} />
+          <div className="h-full rounded-full bg-[image:var(--gradient-brand)] transition-[width] duration-200" style={{ width: `${progress}%` }} />
         </div>
       ) : (
         <button
-          className="cursor-pointer rounded-lg bg-[image:var(--gradient-accent)] px-4 py-2 text-[13px] font-bold text-[#1a0e0a]"
+          className="cursor-pointer rounded-lg bg-[image:var(--gradient-brand)] px-4 py-2 text-[13px] font-bold text-[#1a0e0a]"
           onClick={() => install()}
         >
           Update &amp; restart

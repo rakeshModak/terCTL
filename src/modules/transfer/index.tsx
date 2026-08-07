@@ -243,7 +243,7 @@ function HostSelect({
   return (
     <div className="relative" ref={ref}>
       <button
-        className="flex min-w-[240px] cursor-pointer items-center gap-2 rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-deep)] px-[11px] py-2 text-[12.5px] text-[var(--text)] hover:border-[var(--accent-border)]"
+        className="flex min-w-[240px] cursor-pointer items-center gap-2 rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-deep)] px-[11px] py-2 text-[12.5px] text-[var(--text)] hover:border-[var(--brand-border)]"
         onClick={() => setOpen((o) => !o)}
       >
         {selected ? (
@@ -270,7 +270,7 @@ function HostSelect({
           {hosts.map((h) => (
             <button
               key={h.id}
-              className={`flex w-full cursor-pointer items-center gap-[9px] rounded-lg px-[10px] py-[9px] text-left ${h.id === value ? 'bg-[var(--accent-soft-2)]' : 'bg-transparent hover:bg-white/5'}`}
+              className={`flex w-full cursor-pointer items-center gap-[9px] rounded-lg px-[10px] py-[9px] text-left ${h.id === value ? 'bg-[var(--brand-soft-2)]' : 'bg-transparent hover:bg-white/5'}`}
               onClick={() => {
                 onChange(h.id)
                 setOpen(false)
@@ -279,7 +279,7 @@ function HostSelect({
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--green)] shadow-[0_0_6px_var(--green)]" />
               <span className="text-[13px] font-medium text-[var(--text)]">{h.label}</span>
               <span className="ml-auto text-[11px] text-[var(--text-faint)]" style={mono}>{h.username}@{h.hostname}</span>
-              {h.id === value && <span className="shrink-0 text-[13px] text-[var(--accent)]">✓</span>}
+              {h.id === value && <span className="shrink-0 text-[13px] text-[var(--brand)]">✓</span>}
             </button>
           ))}
         </div>
@@ -335,7 +335,7 @@ function Pane({
   return (
     <div className="flex min-w-0 flex-1 flex-col border-r border-[var(--border)] last:border-r-0">
       <div className="box-border flex h-[52px] items-center gap-2 border-b border-[var(--border)] bg-[var(--bg-panel)] px-[18px]">
-        <span className="flex shrink-0 items-center" style={{ color: local ? 'var(--text-dim)' : 'var(--accent)' }}>
+        <span className="flex shrink-0 items-center" style={{ color: local ? 'var(--text-dim)' : 'var(--brand)' }}>
           {local ? (
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
               <rect x="3" y="4" width="18" height="14" rx="2" />
@@ -354,7 +354,7 @@ function Pane({
         </span>
         {path && (
           <button
-            className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--border-2)] bg-white/[0.04] text-[var(--text-muted)] hover:border-[var(--accent-border)] hover:text-[var(--accent)]"
+            className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--border-2)] bg-white/[0.04] text-[var(--text-muted)] hover:border-[var(--brand-border)] hover:text-[var(--brand)]"
             onClick={onUp}
             title="Up one level"
           >
@@ -385,8 +385,8 @@ function Pane({
           visible.map((f) => (
             <div
               key={f.path}
-              className={`group flex items-center gap-3 border-b border-white/[0.03] px-[18px] py-[9px] ${selected === f.path ? 'bg-[var(--accent-soft)]' : 'hover:bg-white/[0.03]'}`}
-              style={selected === f.path ? { boxShadow: 'inset 2px 0 0 var(--accent)' } : undefined}
+              className={`group flex items-center gap-3 border-b border-white/[0.03] px-[18px] py-[9px] ${selected === f.path ? 'bg-[var(--brand-soft)]' : 'hover:bg-white/[0.03]'}`}
+              style={selected === f.path ? { boxShadow: 'inset 2px 0 0 var(--brand)' } : undefined}
               onClick={() => setSelected(f.path)}
               onDoubleClick={() => f.isDir && onOpen(f)}
             >
@@ -403,7 +403,7 @@ function Pane({
               <span className="w-[96px] text-right text-[11px] text-[var(--text-faint)]" style={mono}>{fmtDate(f.modified)}</span>
               {!f.isDir && action.enabled && (
                 <button
-                  className="h-6 w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--accent-border)] bg-[var(--accent-soft)] text-[13px] text-[var(--accent)] opacity-0 transition-opacity group-hover:opacity-100"
+                  className="h-6 w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--brand-border)] bg-[var(--brand-soft)] text-[13px] text-[var(--brand)] opacity-0 transition-opacity group-hover:opacity-100"
                   title={`${action.label} ${f.name}`}
                   onClick={(e) => { e.stopPropagation(); action.onClick(f) }}
                 >
@@ -443,12 +443,12 @@ function PaneMenu({
     fn()
   }
 
-  const item = 'flex w-full cursor-pointer items-center gap-2 rounded-[7px] bg-transparent px-[10px] py-2 text-left text-[12.5px] text-[var(--text)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--text)]'
+  const item = 'flex w-full cursor-pointer items-center gap-2 rounded-[7px] bg-transparent px-[10px] py-2 text-left text-[12.5px] text-[var(--text)] hover:bg-[var(--brand-soft)] hover:text-[var(--brand)] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--text)]'
 
   return (
     <div className="relative shrink-0" ref={ref}>
       <button
-        className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--border-2)] bg-white/[0.04] text-[var(--text-muted)] hover:border-[var(--accent-border)] hover:text-[var(--accent)] disabled:cursor-default disabled:opacity-40"
+        className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-[7px] border border-[var(--border-2)] bg-white/[0.04] text-[var(--text-muted)] hover:border-[var(--brand-border)] hover:text-[var(--brand)] disabled:cursor-default disabled:opacity-40"
         onClick={() => setOpen((o) => !o)}
         disabled={disabled}
         title="Actions"
@@ -461,19 +461,19 @@ function PaneMenu({
           style={menuShadow}
         >
           <button className={item} onClick={run(onToggleHidden)}>
-            <span className="w-3 shrink-0 text-[11px] text-[var(--accent)]">{showHidden ? '✓' : ''}</span>
+            <span className="w-3 shrink-0 text-[11px] text-[var(--brand)]">{showHidden ? '✓' : ''}</span>
             Show hidden files
           </button>
           <button className={item} onClick={run(onRefresh)}>
-            <span className="w-3 shrink-0 text-[11px] text-[var(--accent)]" />
+            <span className="w-3 shrink-0 text-[11px] text-[var(--brand)]" />
             Refresh
           </button>
           <button className={item} onClick={run(onNewFolder)}>
-            <span className="w-3 shrink-0 text-[11px] text-[var(--accent)]" />
+            <span className="w-3 shrink-0 text-[11px] text-[var(--brand)]" />
             New folder
           </button>
           <button className={item} onClick={run(onRename)} disabled={!hasSelection}>
-            <span className="w-3 shrink-0 text-[11px] text-[var(--accent)]" />
+            <span className="w-3 shrink-0 text-[11px] text-[var(--brand)]" />
             Rename{hasSelection ? '' : '…'}
           </button>
         </div>

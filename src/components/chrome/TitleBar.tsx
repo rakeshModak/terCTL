@@ -99,8 +99,8 @@ export function TitleBar() {
             return (
               <div
                 key={tab.id}
-                className={`flex max-w-[190px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border border-transparent px-[10px] py-[6px] text-[12.5px] ${active ? 'bg-[var(--accent-soft-2)] text-[var(--text)]' : 'bg-white/[0.03] text-[var(--text-muted)] hover:bg-white/[0.06]'}`}
-                style={active ? { borderColor: 'color-mix(in srgb, var(--accent) 35%, transparent)' } : undefined}
+                className={`flex max-w-[190px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border border-transparent px-[10px] py-[6px] text-[12.5px] ${active ? 'bg-[var(--brand-soft-2)] text-[var(--text)]' : 'bg-white/[0.03] text-[var(--text-muted)] hover:bg-white/[0.06]'}`}
+                style={active ? { borderColor: 'color-mix(in srgb, var(--brand) 35%, transparent)' } : undefined}
                 draggable
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = 'move'
@@ -111,7 +111,7 @@ export function TitleBar() {
                 onClick={() => setActiveTab(tab.id)}
               >
                 {isWorkspace ? (
-                  <span className="flex shrink-0 items-center text-[var(--accent)]" title="Deck">
+                  <span className="flex shrink-0 items-center text-[var(--brand)]" title="Deck">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="4" width="18" height="16" rx="2" />
                       <path d="M12 4v16" />
@@ -126,7 +126,7 @@ export function TitleBar() {
                 <span className="overflow-hidden text-ellipsis">{tab.label}</span>
                 {active && !isWorkspace && tabs.length > 1 && (
                   <span
-                    className="flex shrink-0 items-center text-[var(--text-faint)] hover:text-[var(--accent)]"
+                    className="flex shrink-0 items-center text-[var(--text-faint)] hover:text-[var(--brand)]"
                     title="Split with neighbor"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -151,7 +151,7 @@ export function TitleBar() {
               </div>
             )
           })}
-          <button data-no-drag className="h-7 w-7 shrink-0 cursor-pointer rounded-lg bg-white/[0.04] text-base text-[var(--text-muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]" onClick={() => setNewTabPicker(true)} title="New tab">
+          <button data-no-drag className="h-7 w-7 shrink-0 cursor-pointer rounded-lg bg-white/[0.04] text-base text-[var(--text-muted)] hover:bg-[var(--brand-soft)] hover:text-[var(--brand)]" onClick={() => setNewTabPicker(true)} title="New tab">
             +
           </button>
         </div>
@@ -164,7 +164,7 @@ export function TitleBar() {
       {onSessions && tabs.length > 0 && (
         <button
           data-no-drag
-          className={`flex h-[30px] w-[30px] shrink-0 cursor-pointer items-center justify-center rounded-lg ${showInspector ? 'bg-[var(--accent-soft-2)] text-[var(--accent)]' : 'bg-transparent text-[var(--text-muted)]'}`}
+          className={`flex h-[30px] w-[30px] shrink-0 cursor-pointer items-center justify-center rounded-lg ${showInspector ? 'bg-[var(--brand-soft-2)] text-[var(--brand)]' : 'bg-transparent text-[var(--text-muted)]'}`}
           title="Toggle details panel"
           onClick={toggleInspector}
         >

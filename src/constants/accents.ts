@@ -1,6 +1,3 @@
-// Accent presets — each is a {color, gradient-end} pair so buttons/logo keep a
-// vivid two-tone gradient. Muted, desaturated "futurist" palette — same hues as
-// before but softened so they read as sophisticated rather than neon-bright.
 export const ACCENTS: Record<string, { c: string; c2: string }> = {
   Ember: { c: '#d9795f', c2: '#c65f80' },
   Emerald: { c: '#4bb890', c2: '#3ba7b0' },
@@ -16,7 +13,8 @@ export const ACCENTS: Record<string, { c: string; c2: string }> = {
   Fuchsia: { c: '#b268bf', c2: '#8168bd' },
   Plasma: { c: '#7982c4', c2: '#b078bf' },
   Solar: { c: '#cf7e54', c2: '#c7a25a' },
-  // Muted jade-green (the glowing bar) and a monochrome silver (editorial B&W).
   Jade: { c: '#43ab88', c2: '#2f8a70' },
   Chrome: { c: '#dfe3ea', c2: '#a3adbb' },
 }
+
+export const DEFAULT_ACCENT = 'Chrome'

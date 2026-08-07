@@ -27,14 +27,14 @@ const DOT: Record<string, string> = {
 }
 
 const btnAccent =
-  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] bg-[image:var(--gradient-accent)] px-4 py-[10px] text-[13px] font-bold text-[#1a0e0a]'
+  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] bg-[image:var(--gradient-brand)] px-4 py-[10px] text-[13px] font-bold text-[#1a0e0a]'
 const btnGhost =
-  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-[var(--border-strong)] bg-white/[0.03] px-[15px] py-[10px] text-[13px] font-semibold text-[var(--text-bright)] hover:border-[var(--accent-border)]'
+  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-[var(--border-strong)] bg-white/[0.03] px-[15px] py-[10px] text-[13px] font-semibold text-[var(--text-bright)] hover:border-[var(--brand-border)]'
 const iconBtnBase =
   'flex h-[26px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-[7px] bg-white/[0.04] text-[var(--text-faint)]'
-const iconBtn = `${iconBtnBase} hover:bg-[var(--accent-soft-2)] hover:text-[var(--accent)]`
+const iconBtn = `${iconBtnBase} hover:bg-[var(--brand-soft-2)] hover:text-[var(--brand)]`
 const iconBtnDanger = `${iconBtnBase} hover:bg-[rgb(255_95_86_/_0.1)] hover:text-[var(--red)]`
-const accentBtnShadow = { boxShadow: '0 4px 16px color-mix(in srgb, var(--accent) 30%, transparent)' } as const
+const accentBtnShadow = { boxShadow: '0 4px 16px color-mix(in srgb, var(--brand) 30%, transparent)' } as const
 const cardGradient = 'bg-[linear-gradient(160deg,var(--bg-card-top),var(--bg-card))]'
 
 export function HostsPage() {
@@ -215,8 +215,8 @@ function HostsBrowser({ onAddHost, onEditHost }: BrowserProps) {
               return (
                 <span
                   key={chip}
-                  className={`cursor-pointer rounded-[20px] border px-[13px] py-[6px] text-[12px] font-medium ${active ? 'border-transparent bg-[var(--accent-soft-2)] text-[var(--accent)]' : 'border-[var(--border-2)] bg-white/[0.04] text-[var(--text-dim)]'}`}
-                  style={active ? { borderColor: 'color-mix(in srgb, var(--accent) 35%, transparent)' } : undefined}
+                  className={`cursor-pointer rounded-[20px] border px-[13px] py-[6px] text-[12px] font-medium ${active ? 'border-transparent bg-[var(--brand-soft-2)] text-[var(--brand)]' : 'border-[var(--border-2)] bg-white/[0.04] text-[var(--text-dim)]'}`}
+                  style={active ? { borderColor: 'color-mix(in srgb, var(--brand) 35%, transparent)' } : undefined}
                   onClick={() => setTagFilter(chip === 'All' ? null : chip)}
                 >
                   {chip}
@@ -233,7 +233,7 @@ function HostsBrowser({ onAddHost, onEditHost }: BrowserProps) {
               return (
                 <span key={c.id ?? 'root'} className="inline-flex items-center gap-[6px]">
                   <button
-                    className="cursor-pointer border-none bg-transparent px-[3px] py-[2px] text-[13.5px] font-semibold hover:text-[var(--accent)]"
+                    className="cursor-pointer border-none bg-transparent px-[3px] py-[2px] text-[13.5px] font-semibold hover:text-[var(--brand)]"
                     style={{ color: last ? 'var(--text)' : 'var(--text-muted)' }}
                     onClick={() => setPath(path.slice(0, i))}
                   >
@@ -255,12 +255,12 @@ function HostsBrowser({ onAddHost, onEditHost }: BrowserProps) {
               {subgroups.map((g) => (
                 <div
                   key={g.id}
-                  className={`group flex cursor-pointer items-center gap-[10px] rounded-[11px] border border-[var(--border-2)] ${cardGradient} px-[11px] py-[9px] text-left transition-colors duration-150 hover:border-[var(--accent-border)]`}
+                  className={`group flex cursor-pointer items-center gap-[10px] rounded-[11px] border border-[var(--border-2)] ${cardGradient} px-[11px] py-[9px] text-left transition-colors duration-150 hover:border-[var(--brand-border)]`}
                   onClick={() => setPath([...path, g.id])}
                 >
                   <div
-                    className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-[image:var(--gradient-accent)] [&_svg]:h-4 [&_svg]:w-4"
-                    style={{ boxShadow: '0 2px 9px color-mix(in srgb, var(--accent) 30%, transparent)' }}
+                    className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-[image:var(--gradient-brand)] [&_svg]:h-4 [&_svg]:w-4"
+                    style={{ boxShadow: '0 2px 9px color-mix(in srgb, var(--brand) 30%, transparent)' }}
                   >
                     <GridIcon />
                   </div>
@@ -314,14 +314,14 @@ function HostsBrowser({ onAddHost, onEditHost }: BrowserProps) {
               return (
                 <button
                   key={h.id}
-                  className={`flex cursor-pointer flex-col rounded-[11px] border border-[var(--border-2)] ${cardGradient} px-3 py-[11px] text-left transition-all duration-150 hover:-translate-y-px hover:border-[var(--accent-border)]`}
+                  className={`flex cursor-pointer flex-col rounded-[11px] border border-[var(--border-2)] ${cardGradient} px-3 py-[11px] text-left transition-all duration-150 hover:-translate-y-px hover:border-[var(--brand-border)]`}
                   onClick={() => openHost(h)}
                 >
                   <div className="mb-[6px] flex items-center gap-[9px]">
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: dot, boxShadow: `0 0 9px ${dot}` }} />
                     <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-semibold text-[var(--text)]">{h.label}</span>
                     <span
-                      className="ml-auto cursor-pointer px-1 text-[15px] leading-[0.5] text-[var(--text-faint)] hover:text-[var(--accent)]"
+                      className="ml-auto cursor-pointer px-1 text-[15px] leading-[0.5] text-[var(--text-faint)] hover:text-[var(--brand)]"
                       title="Edit server"
                       onClick={(e) => {
                         e.stopPropagation()
@@ -372,8 +372,8 @@ function EmptyHosts({ onAddHost, onNewGroup }: { onAddHost: () => void; onNewGro
         <svg width="300" height="196" viewBox="0 0 300 196" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <radialGradient id="ehGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.22" />
-              <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="var(--brand)" stopOpacity="0" />
             </radialGradient>
           </defs>
           <circle cx="150" cy="98" r="80" fill="url(#ehGlow)" />
@@ -395,8 +395,8 @@ function EmptyHosts({ onAddHost, onNewGroup }: { onAddHost: () => void; onNewGro
             <circle cx="38" cy="12.5" r="2.2" fill="var(--amber)" />
           </g>
           <g transform="translate(126,150)">
-            <rect width="48" height="36" rx="9" fill="none" stroke="var(--accent)" strokeOpacity="0.65" strokeWidth="1.6" strokeDasharray="5 4" />
-            <path d="M24 11 v14 M17 18 h14" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
+            <rect width="48" height="36" rx="9" fill="none" stroke="var(--brand)" strokeOpacity="0.65" strokeWidth="1.6" strokeDasharray="5 4" />
+            <path d="M24 11 v14 M17 18 h14" stroke="var(--brand)" strokeWidth="2" strokeLinecap="round" />
           </g>
           <g transform="translate(124,72)">
             <rect width="52" height="52" rx="14" fill="#17181b" stroke="rgba(255,255,255,0.07)" />

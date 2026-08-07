@@ -53,7 +53,7 @@ export function ActivityRail() {
               height: 42,
               border: 'none',
               borderRadius: 11,
-              background: active ? 'var(--accent-soft-2)' : 'transparent',
+              background: active ? 'var(--brand-soft-2)' : 'transparent',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -69,7 +69,7 @@ export function ActivityRail() {
                 width: 3,
                 height: 20,
                 borderRadius: 3,
-                background: active ? 'var(--accent)' : 'transparent',
+                background: active ? 'var(--brand)' : 'transparent',
               }}
             />
             <svg
@@ -77,7 +77,7 @@ export function ActivityRail() {
               height="21"
               viewBox="0 0 24 24"
               fill="none"
-              stroke={active ? 'var(--accent)' : 'var(--text-muted)'}
+              stroke={active ? 'var(--brand)' : 'var(--text-muted)'}
               strokeWidth="1.9"
               strokeLinecap="round"
               strokeLinejoin="round"

@@ -32,7 +32,7 @@ export function BootSplash() {
         inset: 0,
         zIndex: 200,
         background:
-          "radial-gradient(120% 100% at 50% 42%, color-mix(in srgb, var(--accent) 8%, #0a0c10) 0%, #0a0c10 50%, #070809 100%)",
+          "radial-gradient(120% 100% at 50% 42%, color-mix(in srgb, var(--brand) 8%, #0a0c10) 0%, #0a0c10 50%, #070809 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -79,7 +79,7 @@ export function BootSplash() {
               display: "inline-block",
               width: 7,
               height: 15,
-              background: "var(--accent)",
+              background: "var(--brand)",
               animation: "bootcaret 1s steps(1) infinite",
             }}
           />
@@ -102,7 +102,7 @@ export function BootSplash() {
               width: "32%",
               height: "100%",
               borderRadius: 3,
-              background: "var(--gradient-accent)",
+              background: "var(--gradient-brand)",
               animation: "bootbar 1.6s cubic-bezier(0.5,0,0.5,1) infinite",
             }}
           />

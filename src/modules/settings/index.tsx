@@ -8,7 +8,7 @@ import {
   settingsAtom,
 } from '../../store/settings'
 import { ACCENTS } from '../../constants/accents'
-import { THEMES } from '../../constants/themes'
+import { THEMES, themeSwatch } from '../../constants/themes'
 import { TERM_SWATCH } from '../../constants/terminal-schemes'
 import {
   availableUpdateAtom,
@@ -23,19 +23,6 @@ const CATS = [
   { id: 'terminal', name: 'Terminal' },
   { id: 'security', name: 'Security' },
 ]
-
-const THEME_SWATCH: Record<string, string> = {
-  Midnight: 'linear-gradient(135deg,#0a0c10,#151922)',
-  Graphite: 'linear-gradient(135deg,#17181b,#26272e)',
-  'Nord Deep': 'linear-gradient(135deg,#1b2230,#2e3a52)',
-  Obsidian: 'linear-gradient(135deg,#0b0b0d,#1a1a1f)',
-  Void: 'linear-gradient(135deg,#0d0a16,#201735)',
-  'Deep Space': 'linear-gradient(135deg,#0a0e1a,#1a2238)',
-  Abyss: 'linear-gradient(135deg,#071414,#173131)',
-  Plum: 'linear-gradient(135deg,#140a12,#311b2c)',
-  Carbon: 'linear-gradient(135deg,#0a0a0b,#1a1a1d)',
-  Forest: 'linear-gradient(135deg,#080b09,#152018)',
-}
 
 export function SettingsView() {
   const [cat, setCat] = useState('appearance')
@@ -95,13 +82,13 @@ export function SettingsView() {
                   <div
                     key={name}
                     className="w-[150px] cursor-pointer overflow-hidden rounded-xl border-2 bg-[var(--bg-card)]"
-                    style={{ borderColor: active ? 'var(--accent)' : 'rgba(255,255,255,0.08)' }}
+                    style={{ borderColor: active ? 'var(--brand)' : 'rgba(255,255,255,0.08)' }}
                     onClick={() => setTheme(name)}
                   >
-                    <div style={{ height: 64, background: THEME_SWATCH[name] }} />
+                    <div style={{ height: 64, background: themeSwatch(name) }} />
                     <div className="flex items-center gap-[7px] px-[11px] py-[9px]">
                       <span className="text-[12.5px] font-semibold" style={{ color: active ? 'var(--text)' : 'var(--text-dim)' }}>{name}</span>
-                      <span className="ml-auto text-[13px]" style={{ color: active ? 'var(--accent)' : 'transparent' }}>✓</span>
+                      <span className="ml-auto text-[13px]" style={{ color: active ? 'var(--brand)' : 'transparent' }}>✓</span>
                     </div>
                   </div>
                 )
@@ -141,7 +128,7 @@ export function SettingsView() {
                     title={name}
                     onClick={() => setTermScheme(name)}
                     className="flex h-[60px] w-[72px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] border-2"
-                    style={{ background: s.bg, borderColor: active ? 'var(--accent)' : 'rgba(255,255,255,0.1)' }}
+                    style={{ background: s.bg, borderColor: active ? 'var(--brand)' : 'rgba(255,255,255,0.1)' }}
                   >
                     <span style={{ color: s.fg, fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700 }}>Aa</span>
                     <span style={{ color: s.fg, fontFamily: 'var(--font-mono)', fontSize: 9, opacity: 0.8 }}>{name}</span>
@@ -188,7 +175,7 @@ export function SettingsView() {
                   {i > 0 && <div className="mx-4 h-px bg-white/5" />}
                   <div className="flex items-center px-4 py-[13px]">
                     <div className="flex-1 text-[13px] font-medium">{label}</div>
-                    <div className="flex h-6 w-[42px] cursor-pointer justify-end rounded-[14px] bg-[var(--accent)] p-[2px]" style={{ boxShadow: '0 0 12px color-mix(in srgb, var(--accent) 40%, transparent)' }}>
+                    <div className="flex h-6 w-[42px] cursor-pointer justify-end rounded-[14px] bg-[var(--brand)] p-[2px]" style={{ boxShadow: '0 0 12px color-mix(in srgb, var(--brand) 40%, transparent)' }}>
                       <span className="block h-5 w-5 rounded-full bg-white" />
                     </div>
                   </div>
@@ -214,7 +201,7 @@ export function SettingsView() {
                   <div className="text-[13px] font-medium">Store passphrases in keychain</div>
                   <div className="mt-[2px] text-[11.5px] text-[var(--text-faint)]">Use system secure storage</div>
                 </div>
-                <div className="flex h-6 w-[42px] cursor-pointer justify-end rounded-[14px] bg-[var(--accent)] p-[2px]" style={{ boxShadow: '0 0 12px color-mix(in srgb, var(--accent) 40%, transparent)' }}>
+                <div className="flex h-6 w-[42px] cursor-pointer justify-end rounded-[14px] bg-[var(--brand)] p-[2px]" style={{ boxShadow: '0 0 12px color-mix(in srgb, var(--brand) 40%, transparent)' }}>
                   <span className="block h-5 w-5 rounded-full bg-white" />
                 </div>
               </div>

@@ -8,14 +8,14 @@ import type { AuthKind, Host } from '../../models'
 import { TERM_SWATCH } from '../../constants/terminal-schemes'
 
 const fieldBase =
-  'rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-deep)] text-[13px] font-normal normal-case tracking-normal text-[var(--text)] transition-colors focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-ring)] focus:outline-none'
+  'rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-deep)] text-[13px] font-normal normal-case tracking-normal text-[var(--text)] transition-colors focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_var(--brand-ring)] focus:outline-none'
 const inputCls = `${fieldBase} px-3 py-[10px] placeholder:text-[var(--text-faint)]`
 const selectCls = `${fieldBase} cursor-pointer appearance-none py-[10px] pl-3 pr-[34px] bg-no-repeat`
 const fieldRow = 'flex flex-col gap-[6px] text-[11px] font-semibold uppercase tracking-[0.5px] text-[var(--text-faint)]'
 const drawerBtn =
   'cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.04] px-[18px] py-[9px] text-[13px] font-semibold text-[var(--text)] hover:border-[var(--border-strong)]'
 const drawerBtnPrimary =
-  'cursor-pointer rounded-[9px] bg-[image:var(--gradient-accent)] px-[18px] py-[9px] text-[13px] font-semibold text-[#1a0e0a] disabled:cursor-not-allowed disabled:opacity-60'
+  'cursor-pointer rounded-[9px] bg-[image:var(--gradient-brand)] px-[18px] py-[9px] text-[13px] font-semibold text-[#1a0e0a] disabled:cursor-not-allowed disabled:opacity-60'
 // Custom select arrow (replaces the dated native macOS dropdown chevron).
 const selectArrow = {
   backgroundImage:
@@ -129,7 +129,7 @@ export function HostForm({ host, defaultGroupId, onClose }: HostFormProps) {
       >
         <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 pt-5 pb-4">
           <div className="flex flex-1 items-center gap-3">
-            <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] bg-[var(--accent-soft-2)] text-[var(--accent)]">
+            <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] bg-[var(--brand-soft-2)] text-[var(--brand)]">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 17l6-5-6-5M13 18h7" />
               </svg>
@@ -278,7 +278,7 @@ export function HostForm({ host, defaultGroupId, onClose }: HostFormProps) {
           <button type="button" className={drawerBtn} onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" className={drawerBtnPrimary} style={{ boxShadow: '0 4px 16px color-mix(in srgb, var(--accent) 30%, transparent)' }} disabled={saving}>
+          <button type="submit" className={drawerBtnPrimary} style={{ boxShadow: '0 4px 16px color-mix(in srgb, var(--brand) 30%, transparent)' }} disabled={saving}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -338,7 +338,7 @@ function SwatchDropdown({
     <div className="relative" ref={ref}>
       <button
         type="button"
-        className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-deep)] px-[11px] py-2 text-[12.5px] font-normal normal-case tracking-normal text-[var(--text)] hover:border-[var(--accent-border)]"
+        className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-deep)] px-[11px] py-2 text-[12.5px] font-normal normal-case tracking-normal text-[var(--text)] hover:border-[var(--brand-border)]"
         onClick={() => setOpen((o) => !o)}
       >
         {current.swatch}
@@ -356,7 +356,7 @@ function SwatchDropdown({
             <button
               type="button"
               key={o.value}
-              className={`flex w-full cursor-pointer items-center gap-[9px] rounded-lg px-[10px] py-[9px] text-left normal-case tracking-normal ${o.value === (value ?? '') ? 'bg-[var(--accent-soft-2)]' : 'bg-transparent hover:bg-white/5'}`}
+              className={`flex w-full cursor-pointer items-center gap-[9px] rounded-lg px-[10px] py-[9px] text-left normal-case tracking-normal ${o.value === (value ?? '') ? 'bg-[var(--brand-soft-2)]' : 'bg-transparent hover:bg-white/5'}`}
               onClick={() => {
                 onChange(o.value || null)
                 setOpen(false)
@@ -364,7 +364,7 @@ function SwatchDropdown({
             >
               {o.swatch}
               <span className="text-[13px] font-medium text-[var(--text)]">{o.label}</span>
-              {o.value === (value ?? '') && <span className="ml-auto shrink-0 text-[13px] text-[var(--accent)]">✓</span>}
+              {o.value === (value ?? '') && <span className="ml-auto shrink-0 text-[13px] text-[var(--brand)]">✓</span>}
             </button>
           ))}
         </div>

@@ -14,10 +14,10 @@ const cardShadow = { boxShadow: '0 24px 60px -20px rgba(0,0,0,0.7)' } as const
 const h2Cls =
   'm-0 break-words text-[15px] font-[650] leading-[1.4] tracking-normal text-[var(--text-bright)] [overflow-wrap:anywhere]'
 const inputCls =
-  'rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-deep)] px-3 py-[10px] text-[13px] text-[var(--text)] transition-colors placeholder:text-[var(--text-faint)] focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-ring)] focus:outline-none'
+  'rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-deep)] px-3 py-[10px] text-[13px] text-[var(--text)] transition-colors placeholder:text-[var(--text-faint)] focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_var(--brand-ring)] focus:outline-none'
 const actionBtn =
   'cursor-pointer rounded-lg border border-[var(--border-2)] bg-white/[0.04] px-[14px] py-[7px] text-[13px] text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60'
-const primaryBtn = `${actionBtn} border-none bg-[image:var(--gradient-accent)] font-bold text-[#1a0e0a]`
+const primaryBtn = `${actionBtn} border-none bg-[image:var(--gradient-brand)] font-bold text-[#1a0e0a]`
 const dangerBtn = `${actionBtn} border-none bg-[var(--red)] font-bold text-[#2a0b0b]`
 
 export function Dialogs() {

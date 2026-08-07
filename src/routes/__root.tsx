@@ -1,8 +1,7 @@
 import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
-import { ACCENTS } from '../constants/accents'
-import { THEMES } from '../constants/themes'
+import { applyTheme } from '../lib/theme'
 import { settingsAtom } from '../store/settings'
 import { refreshAllAtom } from '../store/app'
 import { checkForUpdateAtom } from '../store/updater'
@@ -46,13 +45,11 @@ function RootLayout() {
     void loadVersion()
   }, [loadVersion])
 
-  // Apply accent + base theme to the document root (CSS derives everything else).
+  // Re-derive the shadcn token set whenever the accent or base theme changes.
+  // main.tsx already applied the persisted pair before the first render, so
+  // this only does work on an actual change from Settings.
   useEffect(() => {
-    const a = ACCENTS[accent] ?? ACCENTS.Ember
-    const root = document.documentElement
-    root.style.setProperty('--accent', a.c)
-    root.style.setProperty('--accent-2', a.c2)
-    root.dataset.theme = THEMES[theme] ?? ''
+    applyTheme({ accent, theme })
   }, [accent, theme])
 
   return (

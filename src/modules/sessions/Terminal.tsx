@@ -32,7 +32,7 @@ const FIND_ICON_BTN =
 const findToggle = (on: boolean) =>
   `flex h-[24px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${
     on
-      ? 'bg-[var(--accent)] text-[#0b0d10] shadow-[0_1px_4px_rgb(0_0_0_/_0.3)]'
+      ? 'bg-[var(--brand)] text-[#0b0d10] shadow-[0_1px_4px_rgb(0_0_0_/_0.3)]'
       : 'text-[var(--text-faint)] hover:bg-white/10 hover:text-[var(--text)]'
   }`
 
@@ -299,7 +299,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       const matches = matchesRef.current
       if (!term || matches.length === 0) return
       const accent =
-        getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#d9795f'
+        getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#d9795f'
       const buf = term.buffer.active
       const cursorAbs = buf.baseY + buf.cursorY
       const n = matches.length

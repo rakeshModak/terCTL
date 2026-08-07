@@ -34,10 +34,10 @@ import {
 } from '../../store/app'
 
 const btnAccent =
-  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] bg-[image:var(--gradient-accent)] px-4 py-[10px] text-[13px] font-bold text-[#1a0e0a]'
+  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] bg-[image:var(--gradient-brand)] px-4 py-[10px] text-[13px] font-bold text-[#1a0e0a]'
 const btnGhost =
-  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-[var(--border-strong)] bg-white/[0.03] px-[15px] py-[10px] text-[13px] font-semibold text-[var(--text-bright)] hover:border-[var(--accent-border)]'
-const accentBtnShadow = { boxShadow: '0 4px 16px color-mix(in srgb, var(--accent) 30%, transparent)' } as const
+  'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-[var(--border-strong)] bg-white/[0.03] px-[15px] py-[10px] text-[13px] font-semibold text-[var(--text-bright)] hover:border-[var(--brand-border)]'
+const accentBtnShadow = { boxShadow: '0 4px 16px color-mix(in srgb, var(--brand) 30%, transparent)' } as const
 const cardGradient = 'bg-[linear-gradient(160deg,var(--bg-card-top),var(--bg-card))]'
 const connectCard = `flex max-w-[420px] flex-col items-center gap-3 rounded-2xl border border-[var(--border-2)] ${cardGradient} px-10 py-8 text-center animate-[rise_0.25s_ease_both]`
 const cardShadow = { boxShadow: '0 24px 60px -20px rgba(0,0,0,0.7)' } as const
@@ -191,9 +191,9 @@ export function SessionsView() {
                     isSplit
                       ? {
                           background: 'var(--term-bg, var(--bg))',
-                          borderColor: active ? 'color-mix(in srgb, var(--accent) 55%, transparent)' : 'var(--border)',
+                          borderColor: active ? 'color-mix(in srgb, var(--brand) 55%, transparent)' : 'var(--border)',
                           boxShadow: active
-                            ? 'inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 16px -4px color-mix(in srgb, var(--accent) 40%, transparent)'
+                            ? 'inset 0 0 0 1px color-mix(in srgb, var(--brand) 22%, transparent), 0 0 16px -4px color-mix(in srgb, var(--brand) 40%, transparent)'
                             : undefined,
                         }
                       : undefined
@@ -270,8 +270,8 @@ export function SessionsView() {
                   }
             const after =
               d.dir === 'row'
-                ? "after:content-[''] after:absolute after:left-1/2 after:top-[8%] after:h-[84%] after:w-[2px] after:-translate-x-1/2 after:bg-transparent after:transition-colors hover:after:bg-[var(--accent)]"
-                : "after:content-[''] after:absolute after:top-1/2 after:left-[8%] after:h-[2px] after:w-[84%] after:-translate-y-1/2 after:bg-transparent after:transition-colors hover:after:bg-[var(--accent)]"
+                ? "after:content-[''] after:absolute after:left-1/2 after:top-[8%] after:h-[84%] after:w-[2px] after:-translate-x-1/2 after:bg-transparent after:transition-colors hover:after:bg-[var(--brand)]"
+                : "after:content-[''] after:absolute after:top-1/2 after:left-[8%] after:h-[2px] after:w-[84%] after:-translate-y-1/2 after:bg-transparent after:transition-colors hover:after:bg-[var(--brand)]"
             return (
               <div
                 key={d.path.join('-') || 'root'}
@@ -289,7 +289,7 @@ export function SessionsView() {
             >
               <span className="h-2 w-2 rounded-full bg-[var(--red)] shadow-[0_0_8px_var(--red)]" />
               <span>Disconnected</span>
-              <button className="cursor-pointer rounded-lg bg-[image:var(--gradient-accent)] px-[14px] py-[6px] text-[12.5px] font-bold text-[#1a0e0a]" onClick={() => reconnect(activeSession.id)}>
+              <button className="cursor-pointer rounded-lg bg-[image:var(--gradient-brand)] px-[14px] py-[6px] text-[12.5px] font-bold text-[#1a0e0a]" onClick={() => reconnect(activeSession.id)}>
                 Reconnect
               </button>
               <button className="cursor-pointer rounded-lg border border-[var(--border-2)] bg-transparent px-3 py-[6px] text-[12.5px] text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => closeSession(activeSession.id)}>
@@ -351,7 +351,7 @@ function Inspector({
           >
             {status === 'reconnecting' ? 'RECONNECTING' : connected ? 'CONNECTED' : 'DISCONNECTED'}
           </span>
-          <button className="h-6 w-6 shrink-0 cursor-pointer rounded-[7px] bg-white/[0.04] text-[var(--text-muted)] hover:bg-[var(--accent-soft-2)] hover:text-[var(--accent)]" onClick={onClose} title="Collapse details">
+          <button className="h-6 w-6 shrink-0 cursor-pointer rounded-[7px] bg-white/[0.04] text-[var(--text-muted)] hover:bg-[var(--brand-soft-2)] hover:text-[var(--brand)]" onClick={onClose} title="Collapse details">
             ›
           </button>
         </div>
@@ -370,13 +370,13 @@ function Inspector({
       <MetricsPanel hostId={host.id} connected={connected} />
 
       <div className="grid grid-cols-2 gap-2">
-        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--accent-border)]" onClick={onOpenSftp}>
+        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" onClick={onOpenSftp}>
           Open SFTP
         </button>
-        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--accent-border)]" title="Coming soon">
+        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" title="Coming soon">
           Port Forward
         </button>
-        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--accent-border)]" onClick={onDuplicate}>
+        <button className="cursor-pointer rounded-[9px] border border-[var(--border-2)] bg-white/[0.03] p-[9px] text-[12px] font-medium text-[var(--text-bright)] hover:border-[var(--brand-border)]" onClick={onDuplicate}>
           Duplicate
         </button>
         <button className="cursor-pointer rounded-[9px] border border-[rgb(255_95_86_/_0.35)] bg-[rgb(255_95_86_/_0.09)] p-[9px] text-[12px] font-semibold text-[var(--red)]" onClick={onDisconnect}>
@@ -423,7 +423,7 @@ function PaneDropZones({ onSplit }: { onSplit: (edge: Edge) => void }) {
       {over && (
         <div
           className="pointer-events-none rounded-lg animate-[previewIn_0.14s_ease_both]"
-          style={{ position: 'absolute', ...PREVIEW[over], background: 'color-mix(in srgb, var(--accent) 14%, transparent)', transition: 'inset 0.16s cubic-bezier(0.22,1,0.36,1)' }}
+          style={{ position: 'absolute', ...PREVIEW[over], background: 'color-mix(in srgb, var(--brand) 14%, transparent)', transition: 'inset 0.16s cubic-bezier(0.22,1,0.36,1)' }}
         />
       )}
       {target('left', { left: 0, top: 0, width: '30%', height: '100%' })}

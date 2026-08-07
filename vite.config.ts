@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -8,6 +9,14 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 export default defineConfig({
   // TanStack Router plugin must come before the React plugin.
   plugins: [TanStackRouterVite({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],
+
+  // Mirror the "@/*" -> "src/*" alias declared in tsconfig.app.json, which
+  // shadcn's components.json resolves imports against.
+  resolve: {
+    alias: {
+      '@': path.resolve(import.meta.dirname, './src'),
+    },
+  },
 
   // Prevent Vite from obscuring Rust errors
   clearScreen: false,
