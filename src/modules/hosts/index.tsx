@@ -26,7 +26,6 @@ const DOT: Record<string, string> = {
   off: '#5f6875',
 }
 
-// Shared class strings (used in more than one place)
 const btnAccent =
   'flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] bg-[image:var(--gradient-accent)] px-4 py-[10px] text-[13px] font-bold text-[#1a0e0a]'
 const btnGhost =
@@ -38,8 +37,6 @@ const iconBtnDanger = `${iconBtnBase} hover:bg-[rgb(255_95_86_/_0.1)] hover:text
 const accentBtnShadow = { boxShadow: '0 4px 16px color-mix(in srgb, var(--accent) 30%, transparent)' } as const
 const cardGradient = 'bg-[linear-gradient(160deg,var(--bg-card-top),var(--bg-card))]'
 
-// The hosts page: browse groups/hosts, and open the add/edit drawer. Owns the
-// host-form state that used to live in the old top-level App component.
 export function HostsPage() {
   const [hostForm, setHostForm] = useState<HostFormState>({ mode: 'closed' })
   const openCreate = (groupId: string | null) => setHostForm({ mode: 'create', groupId })
@@ -177,12 +174,12 @@ function HostsBrowser({ onAddHost, onEditHost }: BrowserProps) {
   const currentGroup = insideGroup ? groups.find((g) => g.id === currentGroupId) : null
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--bg)]">
-      <div className="m-0 max-w-[1600px] px-8 pt-[18px] pb-8">
-        <div className="mb-[18px] flex items-end gap-3">
+    <div className="flex-1 overflow-y-auto bg-(--bg)">
+      <div className="m-0 px-8 pt-4.5 pb-8">
+        <div className="mb-4.5 flex items-end gap-3">
           <div>
             <h1 className="m-0 text-[26px] font-bold tracking-[-0.3px]">Hosts</h1>
-            <p className="mt-[5px] mb-0 text-[13px] text-[var(--text-muted)]">
+            <p className="mt-1.25 mb-0 text-[13px] text-(--text-muted)">
               {hosts.length} saved connection{hosts.length === 1 ? '' : 's'} across {rootGroupCount}{' '}
               environment{rootGroupCount === 1 ? '' : 's'}
             </p>
@@ -190,10 +187,10 @@ function HostsBrowser({ onAddHost, onEditHost }: BrowserProps) {
           <div className="flex-1" />
           {!isEmpty && (
             <>
-              <div className="flex w-[260px] items-center gap-2 rounded-[10px] border border-[var(--border-2)] bg-white/[0.04] px-[13px] py-[9px]">
+              <div className="flex w-65 items-center gap-2 rounded-[10px] border border-(--border-2) bg-white/4 px-3.25 py-2.25">
                 <SearchIcon />
                 <input
-                  className="min-w-0 flex-1 border-none bg-transparent text-[12.5px] text-[var(--text)] outline-none"
+                  className="min-w-0 flex-1 border-none bg-transparent text-[12.5px] text-(--text) outline-none"
                   value={query}
                   onChange={(e) => setQuery(e.currentTarget.value)}
                   placeholder="Search hosts, tags, IPs…"
