@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import SettingRow, { SettingRowList } from './setting-row';
-import SettingsSection from './settings-section';
+import SettingRow, { SettingRowList } from '@/modules/settings/setting-row';
+import SettingsSection from '@/modules/settings/settings-section';
 
 const PLACEHOLDER_TOGGLES = [
   'Cursor blink',

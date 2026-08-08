@@ -7,15 +7,17 @@ import {
   setTermSchemeAtom,
   setThemeAtom,
   settingsAtom,
-} from '../../store/settings';
-import type { ResolvedMode } from '../../lib/theme';
-import AccentPicker from './accent-picker';
-import FontSizeStepper from './font-size-stepper';
-import ModePicker from './mode-picker';
-import SettingRow, { SettingRowList } from './setting-row';
-import SettingsSection, { SettingsGroup } from './settings-section';
-import TerminalSchemePicker from './terminal-scheme-picker';
-import ThemePicker from './theme-picker';
+} from '@/store/settings';
+import type { ResolvedMode } from '@/lib/theme';
+import AccentPicker from '@/modules/settings/sections/appearance/accent-picker';
+import FontSizeStepper from '@/modules/settings/sections/appearance/font-size-stepper';
+import ModePicker from '@/modules/settings/sections/appearance/mode-picker';
+import SettingRow, { SettingRowList } from '@/modules/settings/setting-row';
+import SettingsSection, {
+  SettingsGroup,
+} from '@/modules/settings/settings-section';
+import TerminalSchemePicker from '@/modules/settings/sections/terminal/terminal-scheme-picker';
+import ThemePicker from '@/modules/settings/sections/appearance/theme-picker';
 
 /** `mode` is the user's choice; `resolvedMode` is what is actually rendering. */
 export default function AppearanceSection({

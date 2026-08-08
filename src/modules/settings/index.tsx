@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Palette, ShieldCheck, TerminalSquare } from 'lucide-react';
 import { useResolvedMode } from '@/hooks/useResolvedMode';
-import AppearanceSection from './appearance-section';
-import SecuritySection from './security-section';
-import SettingsNav, { type SettingsCategory } from './settings-nav';
-import TerminalSection from './terminal-section';
-import UpdateRow from './update-row';
+import AppearanceSection from '@/modules/settings/sections/appearance';
+import SecuritySection from '@/modules/settings/sections/security-section';
+import SettingsNav, {
+  type SettingsCategory,
+} from '@/modules/settings/settings-nav';
+import TerminalSection from '@/modules/settings/sections/terminal';
+import UpdateRow from '@/modules/settings/update-row';
 
 const CATEGORIES: SettingsCategory[] = [
   { id: 'appearance', name: 'Appearance', Icon: Palette },

@@ -1,6 +1,6 @@
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { ThemeMode } from '../../lib/theme';
+import type { ThemeMode } from '@/lib/theme';
 
 const OPTIONS: { value: ThemeMode; label: string; Icon: typeof Sun }[] = [
   { value: 'light', label: 'Light', Icon: Sun },

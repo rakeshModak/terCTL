@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { THEMES } from '../../constants/themes';
-import { themeSwatch, type ResolvedMode } from '../../lib/theme';
+import { THEMES } from '@/constants/themes';
+import { themeSwatch, type ResolvedMode } from '@/lib/theme';
 
 interface ThemePickerProps {
   value: string;

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { TERM_SWATCH } from '../../constants/terminal-schemes';
+import { TERM_SWATCH } from '@/constants/terminal-schemes';
 
 interface TerminalSchemePickerProps {
   value: string;

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
-import { ACCENTS } from '../../constants/accents';
-import { accentSwatch, type ResolvedMode } from '../../lib/theme';
+import { ACCENTS } from '@/constants/accents';
+import { accentSwatch, type ResolvedMode } from '@/lib/theme';
 
 interface AccentPickerProps {
   value: string;
