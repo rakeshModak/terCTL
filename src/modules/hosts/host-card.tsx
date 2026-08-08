@@ -1,36 +1,49 @@
-import { ArrowRight, KeyRound, Lock, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import {
+  ArrowRight,
+  KeyRound,
+  Lock,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Separator } from '@/components/ui/separator'
-import type { HostType } from '@/types/host'
+} from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import type { HostType } from '@/types/host';
 
 interface HostCardProps {
-  host: HostType
-  connected: boolean
-  onConnect: () => void
-  onEdit: () => void
-  onDelete: () => void
+  host: HostType;
+  connected: boolean;
+  onConnect: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
-export default function HostCard({ host, connected, onConnect, onEdit, onDelete }: HostCardProps) {
-  const AuthIcon = host.authKind === 'key' ? KeyRound : Lock
-  const initial = (host.label.trim()[0] ?? '?').toUpperCase()
-  const authLabel = host.authKind === 'key' ? 'Key' : 'Password'
+export default function HostCard({
+  host,
+  connected,
+  onConnect,
+  onEdit,
+  onDelete,
+}: HostCardProps) {
+  const AuthIcon = host.authKind === 'key' ? KeyRound : Lock;
+  const initial = (host.label.trim()[0] ?? '?').toUpperCase();
+  const authLabel = host.authKind === 'key' ? 'Key' : 'Password';
 
   return (
     <Card
       size="sm"
       className={cn(
-        'group/host-card relative gap-4 px-5 py-5 transition-colors hover:bg-accent/50',
+        'group/host-card hover:bg-accent/50 relative gap-4 px-5 py-5 transition-colors',
         connected && 'ring-primary/35',
       )}
     >
@@ -38,8 +51,10 @@ export default function HostCard({ host, connected, onConnect, onEdit, onDelete 
         <span
           aria-hidden="true"
           className={cn(
-            'flex size-10 shrink-0 items-center justify-center rounded-xl font-heading text-sm font-semibold',
-            connected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
+            'font-heading flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold',
+            connected
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground',
           )}
         >
           {initial}
@@ -49,7 +64,9 @@ export default function HostCard({ host, connected, onConnect, onEdit, onDelete 
           <span
             className={cn(
               'size-2 rounded-full',
-              connected ? 'bg-primary ring-3 ring-(--brand-ring)' : 'bg-muted-foreground/40',
+              connected
+                ? 'bg-primary ring-3 ring-(--brand-ring)'
+                : 'bg-muted-foreground/40',
             )}
             aria-hidden="true"
           />
@@ -60,7 +77,7 @@ export default function HostCard({ host, connected, onConnect, onEdit, onDelete 
                 <Button
                   variant="ghost"
                   size="icon-xs"
-                  className="opacity-0 transition-opacity focus-visible:opacity-100 group-hover/host-card:opacity-100 aria-expanded:opacity-100"
+                  className="opacity-0 transition-opacity group-hover/host-card:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
                 />
               }
             >
@@ -86,12 +103,14 @@ export default function HostCard({ host, connected, onConnect, onEdit, onDelete 
         <button
           type="button"
           onClick={onConnect}
-          className="block w-full truncate text-left font-heading text-[15px] font-semibold after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+          className="font-heading block w-full truncate text-left text-[15px] font-semibold after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
         >
           {host.label}
-          <span className="sr-only">, {connected ? 'open session' : 'connect'}</span>
+          <span className="sr-only">
+            , {connected ? 'open session' : 'connect'}
+          </span>
         </button>
-        <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 truncate font-mono text-xs">
           {host.username}@{host.hostname}:{host.port}
         </p>
       </div>
@@ -109,7 +128,7 @@ export default function HostCard({ host, connected, onConnect, onEdit, onDelete 
       <div className="mt-auto flex flex-col gap-3">
         <Separator />
         <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+          <span className="text-muted-foreground flex min-w-0 items-center gap-1.5">
             <AuthIcon className="size-3 shrink-0" />
             <span className="truncate">
               {connected ? 'Connected' : authLabel}
@@ -130,5 +149,5 @@ export default function HostCard({ host, connected, onConnect, onEdit, onDelete 
         </div>
       </div>
     </Card>
-  )
+  );
 }

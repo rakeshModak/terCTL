@@ -66,82 +66,202 @@ select {
 }
 
 @keyframes hblink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
 @keyframes bootpulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 @keyframes bootRing {
-  0% { transform: translate(-50%, -50%) scale(0.62); opacity: 0.45; }
-  100% { transform: translate(-50%, -50%) scale(1.75); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.62);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.75);
+    opacity: 0;
+  }
 }
 @keyframes bootFloaty {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes slideTop {
-  0% { transform: translateY(-40px); opacity: 0; }
-  20%, 70% { transform: translateY(0); opacity: 1; }
-  92%, 100% { transform: translateY(-40px); opacity: 0; }
+  0% {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+  20%,
+  70% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
 }
 @keyframes slideBottom {
-  0% { transform: translateY(40px); opacity: 0; }
-  20%, 70% { transform: translateY(0); opacity: 1; }
-  92%, 100% { transform: translateY(40px); opacity: 0; }
+  0% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  20%,
+  70% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
 }
 @keyframes slideLeft {
-  0% { transform: translateX(-40px); opacity: 0; }
-  30%, 70% { transform: translateX(0); opacity: 1; }
-  92%, 100% { transform: translateX(-40px); opacity: 0; }
+  0% {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  30%,
+  70% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
 }
 @keyframes slideRight {
-  0% { transform: translateX(40px); opacity: 0; }
-  30%, 70% { transform: translateX(0); opacity: 1; }
-  92%, 100% { transform: translateX(40px); opacity: 0; }
+  0% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  30%,
+  70% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
 }
 @keyframes bootBreathe {
-  0%, 100% { opacity: 0.85; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 @keyframes bootbar {
-  0% { transform: translateX(-130%); }
-  100% { transform: translateX(340%); }
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(340%);
+  }
 }
 @keyframes bootword {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes boottype {
-  from { width: 0; }
-  to { width: 21ch; }
+  from {
+    width: 0;
+  }
+  to {
+    width: 21ch;
+  }
 }
 @keyframes bootcaret {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
 @keyframes bootline {
-  0%, 55% { opacity: 0; transform: translateY(4px); }
-  72%, 100% { opacity: 1; transform: none; }
+  0%,
+  55% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  72%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 @keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes slide-in-right {
-  from { transform: translateX(100%); }
-  to { transform: none; }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
 }
 @keyframes previewIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes stepPulse {
-  0%, 100% { opacity: 0.22; }
-  45% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  45% {
+    opacity: 1;
+  }
 }

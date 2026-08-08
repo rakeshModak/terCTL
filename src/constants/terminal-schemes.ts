@@ -1,5 +1,5 @@
-import type { ITheme } from '@xterm/xterm'
-import { ensureContrast, hexToHsl, hslToHex, mixHue } from '../lib/color'
+import type { ITheme } from '@xterm/xterm';
+import { ensureContrast, hexToHsl, hslToHex, mixHue } from '../lib/color';
 
 // Terminal color schemes (Settings › Appearance › Terminal text, and the
 // per-host override).
@@ -25,29 +25,29 @@ const ANSI_HUES = {
   blue: 224,
   magenta: 300,
   cyan: 186,
-} as const
+} as const;
 
-type AnsiName = keyof typeof ANSI_HUES
+type AnsiName = keyof typeof ANSI_HUES;
 
 /**
  * How far each ANSI hue is pulled toward the scheme's own hue. Low on purpose:
  * enough to make Matrix's red feel like it belongs in a green terminal, not so
  * much that red stops reading as red.
  */
-const HUE_PULL = 0.16
+const HUE_PULL = 0.16;
 
 /** Normal and bright variants. Bright is lighter and a little more saturated. */
-const NORMAL = { s: 0.6, l: 0.6 }
-const BRIGHT = { s: 0.68, l: 0.73 }
+const NORMAL = { s: 0.6, l: 0.6 };
+const BRIGHT = { s: 0.68, l: 0.73 };
 
 /** ANSI colors carry meaning, so they must stay legible on the background. */
-const MIN_CONTRAST = 4.5
+const MIN_CONTRAST = 4.5;
 
 interface SchemeSpec {
-  bg: string
-  fg: string
-  cursor: string
-  selection: string
+  bg: string;
+  fg: string;
+  cursor: string;
+  selection: string;
 }
 
 /**
@@ -56,42 +56,57 @@ interface SchemeSpec {
  * hexToHsl reports hue 0 for a grey, which is not red — it is no hue at all.
  * Without this, the Mono scheme would drag every ANSI color toward red.
  */
-const TINT_REFERENCE_SATURATION = 0.35
+const TINT_REFERENCE_SATURATION = 0.35;
 
 function ansiRamp(spec: SchemeSpec): Record<string, string> {
-  const fgHsl = hexToHsl(spec.fg)
-  const bgHsl = hexToHsl(spec.bg)
-  const pull = HUE_PULL * Math.min(fgHsl.s / TINT_REFERENCE_SATURATION, 1)
+  const fgHsl = hexToHsl(spec.fg);
+  const bgHsl = hexToHsl(spec.bg);
+  const pull = HUE_PULL * Math.min(fgHsl.s / TINT_REFERENCE_SATURATION, 1);
 
   const build = (name: AnsiName, tone: { s: number; l: number }) => {
-    const h = mixHue(ANSI_HUES[name], fgHsl.h, pull)
-    return ensureContrast({ h, s: tone.s, l: tone.l }, spec.bg, MIN_CONTRAST)
-  }
+    const h = mixHue(ANSI_HUES[name], fgHsl.h, pull);
+    return ensureContrast({ h, s: tone.s, l: tone.l }, spec.bg, MIN_CONTRAST);
+  };
 
-  const ramp: Record<string, string> = {}
+  const ramp: Record<string, string> = {};
   for (const name of Object.keys(ANSI_HUES) as AnsiName[]) {
-    ramp[name] = build(name, NORMAL)
+    ramp[name] = build(name, NORMAL);
     // "brightRed", "brightGreen", ...
-    ramp[`bright${name[0].toUpperCase()}${name.slice(1)}`] = build(name, BRIGHT)
+    ramp[`bright${name[0].toUpperCase()}${name.slice(1)}`] = build(
+      name,
+      BRIGHT,
+    );
   }
 
   // Neutrals ride the scheme's own hue so the greys never look foreign.
   // `black` is a lifted background rather than pure black, which is what keeps
   // dim/bold-black text visible instead of vanishing into the canvas.
-  ramp.black = hslToHex({ h: bgHsl.h, s: Math.min(bgHsl.s, 0.2), l: Math.min(bgHsl.l + 0.1, 0.3) })
+  ramp.black = hslToHex({
+    h: bgHsl.h,
+    s: Math.min(bgHsl.s, 0.2),
+    l: Math.min(bgHsl.l + 0.1, 0.3),
+  });
   ramp.brightBlack = ensureContrast(
     { h: bgHsl.h, s: Math.min(bgHsl.s, 0.16), l: 0.42 },
     spec.bg,
     3, // dimmed-on-purpose text: a lower floor than the meaningful colors
-  )
-  ramp.white = spec.fg
-  ramp.brightWhite = hslToHex({ ...hexToHsl(spec.fg), l: Math.min(hexToHsl(spec.fg).l + 0.16, 0.96) })
+  );
+  ramp.white = spec.fg;
+  ramp.brightWhite = hslToHex({
+    ...hexToHsl(spec.fg),
+    l: Math.min(hexToHsl(spec.fg).l + 0.16, 0.96),
+  });
 
-  return ramp
+  return ramp;
 }
 
-function scheme(bg: string, fg: string, cursor: string, selection: string): ITheme {
-  const spec = { bg, fg, cursor, selection }
+function scheme(
+  bg: string,
+  fg: string,
+  cursor: string,
+  selection: string,
+): ITheme {
+  const spec = { bg, fg, cursor, selection };
   return {
     background: bg,
     foreground: fg,
@@ -99,7 +114,7 @@ function scheme(bg: string, fg: string, cursor: string, selection: string): IThe
     cursorAccent: bg,
     selectionBackground: selection,
     ...ansiRamp(spec),
-  }
+  };
 }
 
 export const TERM_SCHEMES: Record<string, ITheme> = {
@@ -112,15 +127,17 @@ export const TERM_SCHEMES: Record<string, ITheme> = {
   Grape: scheme('#0f0a16', '#b6a2d2', '#9580c0', '#241833'),
   Rose: scheme('#140a10', '#d3a6b4', '#c1737f', '#33161f'),
   Mono: scheme('#0d0d0d', '#a8a8a8', '#c4c4c4', '#262626'),
-}
+};
 
 /** A small swatch color per scheme for the Settings UI (text-on-dark preview). */
-export const TERM_SWATCH: Record<string, { bg: string; fg: string }> = Object.fromEntries(
-  Object.entries(TERM_SCHEMES).map(([name, t]) => [
-    name,
-    { bg: t.background ?? '#000', fg: t.foreground ?? '#fff' },
-  ]),
-)
+export const TERM_SWATCH: Record<string, { bg: string; fg: string }> =
+  Object.fromEntries(
+    Object.entries(TERM_SCHEMES).map(([name, t]) => [
+      name,
+      { bg: t.background ?? '#000', fg: t.foreground ?? '#fff' },
+    ]),
+  );
 
-export const terminalTheme = TERM_SCHEMES.TerCTL
-export const terminalFontFamily = '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace'
+export const terminalTheme = TERM_SCHEMES.TerCTL;
+export const terminalFontFamily =
+  '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';

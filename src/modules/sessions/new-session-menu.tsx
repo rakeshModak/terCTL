@@ -1,7 +1,13 @@
-import { useNavigate } from '@tanstack/react-router'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { ChevronRight, Plus, Search, Server, SquareTerminal } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useNavigate } from '@tanstack/react-router';
+import { useAtomValue, useSetAtom } from 'jotai';
+import {
+  ChevronRight,
+  Plus,
+  Search,
+  Server,
+  SquareTerminal,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +16,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { connectAtom, hostsAtom, openLocalTerminalAtom } from '../../store/app'
+} from '@/components/ui/dropdown-menu';
+import { connectAtom, hostsAtom, openLocalTerminalAtom } from '../../store/app';
 
 /** Saved hosts listed inline before falling back to the full Hosts view. */
-const INLINE_HOST_LIMIT = 6
+const INLINE_HOST_LIMIT = 6;
 
 /**
  * The title bar's "+" control: pick between a local shell and connecting to a
@@ -22,13 +28,13 @@ const INLINE_HOST_LIMIT = 6
  * because it owns session creation; the title bar only places it.
  */
 export default function NewSessionMenu() {
-  const hosts = useAtomValue(hostsAtom)
-  const connect = useSetAtom(connectAtom)
-  const openLocalTerminal = useSetAtom(openLocalTerminalAtom)
-  const navigate = useNavigate()
+  const hosts = useAtomValue(hostsAtom);
+  const connect = useSetAtom(connectAtom);
+  const openLocalTerminal = useSetAtom(openLocalTerminalAtom);
+  const navigate = useNavigate();
 
-  const inlineHosts = hosts.slice(0, INLINE_HOST_LIMIT)
-  const hasMore = hosts.length > inlineHosts.length
+  const inlineHosts = hosts.slice(0, INLINE_HOST_LIMIT);
+  const hasMore = hosts.length > inlineHosts.length;
 
   return (
     <DropdownMenu>
@@ -57,10 +63,13 @@ export default function NewSessionMenu() {
             <DropdownMenuGroup>
               <DropdownMenuLabel>Connect to a server</DropdownMenuLabel>
               {inlineHosts.map((host) => (
-                <DropdownMenuItem key={host.id} onClick={() => void connect(host)}>
+                <DropdownMenuItem
+                  key={host.id}
+                  onClick={() => void connect(host)}
+                >
                   <Server />
                   <span className="min-w-0 flex-1 truncate">{host.label}</span>
-                  <span className="truncate font-mono text-xs text-muted-foreground">
+                  <span className="text-muted-foreground truncate font-mono text-xs">
                     {host.username}@{host.hostname}
                   </span>
                 </DropdownMenuItem>
@@ -81,5 +90,5 @@ export default function NewSessionMenu() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

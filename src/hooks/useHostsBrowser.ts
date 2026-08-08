@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo } from 'react';
 import type { GroupType, HostType } from '@/types/host';
 
 export interface HostsBrowserArgs {
@@ -70,12 +70,10 @@ export function useHostsBrowser({
       h.username.toLowerCase().includes(q) ||
       h.tags.some((t) => t.toLowerCase().includes(q));
 
-    return (
-      hosts
-        .filter((h) => searching || (h.groupId ?? null) === currentGroupId)
-        .filter((h) => (tagFilter ? h.tags.includes(tagFilter) : true))
-        .filter(matchesQuery)
-    );
+    return hosts
+      .filter((h) => searching || (h.groupId ?? null) === currentGroupId)
+      .filter((h) => (tagFilter ? h.tags.includes(tagFilter) : true))
+      .filter(matchesQuery);
   }, [hosts, q, searching, currentGroupId, tagFilter]);
 
   const subgroups = useMemo(
@@ -85,7 +83,7 @@ export function useHostsBrowser({
   );
 
   const breadcrumb = useMemo(() => {
-    const trail: BreadcrumbEntry[] = [{ id: null, name: "Hosts" }];
+    const trail: BreadcrumbEntry[] = [{ id: null, name: 'Hosts' }];
     for (const gid of path) {
       const g = groups.find((x) => x.id === gid);
       if (g) trail.push({ id: g.id, name: g.name });

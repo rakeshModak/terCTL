@@ -1,19 +1,23 @@
-import { Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { THEMES } from '../../constants/themes'
-import { themeSwatch, type ResolvedMode } from '../../lib/theme'
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { THEMES } from '../../constants/themes';
+import { themeSwatch, type ResolvedMode } from '../../lib/theme';
 
 interface ThemePickerProps {
-  value: string
-  onChange: (theme: string) => void
-  mode: ResolvedMode
+  value: string;
+  onChange: (theme: string) => void;
+  mode: ResolvedMode;
 }
 
-export default function ThemePicker({ value, onChange, mode }: ThemePickerProps) {
+export default function ThemePicker({
+  value,
+  onChange,
+  mode,
+}: ThemePickerProps) {
   return (
     <div className="flex flex-wrap gap-3">
       {Object.keys(THEMES).map((name) => {
-        const active = name === value
+        const active = name === value;
         return (
           <button
             key={name}
@@ -21,11 +25,14 @@ export default function ThemePicker({ value, onChange, mode }: ThemePickerProps)
             onClick={() => onChange(name)}
             aria-pressed={active}
             className={cn(
-              'w-36 overflow-hidden rounded-xl border-2 bg-card text-left transition-colors',
+              'bg-card w-36 overflow-hidden rounded-xl border-2 text-left transition-colors',
               active ? 'border-primary' : 'border-border hover:border-input',
             )}
           >
-            <span className="block h-16 w-full" style={{ background: themeSwatch(name, mode) }} />
+            <span
+              className="block h-16 w-full"
+              style={{ background: themeSwatch(name, mode) }}
+            />
             <span className="flex items-center gap-2 px-3 py-2">
               <span
                 className={cn(
@@ -35,11 +42,11 @@ export default function ThemePicker({ value, onChange, mode }: ThemePickerProps)
               >
                 {name}
               </span>
-              {active && <Check className="ml-auto size-3.5 text-primary" />}
+              {active && <Check className="text-primary ml-auto size-3.5" />}
             </span>
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

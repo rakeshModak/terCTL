@@ -1,4 +1,4 @@
-import { TriangleAlert } from 'lucide-react'
+import { TriangleAlert } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,17 +9,16 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+} from '@/components/ui/alert-dialog';
 
 interface DeleteAlertProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description: string
-  confirmLabel: string
-  onConfirm: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  onConfirm: () => void;
 }
-
 
 export default function DeleteAlert({
   open,
@@ -44,8 +43,8 @@ export default function DeleteAlert({
           <AlertDialogAction
             variant="destructive"
             onClick={() => {
-              onConfirm()
-              onOpenChange(false)
+              onConfirm();
+              onOpenChange(false);
             }}
           >
             {confirmLabel}
@@ -53,5 +52,5 @@ export default function DeleteAlert({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

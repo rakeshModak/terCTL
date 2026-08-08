@@ -1,5 +1,5 @@
-import { FolderPlus, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { FolderPlus, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyContent,
@@ -7,17 +7,20 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty'
-import { useId } from 'react'
+} from '@/components/ui/empty';
+import { useId } from 'react';
 
 interface HostsEmptyStateProps {
-  onNewHost: () => void
-  onNewGroup: () => void
+  onNewHost: () => void;
+  onNewGroup: () => void;
 }
 
 /** First-run state: no hosts and no groups exist yet. */
-export default function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptyStateProps) {
-    const glowId = useId()
+export default function HostsEmptyState({
+  onNewHost,
+  onNewGroup,
+}: HostsEmptyStateProps) {
+  const glowId = useId();
   return (
     <Empty className="animate-[rise_0.4s_ease_both]">
       <EmptyHeader className="max-w-md">
@@ -33,8 +36,16 @@ export default function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptySta
           >
             <defs>
               <radialGradient id={glowId} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+                <stop
+                  offset="0%"
+                  stopColor="var(--primary)"
+                  stopOpacity="0.22"
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--primary)"
+                  stopOpacity="0"
+                />
               </radialGradient>
             </defs>
 
@@ -53,17 +64,55 @@ export default function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptySta
             </g>
 
             <g transform="translate(40,34)">
-              <rect width="48" height="36" rx="8" className="fill-card stroke-border" />
-              <rect x="10" y="11" width="20" height="3" rx="1.5" className="fill-muted-foreground" />
-              <rect x="10" y="19" width="14" height="3" rx="1.5" className="fill-muted-foreground/50" />
+              <rect
+                width="48"
+                height="36"
+                rx="8"
+                className="fill-card stroke-border"
+              />
+              <rect
+                x="10"
+                y="11"
+                width="20"
+                height="3"
+                rx="1.5"
+                className="fill-muted-foreground"
+              />
+              <rect
+                x="10"
+                y="19"
+                width="14"
+                height="3"
+                rx="1.5"
+                className="fill-muted-foreground/50"
+              />
               <circle cx="38" cy="12.5" r="2.2" className="fill-chart-4" />
             </g>
 
             {/* Idle server. */}
             <g transform="translate(212,34)">
-              <rect width="48" height="36" rx="8" className="fill-card stroke-border" />
-              <rect x="10" y="11" width="20" height="3" rx="1.5" className="fill-muted-foreground" />
-              <rect x="10" y="19" width="14" height="3" rx="1.5" className="fill-muted-foreground/50" />
+              <rect
+                width="48"
+                height="36"
+                rx="8"
+                className="fill-card stroke-border"
+              />
+              <rect
+                x="10"
+                y="11"
+                width="20"
+                height="3"
+                rx="1.5"
+                className="fill-muted-foreground"
+              />
+              <rect
+                x="10"
+                y="19"
+                width="14"
+                height="3"
+                rx="1.5"
+                className="fill-muted-foreground/50"
+              />
               <circle cx="38" cy="12.5" r="2.2" className="fill-chart-5" />
             </g>
 
@@ -86,7 +135,12 @@ export default function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptySta
             </g>
 
             <g transform="translate(124,72)">
-              <rect width="52" height="52" rx="14" className="fill-muted stroke-border" />
+              <rect
+                width="52"
+                height="52"
+                rx="14"
+                className="fill-muted stroke-border"
+              />
               <g transform="translate(13,13)" className="fill-foreground">
                 <rect x="0" y="0" width="26" height="5.7" />
                 <rect x="0" y="20.3" width="26" height="5.7" />
@@ -100,7 +154,8 @@ export default function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptySta
         </EmptyMedia>
         <EmptyTitle>No connections yet</EmptyTitle>
         <EmptyDescription>
-          Add your first server and it lands here — one click to open a secure terminal, anytime.
+          Add your first server and it lands here — one click to open a secure
+          terminal, anytime.
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
@@ -116,5 +171,5 @@ export default function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptySta
         </div>
       </EmptyContent>
     </Empty>
-  )
+  );
 }

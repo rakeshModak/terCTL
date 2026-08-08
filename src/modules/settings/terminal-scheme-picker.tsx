@@ -1,17 +1,19 @@
-import { cn } from '@/lib/utils'
-import { TERM_SWATCH } from '../../constants/terminal-schemes'
+import { cn } from '@/lib/utils';
+import { TERM_SWATCH } from '../../constants/terminal-schemes';
 
 interface TerminalSchemePickerProps {
-  value: string
-  onChange: (scheme: string) => void
+  value: string;
+  onChange: (scheme: string) => void;
 }
 
-
-export default function TerminalSchemePicker({ value, onChange }: TerminalSchemePickerProps) {
+export default function TerminalSchemePicker({
+  value,
+  onChange,
+}: TerminalSchemePickerProps) {
   return (
     <div className="flex flex-wrap gap-2.5">
       {Object.entries(TERM_SWATCH).map(([name, swatch]) => {
-        const active = name === value
+        const active = name === value;
         return (
           <button
             key={name}
@@ -25,15 +27,21 @@ export default function TerminalSchemePicker({ value, onChange }: TerminalScheme
               active ? 'border-primary' : 'border-border hover:border-input',
             )}
           >
-            <span className="font-mono text-base font-bold" style={{ color: swatch.fg }}>
+            <span
+              className="font-mono text-base font-bold"
+              style={{ color: swatch.fg }}
+            >
               Aa
             </span>
-            <span className="font-mono text-[9px] opacity-80" style={{ color: swatch.fg }}>
+            <span
+              className="font-mono text-[9px] opacity-80"
+              style={{ color: swatch.fg }}
+            >
               {name}
             </span>
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

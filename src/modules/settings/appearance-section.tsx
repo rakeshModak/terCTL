@@ -1,5 +1,5 @@
-import { useAtomValue, useSetAtom } from 'jotai'
-import { Badge } from '@/components/ui/badge'
+import { useAtomValue, useSetAtom } from 'jotai';
+import { Badge } from '@/components/ui/badge';
 import {
   bumpFontSizeAtom,
   setAccentAtom,
@@ -7,24 +7,29 @@ import {
   setTermSchemeAtom,
   setThemeAtom,
   settingsAtom,
-} from '../../store/settings'
-import type { ResolvedMode } from '../../lib/theme'
-import AccentPicker from './accent-picker'
-import FontSizeStepper from './font-size-stepper'
-import ModePicker from './mode-picker'
-import SettingRow, { SettingRowList } from './setting-row'
-import SettingsSection, { SettingsGroup } from './settings-section'
-import TerminalSchemePicker from './terminal-scheme-picker'
-import ThemePicker from './theme-picker'
+} from '../../store/settings';
+import type { ResolvedMode } from '../../lib/theme';
+import AccentPicker from './accent-picker';
+import FontSizeStepper from './font-size-stepper';
+import ModePicker from './mode-picker';
+import SettingRow, { SettingRowList } from './setting-row';
+import SettingsSection, { SettingsGroup } from './settings-section';
+import TerminalSchemePicker from './terminal-scheme-picker';
+import ThemePicker from './theme-picker';
 
 /** `mode` is the user's choice; `resolvedMode` is what is actually rendering. */
-export default function AppearanceSection({ resolvedMode }: { resolvedMode: ResolvedMode }) {
-  const { fontSize, accent, theme, termScheme, mode } = useAtomValue(settingsAtom)
-  const bumpFontSize = useSetAtom(bumpFontSizeAtom)
-  const setAccent = useSetAtom(setAccentAtom)
-  const setTheme = useSetAtom(setThemeAtom)
-  const setTermScheme = useSetAtom(setTermSchemeAtom)
-  const setMode = useSetAtom(setModeAtom)
+export default function AppearanceSection({
+  resolvedMode,
+}: {
+  resolvedMode: ResolvedMode;
+}) {
+  const { fontSize, accent, theme, termScheme, mode } =
+    useAtomValue(settingsAtom);
+  const bumpFontSize = useSetAtom(bumpFontSizeAtom);
+  const setAccent = useSetAtom(setAccentAtom);
+  const setTheme = useSetAtom(setThemeAtom);
+  const setTermScheme = useSetAtom(setTermSchemeAtom);
+  const setMode = useSetAtom(setModeAtom);
 
   return (
     <SettingsSection
@@ -35,7 +40,9 @@ export default function AppearanceSection({ resolvedMode }: { resolvedMode: Reso
         <div className="flex flex-wrap items-center gap-3">
           <ModePicker value={mode} onChange={setMode} />
           {mode === 'system' && (
-            <Badge variant="secondary">Following your OS — currently {resolvedMode}</Badge>
+            <Badge variant="secondary">
+              Following your OS — currently {resolvedMode}
+            </Badge>
           )}
         </div>
       </SettingsGroup>
@@ -69,9 +76,10 @@ export default function AppearanceSection({ resolvedMode }: { resolvedMode: Reso
         />
       </SettingRowList>
 
-      <p className="mt-3 text-xs text-muted-foreground">
-        Changes apply instantly to all open terminals and persist across restarts.
+      <p className="text-muted-foreground mt-3 text-xs">
+        Changes apply instantly to all open terminals and persist across
+        restarts.
       </p>
     </SettingsSection>
-  )
+  );
 }

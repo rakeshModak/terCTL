@@ -15,6 +15,6 @@ export const ACCENTS: Record<string, { c: string; c2: string }> = {
   Solar: { c: '#cf7e54', c2: '#c7a25a' },
   Jade: { c: '#43ab88', c2: '#2f8a70' },
   Chrome: { c: '#dfe3ea', c2: '#a3adbb' },
-}
+};
 
-export const DEFAULT_ACCENT = 'Chrome'
+export const DEFAULT_ACCENT = 'Chrome';

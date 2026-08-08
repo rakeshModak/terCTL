@@ -1,51 +1,55 @@
-import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { useEffect } from 'react'
-import { applyTheme, watchSystemMode } from '../lib/theme'
-import { settingsAtom } from '../store/settings'
-import { refreshAllAtom } from '../store/app'
-import { checkForUpdateAtom } from '../store/updater'
-import { loadAppVersionAtom } from '../store/version'
-import { BootSplash } from '../components/chrome/BootSplash'
-import Header from '../modules/layout/header'
-import Sidebar from '../modules/layout/sidebar'
-import { Dialogs } from '../components/Dialogs'
-import { UpdateBanner } from '../components/UpdateBanner'
-import SessionsView from '../modules/sessions'
+import {
+  createRootRoute,
+  Outlet,
+  useRouterState,
+} from '@tanstack/react-router';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { useEffect } from 'react';
+import { applyTheme, watchSystemMode } from '../lib/theme';
+import { settingsAtom } from '../store/settings';
+import { refreshAllAtom } from '../store/app';
+import { checkForUpdateAtom } from '../store/updater';
+import { loadAppVersionAtom } from '../store/version';
+import { BootSplash } from '../components/chrome/BootSplash';
+import Header from '../modules/layout/header';
+import Sidebar from '../modules/layout/sidebar';
+import { Dialogs } from '../components/Dialogs';
+import { UpdateBanner } from '../components/UpdateBanner';
+import SessionsView from '../modules/sessions';
 
 export const Route = createRootRoute({
   component: RootLayout,
-})
+});
 
 function RootLayout() {
-  const { accent, theme, mode } = useAtomValue(settingsAtom)
-  const refreshAll = useSetAtom(refreshAllAtom)
-  const checkForUpdate = useSetAtom(checkForUpdateAtom)
-  const loadVersion = useSetAtom(loadAppVersionAtom)
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const onSessions = pathname === '/sessions'
+  const { accent, theme, mode } = useAtomValue(settingsAtom);
+  const refreshAll = useSetAtom(refreshAllAtom);
+  const checkForUpdate = useSetAtom(checkForUpdateAtom);
+  const loadVersion = useSetAtom(loadAppVersionAtom);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onSessions = pathname === '/sessions';
 
   useEffect(() => {
-    void refreshAll()
+    void refreshAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   useEffect(() => {
-    void checkForUpdate()
+    void checkForUpdate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   useEffect(() => {
-    void loadVersion()
+    void loadVersion();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   useEffect(() => {
-    const choice = { accent, theme, mode }
-    applyTheme(choice)
-    if (mode !== 'system') return
-    return watchSystemMode(() => applyTheme(choice))
-  }, [accent, theme, mode])
+    const choice = { accent, theme, mode };
+    applyTheme(choice);
+    if (mode !== 'system') return;
+    return watchSystemMode(() => applyTheme(choice));
+  }, [accent, theme, mode]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-(--bg) text-(--text)">
@@ -53,7 +57,10 @@ function RootLayout() {
       <Header />
       <div className="flex min-h-0 flex-1">
         <Sidebar />
-        <div className="min-w-0 flex-1" style={{ display: onSessions ? 'flex' : 'none' }}>
+        <div
+          className="min-w-0 flex-1"
+          style={{ display: onSessions ? 'flex' : 'none' }}
+        >
           <SessionsView />
         </div>
         <Outlet />
@@ -61,5 +68,5 @@ function RootLayout() {
       <Dialogs />
       <UpdateBanner />
     </div>
-  )
+  );
 }

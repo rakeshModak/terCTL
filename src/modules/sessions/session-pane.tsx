@@ -1,29 +1,29 @@
-import type { CSSProperties } from 'react'
-import { GripVertical, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import type { Edge, Rect } from '../../lib/layout'
-import type { SessionType } from '../../store/app'
-import PaneDropZones from './pane-drop-zones'
-import { Terminal } from '@/components/Terminal'
+import type { CSSProperties } from 'react';
+import { GripVertical, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import type { Edge, Rect } from '../../lib/layout';
+import type { SessionType } from '../../store/app';
+import PaneDropZones from './pane-drop-zones';
+import { Terminal } from '@/components/Terminal';
 
 interface SessionPaneProps {
-  session: SessionType
+  session: SessionType;
   /** Percentage rect within the split tree; undefined = not in the active tab. */
-  rect: Rect | undefined
-  active: boolean
+  rect: Rect | undefined;
+  active: boolean;
   /** True when the active tab holds more than one pane. */
-  isSplit: boolean
-  resizing: boolean
-  showZones: boolean
-  dragging: boolean
-  termScheme: string | undefined
-  onActivate: () => void
-  onClose: () => void
-  onClosed: () => void
-  onDragStart: () => void
-  onDragEnd: () => void
-  onSplit: (edge: Edge) => void
+  isSplit: boolean;
+  resizing: boolean;
+  showZones: boolean;
+  dragging: boolean;
+  termScheme: string | undefined;
+  onActivate: () => void;
+  onClose: () => void;
+  onClosed: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onSplit: (edge: Edge) => void;
 }
 
 export default function SessionPane({
@@ -49,14 +49,16 @@ export default function SessionPane({
         right: `${100 - rect.left - rect.width}%`,
         bottom: `${100 - rect.top - rect.height}%`,
       }
-    : { display: 'none' }
+    : { display: 'none' };
 
   return (
     <div
       className="absolute overflow-hidden"
       style={{
         ...position,
-        transition: resizing ? 'none' : 'inset 0.18s cubic-bezier(0.22,1,0.36,1)',
+        transition: resizing
+          ? 'none'
+          : 'inset 0.18s cubic-bezier(0.22,1,0.36,1)',
       }}
       onMouseDown={() => !active && onActivate()}
     >
@@ -68,10 +70,16 @@ export default function SessionPane({
         className={cn(
           'absolute flex flex-col overflow-hidden transition-all duration-150',
           isSplit ? 'inset-[3px] rounded-lg border' : 'inset-0',
-          isSplit && active && 'border-primary/55 shadow-[0_0_16px_-4px_var(--brand-soft-2)]',
+          isSplit &&
+            active &&
+            'border-primary/55 shadow-[0_0_16px_-4px_var(--brand-soft-2)]',
           isSplit && !active && 'border-border',
         )}
-        style={isSplit ? { background: 'var(--term-bg, var(--background))' } : undefined}
+        style={
+          isSplit
+            ? { background: 'var(--term-bg, var(--background))' }
+            : undefined
+        }
       >
         <div
           className={cn(
@@ -86,14 +94,16 @@ export default function SessionPane({
           draggable
           title="Drag to reposition in this Deck"
           onDragStart={(e) => {
-            e.dataTransfer.effectAllowed = 'move'
-            e.dataTransfer.setData('text/plain', session.id)
-            onDragStart()
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', session.id);
+            onDragStart();
           }}
           onDragEnd={onDragEnd}
         >
-          <GripVertical className="size-3 shrink-0 text-muted-foreground" />
-          <span className="overflow-hidden text-ellipsis whitespace-nowrap">{session.label}</span>
+          <GripVertical className="text-muted-foreground size-3 shrink-0" />
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+            {session.label}
+          </span>
           <span className="flex-1" />
           <Button
             variant="ghost"
@@ -101,8 +111,8 @@ export default function SessionPane({
             title="Close this pane"
             className="hover:text-destructive"
             onClick={(e) => {
-              e.stopPropagation()
-              onClose()
+              e.stopPropagation();
+              onClose();
             }}
           >
             <X />
@@ -116,11 +126,15 @@ export default function SessionPane({
             resizing && 'pointer-events-none',
           )}
         >
-          <Terminal sessionId={session.id} scheme={termScheme} onClosed={onClosed} />
+          <Terminal
+            sessionId={session.id}
+            scheme={termScheme}
+            onClosed={onClosed}
+          />
         </div>
       </div>
 
       {showZones && <PaneDropZones onSplit={onSplit} />}
     </div>
-  )
+  );
 }

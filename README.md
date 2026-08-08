@@ -41,17 +41,17 @@ Terminals, split-pane Decks, SFTP, and live host metrics — in one native, butt
 
 ## ✨ Features
 
-| | |
-|---|---|
-| 🖥️ **SSH Terminals** | Real PTY sessions over `russh` with full [xterm.js](https://xtermjs.org) rendering and per-host color schemes. |
-| 🪟 **Decks** | Split a tab into multiple panes — drag panes to re-split, drag dividers to resize, all sessions stay live. |
-| 🗂️ **Host Management** | Nested groups, tags, and instant search across labels, hostnames, users, and tags. |
-| 📁 **SFTP Transfer** | Dual-pane local ⇄ remote browser: upload, download, rename, new folder, hidden-file toggle. |
-| 📊 **Live Metrics** | CPU + core count, load average, memory, disk, network throughput, uptime, and top processes. |
-| ⚡ **Local Shells** | Spin up a local terminal right beside your remote sessions. |
-| 🔐 **Secure by Default** | Passwords & key passphrases live in the **OS keychain** — never written to disk. |
-| 🎨 **Themeable** | Multiple base themes, accent colors, and terminal color schemes. |
-| 🌍 **Cross-platform** | One codebase → native installers for macOS, Windows, and Linux. |
+|                          |                                                                                                                |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| 🖥️ **SSH Terminals**     | Real PTY sessions over `russh` with full [xterm.js](https://xtermjs.org) rendering and per-host color schemes. |
+| 🪟 **Decks**             | Split a tab into multiple panes — drag panes to re-split, drag dividers to resize, all sessions stay live.     |
+| 🗂️ **Host Management**   | Nested groups, tags, and instant search across labels, hostnames, users, and tags.                             |
+| 📁 **SFTP Transfer**     | Dual-pane local ⇄ remote browser: upload, download, rename, new folder, hidden-file toggle.                    |
+| 📊 **Live Metrics**      | CPU + core count, load average, memory, disk, network throughput, uptime, and top processes.                   |
+| ⚡ **Local Shells**      | Spin up a local terminal right beside your remote sessions.                                                    |
+| 🔐 **Secure by Default** | Passwords & key passphrases live in the **OS keychain** — never written to disk.                               |
+| 🎨 **Themeable**         | Multiple base themes, accent colors, and terminal color schemes.                                               |
+| 🌍 **Cross-platform**    | One codebase → native installers for macOS, Windows, and Linux.                                                |
 
 ---
 
@@ -90,6 +90,7 @@ Terminals, split-pane Decks, SFTP, and live host metrics — in one native, butt
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - **Node 22+** — a `.node-version` is pinned; [fnm](https://github.com/Schniz/fnm) / nvm pick it up automatically.
 - **Rust** (stable) — [rustup.rs](https://rustup.rs)
 - Tauri platform toolchains — [prerequisites](https://tauri.app/start/prerequisites/).

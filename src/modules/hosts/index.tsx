@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useAtomValue, useSetAtom } from 'jotai';
 import {
   allTagsAtom,
   connectAtom,
@@ -11,130 +11,136 @@ import {
   setActiveSessionAtom,
   setTagFilterAtom,
   tagFilterAtom,
-} from '../../store/app'
-import { hostsService } from '../../services/hosts.service'
-import type { GroupType, HostType } from '@/types/host'
-import ActiveSessions from './active-sessions'
-import DeleteAlert from './delete-alert'
-import GroupBreadcrumb from './group-breadcrumb'
-import GroupCard from './group-card'
-import GroupFormDialog from './group-form-dialog'
-import HostCard from './host-card'
-import HostFormSheet from './host-form-sheet'
-import HostsEmptyState from './hosts-empty-state'
-import HostsHeader from './hosts-header'
-import HostsSearch from './hosts-search'
-import SectionHeading from './section-heading'
-import TagFilterBar from './tag-filter-bar'
-import { useHostsBrowser } from '@/hooks/useHostsBrowser'
+} from '../../store/app';
+import { hostsService } from '../../services/hosts.service';
+import type { GroupType, HostType } from '@/types/host';
+import ActiveSessions from './active-sessions';
+import DeleteAlert from './delete-alert';
+import GroupBreadcrumb from './group-breadcrumb';
+import GroupCard from './group-card';
+import GroupFormDialog from './group-form-dialog';
+import HostCard from './host-card';
+import HostFormSheet from './host-form-sheet';
+import HostsEmptyState from './hosts-empty-state';
+import HostsHeader from './hosts-header';
+import HostsSearch from './hosts-search';
+import SectionHeading from './section-heading';
+import TagFilterBar from './tag-filter-bar';
+import { useHostsBrowser } from '@/hooks/useHostsBrowser';
 
-type HostSheetArgs = { host?: HostType; groupId: string | null }
+type HostSheetArgs = { host?: HostType; groupId: string | null };
 type GroupDialogArgs =
-  { mode: 'create'; parentId: string | null } | { mode: 'rename'; group: GroupType }
-type DeleteTarget = { kind: 'group'; group: GroupType } | { kind: 'host'; host: HostType }
+  | { mode: 'create'; parentId: string | null }
+  | { mode: 'rename'; group: GroupType };
+type DeleteTarget =
+  { kind: 'group'; group: GroupType } | { kind: 'host'; host: HostType };
 
-const GRID = 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(258px,1fr))]'
+const GRID = 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(258px,1fr))]';
 
 export default function HostsPage() {
-  const hosts = useAtomValue(hostsAtom)
-  const groups = useAtomValue(groupsAtom)
-  const allTags = useAtomValue(allTagsAtom)
-  const tagFilter = useAtomValue(tagFilterAtom)
-  const sessions = useAtomValue(sessionsAtom)
-  const connect = useSetAtom(connectAtom)
-  const refreshAll = useSetAtom(refreshAllAtom)
-  const setActiveSession = useSetAtom(setActiveSessionAtom)
-  const setTagFilter = useSetAtom(setTagFilterAtom)
-  const navigate = useNavigate()
+  const hosts = useAtomValue(hostsAtom);
+  const groups = useAtomValue(groupsAtom);
+  const allTags = useAtomValue(allTagsAtom);
+  const tagFilter = useAtomValue(tagFilterAtom);
+  const sessions = useAtomValue(sessionsAtom);
+  const connect = useSetAtom(connectAtom);
+  const refreshAll = useSetAtom(refreshAllAtom);
+  const setActiveSession = useSetAtom(setActiveSessionAtom);
+  const setTagFilter = useSetAtom(setTagFilterAtom);
+  const navigate = useNavigate();
 
-  const [path, setPath] = useState<string[]>([])
-  const [query, setQuery] = useState('')
+  const [path, setPath] = useState<string[]>([]);
+  const [query, setQuery] = useState('');
 
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [sheetArgs, setSheetArgs] = useState<HostSheetArgs>({ groupId: null })
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetArgs, setSheetArgs] = useState<HostSheetArgs>({ groupId: null });
 
-  const [groupDialogOpen, setGroupDialogOpen] = useState(false)
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [groupDialogArgs, setGroupDialogArgs] = useState<GroupDialogArgs>({
     mode: 'create',
     parentId: null,
-  })
+  });
 
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
-  const view = useHostsBrowser({ hosts, groups, path, query, tagFilter })
+  const view = useHostsBrowser({ hosts, groups, path, query, tagFilter });
 
   const sessionByHostId = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const s of sessions) if (!map.has(s.hostId)) map.set(s.hostId, s.id)
-    return map
-  }, [sessions])
+    const map = new Map<string, string>();
+    for (const s of sessions) if (!map.has(s.hostId)) map.set(s.hostId, s.id);
+    return map;
+  }, [sessions]);
 
-  const hostsById = useMemo(() => new Map(hosts.map((h) => [h.id, h])), [hosts])
+  const hostsById = useMemo(
+    () => new Map(hosts.map((h) => [h.id, h])),
+    [hosts],
+  );
 
   const openCreateHost = (groupId: string | null) => {
-    setSheetArgs({ host: undefined, groupId })
-    setSheetOpen(true)
-  }
+    setSheetArgs({ host: undefined, groupId });
+    setSheetOpen(true);
+  };
 
   const openEditHost = (host: HostType) => {
-    setSheetArgs({ host, groupId: null })
-    setSheetOpen(true)
-  }
+    setSheetArgs({ host, groupId: null });
+    setSheetOpen(true);
+  };
 
   const openCreateGroup = () => {
-    setGroupDialogArgs({ mode: 'create', parentId: view.currentGroupId })
-    setGroupDialogOpen(true)
-  }
+    setGroupDialogArgs({ mode: 'create', parentId: view.currentGroupId });
+    setGroupDialogOpen(true);
+  };
 
   const openRenameGroup = (group: GroupType) => {
-    setGroupDialogArgs({ mode: 'rename', group })
-    setGroupDialogOpen(true)
-  }
+    setGroupDialogArgs({ mode: 'rename', group });
+    setGroupDialogOpen(true);
+  };
 
   const askDelete = (target: DeleteTarget) => {
-    setDeleteTarget(target)
-    setDeleteOpen(true)
-  }
+    setDeleteTarget(target);
+    setDeleteOpen(true);
+  };
 
   const submitGroupDialog = async (name: string) => {
     if (groupDialogArgs.mode === 'create') {
-      await hostsService.addGroup(name, groupDialogArgs.parentId)
+      await hostsService.addGroup(name, groupDialogArgs.parentId);
     } else if (name !== groupDialogArgs.group.name) {
-      await hostsService.renameGroup(groupDialogArgs.group.id, name)
+      await hostsService.renameGroup(groupDialogArgs.group.id, name);
     }
-    await refreshAll()
-  }
+    await refreshAll();
+  };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return
+    if (!deleteTarget) return;
     if (deleteTarget.kind === 'group') {
-      await hostsService.deleteGroup(deleteTarget.group.id)
+      await hostsService.deleteGroup(deleteTarget.group.id);
     } else {
-      await hostsService.remove(deleteTarget.host.id)
+      await hostsService.remove(deleteTarget.host.id);
     }
-    await refreshAll()
-  }
+    await refreshAll();
+  };
 
   const openSession = (sessionId: string) => {
-    setActiveSession(sessionId)
-    navigate({ to: '/sessions' })
-  }
+    setActiveSession(sessionId);
+    navigate({ to: '/sessions' });
+  };
 
   const openHost = (host: HostType) => {
-    const existing = sessionByHostId.get(host.id)
+    const existing = sessionByHostId.get(host.id);
     if (existing) {
-      openSession(existing)
-      return
+      openSession(existing);
+      return;
     }
-    void connect(host)
-    navigate({ to: '/sessions' })
-  }
+    void connect(host);
+    navigate({ to: '/sessions' });
+  };
 
-  const showSessions = sessions.length > 0 && !view.insideGroup && !view.searching
+  const showSessions =
+    sessions.length > 0 && !view.insideGroup && !view.searching;
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background">
+    <div className="bg-background flex-1 overflow-y-auto">
       <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-8 pt-10 pb-14">
         <HostsHeader
           hostCount={hosts.length}
@@ -147,7 +153,11 @@ export default function HostsPage() {
 
         {!view.isEmpty && <HostsSearch value={query} onChange={setQuery} />}
 
-        <TagFilterBar tags={allTags} value={tagFilter} onChange={setTagFilter} />
+        <TagFilterBar
+          tags={allTags}
+          value={tagFilter}
+          onChange={setTagFilter}
+        />
 
         {view.insideGroup && (
           <GroupBreadcrumb
@@ -179,7 +189,10 @@ export default function HostsPage() {
         )}
 
         {view.isEmpty ? (
-          <HostsEmptyState onNewHost={() => openCreateHost(null)} onNewGroup={openCreateGroup} />
+          <HostsEmptyState
+            onNewHost={() => openCreateHost(null)}
+            onNewGroup={openCreateGroup}
+          />
         ) : (
           <section>
             <SectionHeading
@@ -205,8 +218,14 @@ export default function HostsPage() {
 
         {showSessions && (
           <section className="mt-9">
-            <SectionHeading trailing={`${sessions.length} open`}>Active sessions</SectionHeading>
-            <ActiveSessions sessions={sessions} hostsById={hostsById} onOpen={openSession} />
+            <SectionHeading trailing={`${sessions.length} open`}>
+              Active sessions
+            </SectionHeading>
+            <ActiveSessions
+              sessions={sessions}
+              hostsById={hostsById}
+              onOpen={openSession}
+            />
           </section>
         )}
       </div>
@@ -229,7 +248,9 @@ export default function HostsPage() {
         }
         confirmLabel={groupDialogArgs.mode === 'create' ? 'Create' : 'Rename'}
         placeholder="e.g. Production"
-        initialValue={groupDialogArgs.mode === 'rename' ? groupDialogArgs.group.name : ''}
+        initialValue={
+          groupDialogArgs.mode === 'rename' ? groupDialogArgs.group.name : ''
+        }
         onSubmit={(name) => void submitGroupDialog(name)}
       />
 
@@ -247,10 +268,12 @@ export default function HostsPage() {
               ? 'Its hosts move to Ungrouped and its subgroups move up a level — nothing is deleted except the group.'
               : 'This also removes its saved credentials from the keychain.'
           }
-          confirmLabel={deleteTarget.kind === 'group' ? 'Delete group' : 'Delete server'}
+          confirmLabel={
+            deleteTarget.kind === 'group' ? 'Delete group' : 'Delete server'
+          }
           onConfirm={() => void confirmDelete()}
         />
       )}
     </div>
-  )
+  );
 }

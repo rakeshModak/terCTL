@@ -1,28 +1,28 @@
-import * as React from "react"
-import { PlusIcon, X } from "lucide-react"
+import * as React from 'react';
+import { PlusIcon, X } from 'lucide-react';
 
-import { Badge } from "@/components/ui/badge"
+import { Badge } from '@/components/ui/badge';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/components/ui/input-group"
-import { Label } from "@/components/ui/label"
+} from '@/components/ui/input-group';
+import { Label } from '@/components/ui/label';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from '@/components/ui/tooltip';
 
 interface TagInputProps {
-  value?: string[]
-  onChange: (value: string[]) => void
-  placeholder?: string
-  label?: string
-  error?: string
+  value?: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  label?: string;
+  error?: string;
   /** Optional autocomplete choices, offered through a native datalist. */
-  suggestions?: string[]
+  suggestions?: string[];
 }
 
 function TagInput({
@@ -33,25 +33,25 @@ function TagInput({
   error,
   suggestions,
 }: Readonly<TagInputProps>) {
-  const [input, setInput] = React.useState("")
+  const [input, setInput] = React.useState('');
 
   // Ids so the label, error text and datalist bind to the control.
-  const id = React.useId()
-  const errorId = `${id}-error`
-  const listId = `${id}-suggestions`
+  const id = React.useId();
+  const errorId = `${id}-error`;
+  const listId = `${id}-suggestions`;
 
-  const tags = value ?? []
+  const tags = value ?? [];
 
   const addTag = () => {
-    const tag = input.trim()
-    if (!tag || tags.includes(tag)) return
-    onChange([...tags, tag])
-    setInput("")
-  }
+    const tag = input.trim();
+    if (!tag || tags.includes(tag)) return;
+    onChange([...tags, tag]);
+    setInput('');
+  };
 
   const removeTag = (tag: string) => {
-    onChange(tags.filter((v) => v !== tag))
-  }
+    onChange(tags.filter((v) => v !== tag));
+  };
 
   return (
     <div className="w-full">
@@ -68,9 +68,9 @@ function TagInput({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
             // Comma commits too, so pasted "a, b" style lists flow naturally.
-            if (e.key === "Enter" || e.key === ",") {
-              e.preventDefault()
-              addTag()
+            if (e.key === 'Enter' || e.key === ',') {
+              e.preventDefault();
+              addTag();
             }
           }}
           aria-invalid={!!error}
@@ -117,7 +117,11 @@ function TagInput({
       {tags.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="flex items-center gap-1"
+            >
               {tag}
               <button
                 type="button"
@@ -132,8 +136,8 @@ function TagInput({
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export { TagInput }
-export type { TagInputProps }
+export { TagInput };
+export type { TagInputProps };

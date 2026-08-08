@@ -1,30 +1,42 @@
-import { ChevronRight, Folder, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import {
+  ChevronRight,
+  Folder,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import type { GroupType } from '@/types/host'
+} from '@/components/ui/dropdown-menu';
+import type { GroupType } from '@/types/host';
 
 interface GroupCardProps {
-  group: GroupType
-  hostCount: number
-  onOpen: () => void
-  onRename: () => void
-  onDelete: () => void
+  group: GroupType;
+  hostCount: number;
+  onOpen: () => void;
+  onRename: () => void;
+  onDelete: () => void;
 }
 
-export default function GroupCard({ group, hostCount, onOpen, onRename, onDelete }: GroupCardProps) {
+export default function GroupCard({
+  group,
+  hostCount,
+  onOpen,
+  onRename,
+  onDelete,
+}: GroupCardProps) {
   return (
     <Card
       size="sm"
-      className="group/group-card relative flex-row items-center gap-3 px-5 py-4 transition-colors hover:bg-accent/50"
+      className="group/group-card hover:bg-accent/50 relative flex-row items-center gap-3 px-5 py-4 transition-colors"
     >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+      <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
         <Folder className="size-4" />
       </div>
 
@@ -37,7 +49,7 @@ export default function GroupCard({ group, hostCount, onOpen, onRename, onDelete
           {group.name}
           <span className="sr-only">, open group</span>
         </button>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="text-muted-foreground truncate text-xs">
           {hostCount} host{hostCount === 1 ? '' : 's'}
         </p>
       </div>
@@ -49,7 +61,7 @@ export default function GroupCard({ group, hostCount, onOpen, onRename, onDelete
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="opacity-0 focus-visible:opacity-100 group-hover/group-card:opacity-100 aria-expanded:opacity-100"
+                className="opacity-0 group-hover/group-card:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100"
               />
             }
           >
@@ -68,8 +80,8 @@ export default function GroupCard({ group, hostCount, onOpen, onRename, onDelete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+        <ChevronRight className="text-muted-foreground size-4 shrink-0" />
       </div>
     </Card>
-  )
+  );
 }

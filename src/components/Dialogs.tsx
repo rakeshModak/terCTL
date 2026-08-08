@@ -1,6 +1,6 @@
-import { useCallback, useState, type FormEvent } from 'react'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { TriangleAlert } from 'lucide-react'
+import { useCallback, useState, type FormEvent } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { TriangleAlert } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,8 +11,8 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogClose,
@@ -20,29 +20,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   confirmReqAtom,
   promptReqAtom,
   resolveConfirmAtom,
   resolvePromptAtom,
   type PromptRequest,
-} from '../store/dialog'
-
+} from '../store/dialog';
 
 export function Dialogs() {
-  const promptReq = useAtomValue(promptReqAtom)
-  const confirmReq = useAtomValue(confirmReqAtom)
-  const resolvePrompt = useSetAtom(resolvePromptAtom)
-  const resolveConfirm = useSetAtom(resolveConfirmAtom)
+  const promptReq = useAtomValue(promptReqAtom);
+  const confirmReq = useAtomValue(confirmReqAtom);
+  const resolvePrompt = useSetAtom(resolvePromptAtom);
+  const resolveConfirm = useSetAtom(resolveConfirmAtom);
 
   return (
     <>
       <Dialog
         open={promptReq !== null}
         onOpenChange={(open) => {
-          if (!open) resolvePrompt(null)
+          if (!open) resolvePrompt(null);
         }}
       >
         <DialogContent>
@@ -59,7 +58,7 @@ export function Dialogs() {
       <AlertDialog
         open={confirmReq !== null}
         onOpenChange={(open) => {
-          if (!open) resolveConfirm(false)
+          if (!open) resolveConfirm(false);
         }}
       >
         <AlertDialogContent>
@@ -72,7 +71,9 @@ export function Dialogs() {
                   </AlertDialogMedia>
                 )}
                 <AlertDialogTitle>{confirmReq.title}</AlertDialogTitle>
-                <AlertDialogDescription>{confirmReq.message}</AlertDialogDescription>
+                <AlertDialogDescription>
+                  {confirmReq.message}
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -88,26 +89,32 @@ export function Dialogs() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }
 
-function PromptForm({ req, onSubmit }: { req: PromptRequest; onSubmit: (value: string) => void }) {
-  const [value, setValue] = useState(req.initialValue)
+function PromptForm({
+  req,
+  onSubmit,
+}: {
+  req: PromptRequest;
+  onSubmit: (value: string) => void;
+}) {
+  const [value, setValue] = useState(req.initialValue);
 
   const focusRef = useCallback((el: HTMLInputElement | null) => {
-    if (!el) return
-    el.focus()
-    const dot = el.value.lastIndexOf('.')
-    el.setSelectionRange(0, dot > 0 ? dot : el.value.length, 'backward')
-    el.scrollLeft = 0
-  }, [])
+    if (!el) return;
+    el.focus();
+    const dot = el.value.lastIndexOf('.');
+    el.setSelectionRange(0, dot > 0 ? dot : el.value.length, 'backward');
+    el.scrollLeft = 0;
+  }, []);
 
-  const trimmed = value.trim()
+  const trimmed = value.trim();
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    if (trimmed) onSubmit(trimmed)
-  }
+    e.preventDefault();
+    if (trimmed) onSubmit(trimmed);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="contents">
@@ -123,11 +130,13 @@ function PromptForm({ req, onSubmit }: { req: PromptRequest; onSubmit: (value: s
       />
 
       <DialogFooter>
-        <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
+        <DialogClose render={<Button type="button" variant="outline" />}>
+          Cancel
+        </DialogClose>
         <Button type="submit" disabled={!trimmed}>
           {req.confirmLabel}
         </Button>
       </DialogFooter>
     </form>
-  )
+  );
 }

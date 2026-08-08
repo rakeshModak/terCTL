@@ -1,7 +1,7 @@
-import { useNavigate } from '@tanstack/react-router'
-import { useSetAtom } from 'jotai'
-import { Server, SquareTerminal } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useNavigate } from '@tanstack/react-router';
+import { useSetAtom } from 'jotai';
+import { Server, SquareTerminal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyContent,
@@ -9,17 +9,17 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty'
-import { openLocalTerminalAtom, setNewTabPickerAtom } from '../../store/app'
+} from '@/components/ui/empty';
+import { openLocalTerminalAtom, setNewTabPickerAtom } from '../../store/app';
 
 /** Shown over the terminal area when no tabs are open. */
 export default function EmptyWorkspace() {
-  const openLocalTerminal = useSetAtom(openLocalTerminalAtom)
-  const setNewTabPicker = useSetAtom(setNewTabPickerAtom)
-  const navigate = useNavigate()
+  const openLocalTerminal = useSetAtom(openLocalTerminalAtom);
+  const setNewTabPicker = useSetAtom(setNewTabPickerAtom);
+  const navigate = useNavigate();
 
   return (
-    <div className="absolute inset-0 z-[4] flex items-center justify-center bg-background">
+    <div className="bg-background absolute inset-0 z-[4] flex items-center justify-center">
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -39,8 +39,8 @@ export default function EmptyWorkspace() {
             <Button
               variant="outline"
               onClick={() => {
-                setNewTabPicker(false)
-                navigate({ to: '/hosts' })
+                setNewTabPicker(false);
+                navigate({ to: '/hosts' });
               }}
             >
               <Server />
@@ -50,5 +50,5 @@ export default function EmptyWorkspace() {
         </EmptyContent>
       </Empty>
     </div>
-  )
+  );
 }

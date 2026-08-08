@@ -1,9 +1,9 @@
-import { useState, type FormEvent } from 'react'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { TerminalSquare } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useState, type FormEvent } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { TerminalSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -11,7 +11,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetClose,
@@ -20,29 +20,37 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { TagInput } from '@/components/ui/tag-input'
-import { allTagsAtom, groupsAtom, refreshAllAtom } from '../../store/app'
-import { credentialsService } from '../../services/credentials.service'
-import { hostsService } from '../../services/hosts.service'
-import type { AuthKindType, HostType } from '@/types/host'
-import GroupFormDialog from './group-form-dialog'
-import TermSchemeSelect from './term-scheme-select'
+} from '@/components/ui/sheet';
+import { TagInput } from '@/components/ui/tag-input';
+import { allTagsAtom, groupsAtom, refreshAllAtom } from '../../store/app';
+import { credentialsService } from '../../services/credentials.service';
+import { hostsService } from '../../services/hosts.service';
+import type { AuthKindType, HostType } from '@/types/host';
+import GroupFormDialog from './group-form-dialog';
+import TermSchemeSelect from './term-scheme-select';
 
-const UNGROUPED = '__ungrouped__'
-const NEW_GROUP = '__new_group__'
+const UNGROUPED = '__ungrouped__';
+const NEW_GROUP = '__new_group__';
 
 interface HostFormSheetProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  host?: HostType
-  defaultGroupId: string | null
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  host?: HostType;
+  defaultGroupId: string | null;
 }
 
-export default function HostFormSheet({ open, onOpenChange, host, defaultGroupId }: HostFormSheetProps) {
+export default function HostFormSheet({
+  open,
+  onOpenChange,
+  host,
+  defaultGroupId,
+}: HostFormSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full gap-0 p-0 data-[side=right]:sm:max-w-md">
+      <SheetContent
+        side="right"
+        className="w-full gap-0 p-0 data-[side=right]:sm:max-w-md"
+      >
         <HostFormBody
           host={host}
           defaultGroupId={defaultGroupId}
@@ -50,45 +58,51 @@ export default function HostFormSheet({ open, onOpenChange, host, defaultGroupId
         />
       </SheetContent>
     </Sheet>
-  )
+  );
 }
 
 interface HostFormBodyProps {
-  host?: HostType
-  defaultGroupId: string | null
-  onDone: () => void
+  host?: HostType;
+  defaultGroupId: string | null;
+  onDone: () => void;
 }
 
 function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
-  const groups = useAtomValue(groupsAtom)
-  const allTags = useAtomValue(allTagsAtom)
-  const refreshAll = useSetAtom(refreshAllAtom)
+  const groups = useAtomValue(groupsAtom);
+  const allTags = useAtomValue(allTagsAtom);
+  const refreshAll = useSetAtom(refreshAllAtom);
 
-  const [label, setLabel] = useState(host?.label ?? '')
-  const [hostname, setHostname] = useState(host?.hostname ?? '')
-  const [port, setPort] = useState(String(host?.port ?? 22))
-  const [username, setUsername] = useState(host?.username ?? 'root')
-  const [authKind, setAuthKind] = useState<AuthKindType>(host?.authKind ?? 'key')
-  const [keyPath, setKeyPath] = useState(host?.keyRef ?? '~/.ssh/id_ed25519')
-  const [password, setPassword] = useState('')
-  const [passphrase, setPassphrase] = useState('')
-  const [groupId, setGroupId] = useState<string | null>(host?.groupId ?? defaultGroupId)
-  const [tags, setTags] = useState<string[]>(host?.tags ?? [])
-  const [termScheme, setTermScheme] = useState<string | null>(host?.termScheme ?? null)
-  const [error, setError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [groupDialogOpen, setGroupDialogOpen] = useState(false)
+  const [label, setLabel] = useState(host?.label ?? '');
+  const [hostname, setHostname] = useState(host?.hostname ?? '');
+  const [port, setPort] = useState(String(host?.port ?? 22));
+  const [username, setUsername] = useState(host?.username ?? 'root');
+  const [authKind, setAuthKind] = useState<AuthKindType>(
+    host?.authKind ?? 'key',
+  );
+  const [keyPath, setKeyPath] = useState(host?.keyRef ?? '~/.ssh/id_ed25519');
+  const [password, setPassword] = useState('');
+  const [passphrase, setPassphrase] = useState('');
+  const [groupId, setGroupId] = useState<string | null>(
+    host?.groupId ?? defaultGroupId,
+  );
+  const [tags, setTags] = useState<string[]>(host?.tags ?? []);
+  const [termScheme, setTermScheme] = useState<string | null>(
+    host?.termScheme ?? null,
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
 
   const handleCreateGroup = async (name: string) => {
-    const group = await hostsService.addGroup(name)
-    await refreshAll()
-    setGroupId(group.id)
-  }
+    const group = await hostsService.addGroup(name);
+    await refreshAll();
+    setGroupId(group.id);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    setError(null)
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
     try {
       const shared = {
         label: label || `${username}@${hostname}`,
@@ -101,38 +115,38 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
         tags,
         accent: null,
         termScheme,
-      }
+      };
 
-      let savedId: string
+      let savedId: string;
       if (host) {
-        await hostsService.update({ ...host, ...shared })
-        savedId = host.id
+        await hostsService.update({ ...host, ...shared });
+        savedId = host.id;
       } else {
-        savedId = (await hostsService.add(shared)).id
+        savedId = (await hostsService.add(shared)).id;
       }
 
       if (authKind === 'key' && passphrase) {
-        await credentialsService.save(savedId, 'passphrase', passphrase)
+        await credentialsService.save(savedId, 'passphrase', passphrase);
       }
       if (authKind === 'password' && password) {
-        await credentialsService.save(savedId, 'password', password)
+        await credentialsService.save(savedId, 'password', password);
       }
 
-      await refreshAll()
-      onDone()
+      await refreshAll();
+      onDone();
     } catch (err) {
-      setError(String(err))
+      setError(String(err));
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   return (
     <>
       <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col">
         {/* pr-12 clears the sheet's built-in close button at top-4 right-4. */}
         <SheetHeader className="flex-row items-center gap-3 border-b p-4 pr-12">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <span className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
             <TerminalSquare className="size-4" />
           </span>
           <div className="min-w-0 flex-1">
@@ -178,13 +192,18 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
             <Label htmlFor="host-auth">Auth</Label>
             <Select
               value={authKind}
-              onValueChange={(value: AuthKindType | null) => value && setAuthKind(value)}
+              onValueChange={(value: AuthKindType | null) =>
+                value && setAuthKind(value)
+              }
               items={[
                 { value: 'key', label: 'Private key' },
                 { value: 'password', label: 'Password' },
               ]}
             >
-              <SelectTrigger id="host-auth" className="w-full data-[size=default]:h-9">
+              <SelectTrigger
+                id="host-auth"
+                className="w-full data-[size=default]:h-9"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -206,7 +225,9 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
                 type="password"
                 value={passphrase}
                 onChange={(e) => setPassphrase(e.currentTarget.value)}
-                placeholder={host ? '(leave blank to keep current)' : '(optional)'}
+                placeholder={
+                  host ? '(leave blank to keep current)' : '(optional)'
+                }
               />
             </>
           ) : (
@@ -225,10 +246,10 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
               value={groupId ?? UNGROUPED}
               onValueChange={(value: string | null) => {
                 if (value === NEW_GROUP) {
-                  setGroupDialogOpen(true)
-                  return
+                  setGroupDialogOpen(true);
+                  return;
                 }
-                setGroupId(!value || value === UNGROUPED ? null : value)
+                setGroupId(!value || value === UNGROUPED ? null : value);
               }}
               items={[
                 { value: UNGROUPED, label: 'Ungrouped' },
@@ -236,7 +257,10 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
                 { value: NEW_GROUP, label: 'New group…' },
               ]}
             >
-              <SelectTrigger id="host-group" className="w-full data-[size=default]:h-9">
+              <SelectTrigger
+                id="host-group"
+                className="w-full data-[size=default]:h-9"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -262,11 +286,13 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
 
           <TermSchemeSelect value={termScheme} onChange={setTermScheme} />
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-destructive text-sm">{error}</p>}
         </div>
 
         <SheetFooter className="flex-row justify-end border-t p-4">
-          <SheetClose render={<Button type="button" variant="outline" />}>Cancel</SheetClose>
+          <SheetClose render={<Button type="button" variant="outline" />}>
+            Cancel
+          </SheetClose>
           <Button type="submit" disabled={saving}>
             {saving ? 'Saving…' : 'Save'}
           </Button>
@@ -286,5 +312,5 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
         onSubmit={(name) => void handleCreateGroup(name)}
       />
     </>
-  )
+  );
 }

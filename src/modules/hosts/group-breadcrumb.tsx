@@ -5,26 +5,31 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import type { BreadcrumbEntry } from '@/hooks/useHostsBrowser'
+} from '@/components/ui/breadcrumb';
+import type { BreadcrumbEntry } from '@/hooks/useHostsBrowser';
 
 interface GroupBreadcrumbProps {
-  trail: BreadcrumbEntry[]
+  trail: BreadcrumbEntry[];
   /** Called with the depth to truncate the open path to. */
-  onNavigate: (depth: number) => void
+  onNavigate: (depth: number) => void;
 }
 
 /** Root-to-current group trail. The last entry is the group being viewed. */
-export default function GroupBreadcrumb({ trail, onNavigate }: GroupBreadcrumbProps) {
+export default function GroupBreadcrumb({
+  trail,
+  onNavigate,
+}: GroupBreadcrumbProps) {
   return (
     <Breadcrumb className="mb-5">
       <BreadcrumbList>
         {trail.map((entry, i) => {
-          const last = i === trail.length - 1
+          const last = i === trail.length - 1;
           return (
             <BreadcrumbItem key={entry.id ?? 'root'}>
               {last ? (
-                <BreadcrumbPage className="font-medium">{entry.name}</BreadcrumbPage>
+                <BreadcrumbPage className="font-medium">
+                  {entry.name}
+                </BreadcrumbPage>
               ) : (
                 <>
                   <BreadcrumbLink
@@ -42,9 +47,9 @@ export default function GroupBreadcrumb({ trail, onNavigate }: GroupBreadcrumbPr
                 </>
               )}
             </BreadcrumbItem>
-          )
+          );
         })}
       </BreadcrumbList>
     </Breadcrumb>
-  )
+  );
 }

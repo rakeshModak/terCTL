@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState, type FormEvent } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogClose,
@@ -8,18 +8,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 interface GroupFormDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description: string
-  confirmLabel: string
-  placeholder?: string
-  initialValue?: string
-  onSubmit: (name: string) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  placeholder?: string;
+  initialValue?: string;
+  onSubmit: (name: string) => void;
 }
 
 export default function GroupFormDialog({
@@ -42,13 +42,13 @@ export default function GroupFormDialog({
           placeholder={placeholder}
           initialValue={initialValue}
           onSubmit={(next) => {
-            onSubmit(next)
-            onOpenChange(false)
+            onSubmit(next);
+            onOpenChange(false);
           }}
         />
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 function GroupForm({
@@ -59,22 +59,22 @@ function GroupForm({
   initialValue,
   onSubmit,
 }: {
-  title: string
-  description: string
-  confirmLabel: string
-  placeholder?: string
-  initialValue: string
-  onSubmit: (name: string) => void
+  title: string;
+  description: string;
+  confirmLabel: string;
+  placeholder?: string;
+  initialValue: string;
+  onSubmit: (name: string) => void;
 }) {
-  const [name, setName] = useState(initialValue)
-  const trimmed = name.trim()
+  const [name, setName] = useState(initialValue);
+  const trimmed = name.trim();
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!trimmed) return
-    onSubmit(trimmed)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!trimmed) return;
+    onSubmit(trimmed);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="contents">
@@ -92,11 +92,13 @@ function GroupForm({
       />
 
       <DialogFooter>
-        <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
+        <DialogClose render={<Button type="button" variant="outline" />}>
+          Cancel
+        </DialogClose>
         <Button type="submit" disabled={!trimmed}>
           {confirmLabel}
         </Button>
       </DialogFooter>
     </form>
-  )
+  );
 }

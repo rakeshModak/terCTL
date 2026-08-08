@@ -1,36 +1,51 @@
-import { Copy, FolderSymlink, Network, PanelRightClose, SquareTerminal, Unplug } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
-import type { HostType } from '@/types/host'
-import type { SessionType } from '../../store/app'
-import MetricsPanel from './metrics-panel'
+import {
+  Copy,
+  FolderSymlink,
+  Network,
+  PanelRightClose,
+  SquareTerminal,
+  Unplug,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import type { HostType } from '@/types/host';
+import type { SessionType } from '../../store/app';
+import MetricsPanel from './metrics-panel';
 
 interface InspectorProps {
-  session: SessionType
+  session: SessionType;
   /** null for a local shell — it has no Host record behind it. */
-  host: HostType | null
-  onClose: () => void
-  onDisconnect: () => void
-  onDuplicate: () => void
-  onOpenSftp: () => void
+  host: HostType | null;
+  onClose: () => void;
+  onDisconnect: () => void;
+  onDuplicate: () => void;
+  onOpenSftp: () => void;
 }
 
 const STATUS_LABEL: Record<SessionType['status'], string> = {
   connected: 'CONNECTED',
   disconnected: 'DISCONNECTED',
   reconnecting: 'RECONNECTING',
-}
+};
 
 /** label / value line in the detail grid. */
-function Detail({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function Detail({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+}) {
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
       <dd className={cn('truncate', tone)}>{value}</dd>
     </>
-  )
+  );
 }
 
 /**
@@ -48,11 +63,11 @@ export default function Inspector({
   onDuplicate,
   onOpenSftp,
 }: InspectorProps) {
-  const connected = session.status === 'connected'
-  const isLocal = host === null
+  const connected = session.status === 'connected';
+  const isLocal = host === null;
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col gap-3.5 overflow-y-auto border-l border-border bg-sidebar p-4">
+    <aside className="border-border bg-sidebar flex w-72 shrink-0 flex-col gap-3.5 overflow-y-auto border-l p-4">
       <Card size="sm" className="gap-3 px-4">
         <div className="flex items-center gap-2.5">
           <span
@@ -60,18 +75,28 @@ export default function Inspector({
               'size-2.5 shrink-0 rounded-full',
               connected ? 'bg-chart-4' : 'bg-destructive',
             )}
-            style={{ boxShadow: `0 0 9px ${connected ? 'var(--green)' : 'var(--red)'}` }}
+            style={{
+              boxShadow: `0 0 9px ${connected ? 'var(--green)' : 'var(--red)'}`,
+            }}
           />
           <span className="min-w-0 flex-1 truncate text-sm font-semibold">
             {host?.label ?? session.label}
           </span>
           <Badge
             variant="secondary"
-            className={cn('shrink-0', connected ? 'text-chart-4' : 'text-destructive')}
+            className={cn(
+              'shrink-0',
+              connected ? 'text-chart-4' : 'text-destructive',
+            )}
           >
             {STATUS_LABEL[session.status]}
           </Badge>
-          <Button variant="ghost" size="icon-xs" onClick={onClose} title="Collapse details">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={onClose}
+            title="Collapse details"
+          >
             <PanelRightClose />
           </Button>
         </div>
@@ -84,7 +109,9 @@ export default function Inspector({
               <Detail label="port" value={String(host.port)} />
               <Detail
                 label="auth"
-                value={host.authKind === 'key' ? (host.keyRef ?? 'key') : 'password'}
+                value={
+                  host.authKind === 'key' ? (host.keyRef ?? 'key') : 'password'
+                }
                 tone="text-chart-3"
               />
             </>
@@ -101,7 +128,11 @@ export default function Inspector({
           Keyed so switching host or reconnecting remounts and resets history,
           rather than resetting state from inside the polling effect. */}
       {host && (
-        <MetricsPanel key={`${host.id}-${connected}`} hostId={host.id} connected={connected} />
+        <MetricsPanel
+          key={`${host.id}-${connected}`}
+          hostId={host.id}
+          connected={connected}
+        />
       )}
 
       <div className="grid grid-cols-2 gap-2">
@@ -127,5 +158,5 @@ export default function Inspector({
         </Button>
       </div>
     </aside>
-  )
+  );
 }

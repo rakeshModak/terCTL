@@ -1,49 +1,54 @@
-import { useNavigate } from '@tanstack/react-router'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { Avatar, AvatarBadge, AvatarFallback } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { cn } from '@/lib/utils'
+import { useNavigate } from '@tanstack/react-router';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { Avatar, AvatarBadge, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import {
   activeSessionIdAtom,
   sessionsAtom,
   setActiveSessionAtom,
   type SessionType,
-} from '../../store/app'
+} from '../../store/app';
 
 const STATUS: Record<SessionType['status'], { tone: string; label: string }> = {
   connected: { tone: 'bg-chart-4', label: 'Connected' },
   disconnected: { tone: 'bg-destructive', label: 'Disconnected' },
   reconnecting: { tone: 'bg-chart-5', label: 'Reconnecting…' },
-}
+};
 
-const initial = (label: string) => (/[a-z0-9]/i.exec(label)?.[0] ?? '?').toUpperCase()
+const initial = (label: string) =>
+  (/[a-z0-9]/i.exec(label)?.[0] ?? '?').toUpperCase();
 
 function ConnectedSessions() {
-  const sessions = useAtomValue(sessionsAtom)
-  const activeId = useAtomValue(activeSessionIdAtom)
-  const setActiveSession = useSetAtom(setActiveSessionAtom)
-  const navigate = useNavigate()
+  const sessions = useAtomValue(sessionsAtom);
+  const activeId = useAtomValue(activeSessionIdAtom);
+  const setActiveSession = useSetAtom(setActiveSessionAtom);
+  const navigate = useNavigate();
 
-  if (sessions.length === 0) return null
+  if (sessions.length === 0) return null;
 
   const focus = (id: string) => {
-    setActiveSession(id)
-    navigate({ to: '/sessions' })
-  }
+    setActiveSession(id);
+    navigate({ to: '/sessions' });
+  };
 
   return (
     <>
       <Separator className="my-1.5 w-7" />
-      <ul className="flex min-h-0 flex-col items-center gap-2 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+      <ul className="flex min-h-0 scrollbar-none flex-col items-center gap-2 overflow-y-auto [&::-webkit-scrollbar]:hidden">
         {sessions.map(({ id, label, status }) => {
-          const active = id === activeId
+          const active = id === activeId;
           return (
             <li key={id}>
               <Tooltip>
                 <TooltipTrigger
                   render={<button type="button" onClick={() => focus(id)} />}
-                  className="relative flex rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="focus-visible:ring-ring relative flex rounded-full outline-none focus-visible:ring-2"
                 >
                   <span
                     className={cn(
@@ -70,11 +75,11 @@ function ConnectedSessions() {
                 </TooltipContent>
               </Tooltip>
             </li>
-          )
+          );
         })}
       </ul>
     </>
-  )
+  );
 }
 
-export default ConnectedSessions
+export default ConnectedSessions;
