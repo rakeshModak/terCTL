@@ -1,14 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { Search } from 'lucide-react'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
-import { PALETTE_HINT } from '../../lib/platform'
-
 interface HostsSearchProps {
   value: string
   onChange: (value: string) => void
 }
 
-export function HostsSearch({ value, onChange }: HostsSearchProps) {
+export default function HostsSearch({ value, onChange }: HostsSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -37,11 +35,6 @@ export function HostsSearch({ value, onChange }: HostsSearchProps) {
         className="h-11"
       />
 
-      <InputGroupAddon align="inline-end" className="pr-2.5">
-        <kbd className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground">
-          {PALETTE_HINT}
-        </kbd>
-      </InputGroupAddon>
     </InputGroup>
   )
 }

@@ -1,5 +1,3 @@
-// Cross-platform OS detection from the WebView user agent. Kept in one place so
-// no UI hardcodes a single platform (the app ships to macOS, Windows, and Linux).
 const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
 
 export const IS_WINDOWS = /Windows/i.test(ua)

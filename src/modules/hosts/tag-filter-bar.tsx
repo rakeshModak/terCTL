@@ -6,7 +6,7 @@ interface TagFilterBarProps {
   onChange: (tag: string | null) => void
 }
 
-export function TagFilterBar({ tags, value, onChange }: TagFilterBarProps) {
+export default function TagFilterBar({ tags, value, onChange }: TagFilterBarProps) {
   if (tags.length === 0) return null
 
   return (

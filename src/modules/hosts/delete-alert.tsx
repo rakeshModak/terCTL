@@ -21,7 +21,7 @@ interface DeleteAlertProps {
 }
 
 
-export function DeleteAlert({
+export default function DeleteAlert({
   open,
   onOpenChange,
   title,

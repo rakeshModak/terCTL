@@ -8,17 +8,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { Group } from '../../models'
+import type { GroupType } from '@/types/host'
 
 interface GroupCardProps {
-  group: Group
+  group: GroupType
   hostCount: number
   onOpen: () => void
   onRename: () => void
   onDelete: () => void
 }
 
-export function GroupCard({ group, hostCount, onOpen, onRename, onDelete }: GroupCardProps) {
+export default function GroupCard({ group, hostCount, onOpen, onRename, onDelete }: GroupCardProps) {
   return (
     <Card
       size="sm"

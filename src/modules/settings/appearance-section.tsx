@@ -9,16 +9,16 @@ import {
   settingsAtom,
 } from '../../store/settings'
 import type { ResolvedMode } from '../../lib/theme'
-import { AccentPicker } from './AccentPicker'
-import { FontSizeStepper } from './FontSizeStepper'
-import { ModePicker } from './ModePicker'
-import { SettingRow, SettingRowList } from './SettingRow'
-import { SettingsGroup, SettingsSection } from './SettingsSection'
-import { TerminalSchemePicker } from './TerminalSchemePicker'
-import { ThemePicker } from './ThemePicker'
+import AccentPicker from './accent-picker'
+import FontSizeStepper from './font-size-stepper'
+import ModePicker from './mode-picker'
+import SettingRow, { SettingRowList } from './setting-row'
+import SettingsSection, { SettingsGroup } from './settings-section'
+import TerminalSchemePicker from './terminal-scheme-picker'
+import ThemePicker from './theme-picker'
 
 /** `mode` is the user's choice; `resolvedMode` is what is actually rendering. */
-export function AppearanceSection({ resolvedMode }: { resolvedMode: ResolvedMode }) {
+export default function AppearanceSection({ resolvedMode }: { resolvedMode: ResolvedMode }) {
   const { fontSize, accent, theme, termScheme, mode } = useAtomValue(settingsAtom)
   const bumpFontSize = useSetAtom(bumpFontSizeAtom)
   const setAccent = useSetAtom(setAccentAtom)

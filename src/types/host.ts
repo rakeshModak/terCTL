@@ -1,12 +1,12 @@
-export type AuthKind = 'password' | 'key'
+export type AuthKindType = 'password' | 'key'
 
-export interface Host {
+export interface HostType {
   id: string
   label: string
   hostname: string
   port: number
   username: string
-  authKind: AuthKind
+  authKind: AuthKindType
   keyRef: string | null
   groupId: string | null
   tags: string[]
@@ -15,12 +15,12 @@ export interface Host {
   termScheme: string | null
 }
 
-export interface NewHost {
+export interface NewHostType {
   label: string
   hostname: string
   port: number
   username: string
-  authKind: AuthKind
+  authKind: AuthKindType
   keyRef: string | null
   groupId: string | null
   tags: string[]
@@ -28,7 +28,7 @@ export interface NewHost {
   termScheme: string | null
 }
 
-export interface Group {
+export interface GroupType {
   id: string
   name: string
   parentId: string | null

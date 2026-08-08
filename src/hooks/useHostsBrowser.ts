@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import type { Group, Host } from "../../models";
+import type { GroupType, HostType } from '@/types/host';
 
 export interface HostsBrowserArgs {
-  hosts: Host[];
-  groups: Group[];
+  hosts: HostType[];
+  groups: GroupType[];
   path: string[];
   query: string;
   tagFilter: string | null;
@@ -16,11 +16,11 @@ export interface BreadcrumbEntry {
 
 export interface HostsBrowserView {
   currentGroupId: string | null;
-  currentGroup: Group | null;
+  currentGroup: GroupType | null;
   insideGroup: boolean;
   searching: boolean;
-  subgroups: Group[];
-  visibleHosts: Host[];
+  subgroups: GroupType[];
+  visibleHosts: HostType[];
   breadcrumb: BreadcrumbEntry[];
   rootGroupCount: number;
   isEmpty: boolean;
@@ -37,7 +37,7 @@ export function useHostsBrowser({
   const currentGroupId = path.length ? path[path.length - 1] : null;
 
   const countDescendants = useMemo(() => {
-    const childrenOf = new Map<string | null, Group[]>();
+    const childrenOf = new Map<string | null, GroupType[]>();
     for (const g of groups) {
       const arr = childrenOf.get(g.parentId) ?? [];
       arr.push(g);
@@ -63,7 +63,7 @@ export function useHostsBrowser({
   const searching = q.length > 0;
 
   const visibleHosts = useMemo(() => {
-    const matchesQuery = (h: Host) =>
+    const matchesQuery = (h: HostType) =>
       !q ||
       h.label.toLowerCase().includes(q) ||
       h.hostname.toLowerCase().includes(q) ||

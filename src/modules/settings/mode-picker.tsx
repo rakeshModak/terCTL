@@ -13,7 +13,7 @@ interface ModePickerProps {
   onChange: (mode: ThemeMode) => void
 }
 
-export function ModePicker({ value, onChange }: ModePickerProps) {
+export default function ModePicker({ value, onChange }: ModePickerProps) {
   return (
     <Tabs
       value={value}

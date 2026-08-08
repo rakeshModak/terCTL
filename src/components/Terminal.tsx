@@ -4,10 +4,10 @@ import { FitAddon } from '@xterm/addon-fit'
 import { listen } from '@tauri-apps/api/event'
 import { getDefaultStore, useAtomValue } from 'jotai'
 import '@xterm/xterm/css/xterm.css'
-import { terminalFontFamily, TERM_SCHEMES } from '../../constants/terminal-schemes'
-import { settingsAtom } from '../../store/settings'
-import { sshService } from '../../services/ssh.service'
-import { IS_MAC } from '../../lib/platform'
+import { terminalFontFamily, TERM_SCHEMES } from '../constants/terminal-schemes'
+import { settingsAtom } from '../store/settings'
+import { sshService } from '../services/ssh.service'
+import { IS_MAC } from '../lib/platform'
 import { Search, ChevronUp, ChevronDown, X, CaseSensitive, Regex } from 'lucide-react'
 
 interface TermOutputEvent {
@@ -64,7 +64,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   const settings = useAtomValue(settingsAtom)
   const fontSize = settings.fontSize
   const globalScheme = settings.termScheme
-  // Host override wins over the global scheme when set to a known scheme.
+  // HostType override wins over the global scheme when set to a known scheme.
   const termScheme = scheme && TERM_SCHEMES[scheme] ? scheme : globalScheme
 
   useEffect(() => {

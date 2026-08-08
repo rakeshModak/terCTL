@@ -25,9 +25,9 @@ import { TagInput } from '@/components/ui/tag-input'
 import { allTagsAtom, groupsAtom, refreshAllAtom } from '../../store/app'
 import { credentialsService } from '../../services/credentials.service'
 import { hostsService } from '../../services/hosts.service'
-import type { AuthKind, Host } from '../../models'
-import { GroupFormDialog } from './GroupFormDialog'
-import { TermSchemeSelect } from './TermSchemeSelect'
+import type { AuthKindType, HostType } from '@/types/host'
+import GroupFormDialog from './group-form-dialog'
+import TermSchemeSelect from './term-scheme-select'
 
 const UNGROUPED = '__ungrouped__'
 const NEW_GROUP = '__new_group__'
@@ -35,11 +35,11 @@ const NEW_GROUP = '__new_group__'
 interface HostFormSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  host?: Host
+  host?: HostType
   defaultGroupId: string | null
 }
 
-export function HostFormSheet({ open, onOpenChange, host, defaultGroupId }: HostFormSheetProps) {
+export default function HostFormSheet({ open, onOpenChange, host, defaultGroupId }: HostFormSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full gap-0 p-0 data-[side=right]:sm:max-w-md">
@@ -54,7 +54,7 @@ export function HostFormSheet({ open, onOpenChange, host, defaultGroupId }: Host
 }
 
 interface HostFormBodyProps {
-  host?: Host
+  host?: HostType
   defaultGroupId: string | null
   onDone: () => void
 }
@@ -68,7 +68,7 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
   const [hostname, setHostname] = useState(host?.hostname ?? '')
   const [port, setPort] = useState(String(host?.port ?? 22))
   const [username, setUsername] = useState(host?.username ?? 'root')
-  const [authKind, setAuthKind] = useState<AuthKind>(host?.authKind ?? 'key')
+  const [authKind, setAuthKind] = useState<AuthKindType>(host?.authKind ?? 'key')
   const [keyPath, setKeyPath] = useState(host?.keyRef ?? '~/.ssh/id_ed25519')
   const [password, setPassword] = useState('')
   const [passphrase, setPassphrase] = useState('')
@@ -178,7 +178,7 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
             <Label htmlFor="host-auth">Auth</Label>
             <Select
               value={authKind}
-              onValueChange={(value: AuthKind | null) => value && setAuthKind(value)}
+              onValueChange={(value: AuthKindType | null) => value && setAuthKind(value)}
               items={[
                 { value: 'key', label: 'Private key' },
                 { value: 'password', label: 'Password' },

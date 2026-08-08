@@ -13,7 +13,7 @@ interface SettingsNavProps {
   onChange: (id: string) => void
 }
 
-export function SettingsNav({ categories, value, onChange }: SettingsNavProps) {
+export default function SettingsNav({ categories, value, onChange }: SettingsNavProps) {
   return (
     <nav className="w-52 shrink-0 border-r border-border bg-sidebar px-3 py-5">
       <h1 className="mx-2 mb-4 font-heading text-base font-bold">Settings</h1>

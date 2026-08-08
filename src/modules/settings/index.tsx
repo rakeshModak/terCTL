@@ -1,13 +1,11 @@
-import { useState, useSyncExternalStore } from 'react'
-import { useAtomValue } from 'jotai'
+import { useState } from 'react'
 import { Palette, ShieldCheck, TerminalSquare } from 'lucide-react'
-import { settingsAtom } from '../../store/settings'
-import { getSystemMode, watchSystemMode, type ResolvedMode } from '../../lib/theme'
-import { AppearanceSection } from './AppearanceSection'
-import { SecuritySection } from './SecuritySection'
-import { SettingsNav, type SettingsCategory } from './SettingsNav'
-import { TerminalSection } from './TerminalSection'
-import { UpdateRow } from './UpdateRow'
+import { useResolvedMode } from '@/hooks/useResolvedMode'
+import AppearanceSection from './appearance-section'
+import SecuritySection from './security-section'
+import SettingsNav, { type SettingsCategory } from './settings-nav'
+import TerminalSection from './terminal-section'
+import UpdateRow from './update-row'
 
 const CATEGORIES: SettingsCategory[] = [
   { id: 'appearance', name: 'Appearance', Icon: Palette },
@@ -15,13 +13,8 @@ const CATEGORIES: SettingsCategory[] = [
   { id: 'security', name: 'Security', Icon: ShieldCheck },
 ]
 
-function useResolvedMode(): ResolvedMode {
-  const { mode } = useAtomValue(settingsAtom)
-  const systemMode = useSyncExternalStore(watchSystemMode, getSystemMode, () => 'dark' as const)
-  return mode === 'system' ? systemMode : mode
-}
 
-export function SettingsView() {
+export default function SettingsView() {
   const [category, setCategory] = useState('appearance')
   const resolvedMode = useResolvedMode()
 

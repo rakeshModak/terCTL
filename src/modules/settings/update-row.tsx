@@ -9,10 +9,10 @@ import {
   updateStatusAtom,
 } from '../../store/updater'
 import { appVersionAtom } from '../../store/version'
-import { SettingRow } from './SettingRow'
+import SettingRow from './setting-row'
 
 /** Pinned to the bottom of every settings pane. */
-export function UpdateRow() {
+export default function UpdateRow() {
   const updateStatus = useAtomValue(updateStatusAtom)
   const availableUpdate = useAtomValue(availableUpdateAtom)
   const updateError = useAtomValue(updateErrorAtom)

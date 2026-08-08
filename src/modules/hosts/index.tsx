@@ -13,29 +13,29 @@ import {
   tagFilterAtom,
 } from '../../store/app'
 import { hostsService } from '../../services/hosts.service'
-import type { Group, Host } from '../../models'
-import { ActiveSessions } from './ActiveSessions'
-import { DeleteAlert } from './DeleteAlert'
-import { GroupBreadcrumb } from './GroupBreadcrumb'
-import { GroupCard } from './GroupCard'
-import { GroupFormDialog } from './GroupFormDialog'
-import { HostCard } from './HostCard'
-import { HostFormSheet } from './HostFormSheet'
-import { HostsEmptyState } from './HostsEmptyState'
-import { HostsHeader } from './HostsHeader'
-import { HostsSearch } from './HostsSearch'
-import { SectionHeading } from './SectionHeading'
-import { TagFilterBar } from './TagFilterBar'
-import { useHostsBrowser } from './useHostsBrowser'
+import type { GroupType, HostType } from '@/types/host'
+import ActiveSessions from './active-sessions'
+import DeleteAlert from './delete-alert'
+import GroupBreadcrumb from './group-breadcrumb'
+import GroupCard from './group-card'
+import GroupFormDialog from './group-form-dialog'
+import HostCard from './host-card'
+import HostFormSheet from './host-form-sheet'
+import HostsEmptyState from './hosts-empty-state'
+import HostsHeader from './hosts-header'
+import HostsSearch from './hosts-search'
+import SectionHeading from './section-heading'
+import TagFilterBar from './tag-filter-bar'
+import { useHostsBrowser } from '@/hooks/useHostsBrowser'
 
-type HostSheetArgs = { host?: Host; groupId: string | null }
+type HostSheetArgs = { host?: HostType; groupId: string | null }
 type GroupDialogArgs =
-  { mode: 'create'; parentId: string | null } | { mode: 'rename'; group: Group }
-type DeleteTarget = { kind: 'group'; group: Group } | { kind: 'host'; host: Host }
+  { mode: 'create'; parentId: string | null } | { mode: 'rename'; group: GroupType }
+type DeleteTarget = { kind: 'group'; group: GroupType } | { kind: 'host'; host: HostType }
 
 const GRID = 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(258px,1fr))]'
 
-export function HostsPage() {
+export default function HostsPage() {
   const hosts = useAtomValue(hostsAtom)
   const groups = useAtomValue(groupsAtom)
   const allTags = useAtomValue(allTagsAtom)
@@ -77,7 +77,7 @@ export function HostsPage() {
     setSheetOpen(true)
   }
 
-  const openEditHost = (host: Host) => {
+  const openEditHost = (host: HostType) => {
     setSheetArgs({ host, groupId: null })
     setSheetOpen(true)
   }
@@ -87,7 +87,7 @@ export function HostsPage() {
     setGroupDialogOpen(true)
   }
 
-  const openRenameGroup = (group: Group) => {
+  const openRenameGroup = (group: GroupType) => {
     setGroupDialogArgs({ mode: 'rename', group })
     setGroupDialogOpen(true)
   }
@@ -121,7 +121,7 @@ export function HostsPage() {
     navigate({ to: '/sessions' })
   }
 
-  const openHost = (host: Host) => {
+  const openHost = (host: HostType) => {
     const existing = sessionByHostId.get(host.id)
     if (existing) {
       openSession(existing)

@@ -11,7 +11,7 @@ interface SectionHeadingProps {
 }
 
 /** The small uppercase label that introduces each section of the page. */
-export function SectionHeading({ children, detail, count, trailing }: SectionHeadingProps) {
+export default function SectionHeading({ children, detail, count, trailing }: SectionHeadingProps) {
   return (
     <div className="mb-3 flex items-center gap-2">
       <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">

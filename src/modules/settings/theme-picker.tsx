@@ -6,11 +6,10 @@ import { themeSwatch, type ResolvedMode } from '../../lib/theme'
 interface ThemePickerProps {
   value: string
   onChange: (theme: string) => void
-  /** Swatches preview the theme as it renders in the mode currently applied. */
   mode: ResolvedMode
 }
 
-export function ThemePicker({ value, onChange, mode }: ThemePickerProps) {
+export default function ThemePicker({ value, onChange, mode }: ThemePickerProps) {
   return (
     <div className="flex flex-wrap gap-3">
       {Object.keys(THEMES).map((name) => {

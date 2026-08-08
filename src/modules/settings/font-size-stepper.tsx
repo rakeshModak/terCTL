@@ -6,7 +6,7 @@ interface FontSizeStepperProps {
   onBump: (delta: number) => void
 }
 
-export function FontSizeStepper({ value, onBump }: FontSizeStepperProps) {
+export default function FontSizeStepper({ value, onBump }: FontSizeStepperProps) {
   return (
     <div className="flex items-center gap-1 rounded-lg bg-muted p-0.5">
       <Button

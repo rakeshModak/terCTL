@@ -6,7 +6,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import type { BreadcrumbEntry } from './useHostsBrowser'
+import type { BreadcrumbEntry } from '@/hooks/useHostsBrowser'
 
 interface GroupBreadcrumbProps {
   trail: BreadcrumbEntry[]
@@ -15,7 +15,7 @@ interface GroupBreadcrumbProps {
 }
 
 /** Root-to-current group trail. The last entry is the group being viewed. */
-export function GroupBreadcrumb({ trail, onNavigate }: GroupBreadcrumbProps) {
+export default function GroupBreadcrumb({ trail, onNavigate }: GroupBreadcrumbProps) {
   return (
     <Breadcrumb className="mb-5">
       <BreadcrumbList>

@@ -1,4 +1,4 @@
-export interface FileEntry {
+export interface FileEntryType {
   name: string
   path: string
   isDir: boolean

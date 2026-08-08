@@ -11,17 +11,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
-import type { Host } from '../../models'
+import type { HostType } from '@/types/host'
 
 interface HostCardProps {
-  host: Host
+  host: HostType
   connected: boolean
   onConnect: () => void
   onEdit: () => void
   onDelete: () => void
 }
 
-export function HostCard({ host, connected, onConnect, onEdit, onDelete }: HostCardProps) {
+export default function HostCard({ host, connected, onConnect, onEdit, onDelete }: HostCardProps) {
   const AuthIcon = host.authKind === 'key' ? KeyRound : Lock
   const initial = (host.label.trim()[0] ?? '?').toUpperCase()
   const authLabel = host.authKind === 'key' ? 'Key' : 'Password'

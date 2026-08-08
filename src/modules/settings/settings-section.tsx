@@ -6,7 +6,7 @@ interface SettingsSectionProps {
   children: ReactNode
 }
 
-export function SettingsSection({ title, description, children }: SettingsSectionProps) {
+export default function SettingsSection({ title, description, children }: SettingsSectionProps) {
   return (
     <section className="max-w-3xl">
       <h2 className="font-heading text-xl font-bold tracking-tight">{title}</h2>

@@ -5,12 +5,10 @@ import { Separator } from '@/components/ui/separator'
 interface SettingRowProps {
   title: ReactNode
   description?: ReactNode
-  /** The control on the trailing edge. */
   action?: ReactNode
 }
 
-/** One label/description/control line. Meant to sit inside a SettingRowList. */
-export function SettingRow({ title, description, action }: SettingRowProps) {
+export default function SettingRow({ title, description, action }: SettingRowProps) {
   return (
     <div className="flex items-center gap-4 px-4 py-3">
       <div className="min-w-0 flex-1">
@@ -24,9 +22,6 @@ export function SettingRow({ title, description, action }: SettingRowProps) {
 
 /** Groups rows into one card, separating each pair. */
 export function SettingRowList({ children }: { children: ReactNode }) {
-  // Children.toArray rather than children.filter: React only hands back an
-  // array when there is more than one child, so a single-row list would
-  // otherwise throw. It also flattens fragments and assigns stable keys.
   const rows = Children.toArray(children)
   return (
     <Card size="sm" className="gap-0 py-1">

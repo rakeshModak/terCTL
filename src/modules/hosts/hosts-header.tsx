@@ -12,7 +12,7 @@ interface HostsHeaderProps {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
-export function HostsHeader({
+export default function HostsHeader({
   hostCount,
   groupCount,
   sessionCount,

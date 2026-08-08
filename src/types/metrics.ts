@@ -1,10 +1,10 @@
-export interface ProcInfo {
+export interface ProcInfoType {
   name: string
   cpu: number
   mem: number
 }
 
-export interface Metrics {
+export interface MetricsType {
   cpu: number
   cores: number
   load: string
@@ -15,5 +15,5 @@ export interface Metrics {
   netRx: number
   netTx: number
   uptimeSec: number
-  procs: ProcInfo[]
+  procs: ProcInfoType[]
 }

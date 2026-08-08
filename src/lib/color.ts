@@ -88,12 +88,29 @@ export function readableOn(bg: string, darkInk: string, lightInk: string): strin
  * any added later — legible without per-theme tuning.
  */
 export function darkenToContrast(ink: Hsl, bg: string, target: number): string {
+  return ensureContrast(ink, bg, target)
+}
+
+/**
+ * Step `ink`'s lightness away from `bg` until it clears `target` contrast.
+ *
+ * Direction follows the background: colors lighten on a dark surface and darken
+ * on a light one. Hue and saturation are preserved, so a red stays red — only
+ * its lightness moves. 0.02 steps are fine enough not to overshoot.
+ */
+export function ensureContrast(ink: Hsl, bg: string, target: number): string {
+  const step = luminance(bg) < 0.35 ? 0.02 : -0.02
   let { l } = ink
   let hex = hslToHex({ ...ink, l })
-  // 0.02 steps: fine enough to avoid overshooting, bounded by l > 0.
-  while (l > 0.02 && contrast(hex, bg) < target) {
-    l -= 0.02
+  while (contrast(hex, bg) < target && l > 0.02 && l < 0.98) {
+    l += step
     hex = hslToHex({ ...ink, l })
   }
   return hex
+}
+
+/** Shortest-path interpolation between two hues, in degrees. */
+export function mixHue(from: number, to: number, t: number): number {
+  const delta = ((to - from + 540) % 360) - 180
+  return (from + delta * t + 360) % 360
 }

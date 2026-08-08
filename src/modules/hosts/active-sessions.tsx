@@ -1,28 +1,28 @@
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
 import { LOCAL_MACHINE_LABEL } from '../../lib/platform'
-import type { Host } from '../../models'
-import type { Session } from '../../store/app'
+import type { HostType } from '@/types/host'
+import type { SessionType } from '../../store/app'
 
 interface ActiveSessionsProps {
-  sessions: Session[]
-  hostsById: Map<string, Host>
+  sessions: SessionType[]
+  hostsById: Map<string, HostType>
   onOpen: (sessionId: string) => void
 }
 
-const DOT: Record<Session['status'], string> = {
+const DOT: Record<SessionType['status'], string> = {
   connected: 'bg-primary',
   reconnecting: 'bg-chart-5',
   disconnected: 'bg-muted-foreground/40',
 }
 
-const STATUS_LABEL: Record<Session['status'], string> = {
+const STATUS_LABEL: Record<SessionType['status'], string> = {
   connected: 'Connected',
   reconnecting: 'Reconnecting…',
   disconnected: 'Disconnected',
 }
 
-export function ActiveSessions({ sessions, hostsById, onOpen }: ActiveSessionsProps) {
+export default function ActiveSessions({ sessions, hostsById, onOpen }: ActiveSessionsProps) {
   return (
     <Card size="sm" className="gap-0 py-0">
       <ul className="divide-y divide-border">

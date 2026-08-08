@@ -2,10 +2,10 @@ import { atom } from 'jotai'
 import type { Getter, Setter } from 'jotai'
 import { hostsService } from '../services/hosts.service'
 import { sshService } from '../services/ssh.service'
-import type { Group, Host } from '../models'
+import type { GroupType, HostType } from '@/types/host'
+import type { SessionType, TabType } from '@/types/session'
 import {
   type Edge,
-  type Pane,
   firstLeaf,
   hasSession,
   leaf,
@@ -17,30 +17,21 @@ import {
   splitTreeAt,
 } from '../lib/layout'
 
-export interface Session {
-  id: string
-  hostId: string // "__local__" for a local shell
-  label: string
-  status: 'connected' | 'disconnected' | 'reconnecting'
-}
+// Re-exported so existing imports of these domain types from the store keep
+// resolving; they are defined in @/types/session.
+export type { SessionType, TabType }
 
-// A title-bar tab. A single-host tab has a one-leaf `layout`; a "workspace"
-// (label "Deck N") has a split layout holding 2+ sessions. Every tab owns its
-// own split tree, so you can build several independent split workspaces.
-export interface Tab {
-  id: string
-  label: string
-  layout: Pane
-}
+/** Sentinel hostId for a local shell — it has no Host record. */
+export const LOCAL_HOST_ID = '__local__'
 
 // ---- state atoms ----
-export const hostsAtom = atom<Host[]>([])
-export const groupsAtom = atom<Group[]>([])
+export const hostsAtom = atom<HostType[]>([])
+export const groupsAtom = atom<GroupType[]>([])
 export const allTagsAtom = atom<string[]>([])
 export const tagFilterAtom = atom<string | null>(null)
 
-export const sessionsAtom = atom<Session[]>([])
-export const tabsAtom = atom<Tab[]>([])
+export const sessionsAtom = atom<SessionType[]>([])
+export const tabsAtom = atom<TabType[]>([])
 export const activeTabIdAtom = atom<string | null>(null)
 // The session focused within the active tab (drives the inspector/metrics).
 export const activeSessionIdAtom = atom<string | null>(null)
@@ -56,9 +47,6 @@ export const connectErrorAtom = atom<{ label: string; message: string } | null>(
 
 export const sidebarCollapsedAtom = atom(false)
 export const showInspectorAtom = atom(true)
-
-// When true, the sessions view shows the "new tab" chooser (local shell / browse
-// hosts) over the terminals instead of jumping straight into a local terminal.
 export const newTabPickerAtom = atom(false)
 export const setNewTabPickerAtom = atom(null, (_get, set, v: boolean) => {
   set(newTabPickerAtom, v)
@@ -85,11 +73,7 @@ export const setTagFilterAtom = atom(null, (get, set, tag: string | null) => {
   set(tagFilterAtom, get(tagFilterAtom) === tag ? null : tag)
 })
 
-// ---- drag / Deck actions ----
 export const setDraggingTabAtom = atom(null, (get, set, tabId: string | null) => {
-  // Dragging the ACTIVE tab: focus its right-else-left neighbor so the
-  // neighbor's panes become the drop targets and the dragged (active) tab can
-  // fold into it. Non-active drags behave normally.
   if (tabId && tabId === get(activeTabIdAtom)) {
     const tabs = get(tabsAtom)
     const idx = tabs.findIndex((t) => t.id === tabId)
@@ -168,10 +152,10 @@ export const splitActiveTabAtom = atom(null, (get, set) => {
   if (!neighbor) return // lone host, no neighbor → disabled
 
   const neighborIsWorkspace = paneSessionIds(neighbor.layout).length > 1
-  // Host joins the neighbor: neighbor on the left, the split host on the right.
+  // HostType joins the neighbor: neighbor on the left, the split host on the right.
   const layout = mergeTrees(neighbor.layout, active.layout, 'right')
   const label = neighborIsWorkspace ? neighbor.label : nextWorkspaceLabel(tabs)
-  const merged: Tab = { id: neighbor.id, label, layout }
+  const merged: TabType = { id: neighbor.id, label, layout }
   const next = tabs
     .filter((t) => t.id !== active.id)
     .map((t) => (t.id === neighbor.id ? merged : t))
@@ -212,7 +196,7 @@ export const refreshAllAtom = atom(null, async (_get, set) => {
 })
 
 // ---- session lifecycle actions ----
-export const connectAtom = atom(null, async (get, set, host: Host) => {
+export const connectAtom = atom(null, async (get, set, host: HostType) => {
   set(newTabPickerAtom, false)
   set(connectingAtom, { hostId: host.id, label: host.label })
   set(connectErrorAtom, null)
@@ -234,7 +218,7 @@ export const openLocalTerminalAtom = atom(null, async (get, set) => {
   const label = n === 1 ? 'Local' : `Local ${n}`
   try {
     const sessionId = await sshService.localConnect()
-    addTab(get, set, { id: sessionId, hostId: '__local__', label, status: 'connected' })
+    addTab(get, set, { id: sessionId, hostId: LOCAL_HOST_ID, label, status: 'connected' })
   } catch (e) {
     set(connectErrorAtom, { label, message: String(e) })
   }
@@ -254,7 +238,7 @@ export const closeSessionAtom = atom(null, (get, set, sessionId: string) => {
       const layout = removeLeaf(t.layout, sessionId)
       return layout ? { ...t, layout } : null
     })
-    .filter((t): t is Tab => t !== null)
+    .filter((t): t is TabType => t !== null)
   resolveActive(get, set, tabs, sessionId)
 })
 
@@ -290,7 +274,7 @@ export const reconnectAtom = atom(null, async (get, set, sessionId: string) => {
   )
   try {
     const newId =
-      session.hostId === '__local__'
+      session.hostId === LOCAL_HOST_ID
         ? await sshService.localConnect()
         : await sshService.connect(session.hostId)
     set(
@@ -343,7 +327,7 @@ function uniqueLabel(base: string, existing: string[]): string {
   return `${base} (${n})`
 }
 
-function nextWorkspaceLabel(tabs: Tab[]): string {
+function nextWorkspaceLabel(tabs: TabType[]): string {
   const existing = tabs.map((t) => t.label)
   let n = 1
   while (existing.includes(`Deck ${n}`)) n++
@@ -356,13 +340,13 @@ function newTabId(): string {
 }
 
 // Add a freshly-opened session as its own new tab and focus it.
-function addTab(get: Getter, set: Setter, session: Session): void {
+function addTab(get: Getter, set: Setter, session: SessionType): void {
   const tabs = get(tabsAtom)
   const label = uniqueLabel(
     session.label,
     tabs.map((t) => t.label),
   )
-  const tab: Tab = { id: newTabId(), label, layout: leaf(session.id) }
+  const tab: TabType = { id: newTabId(), label, layout: leaf(session.id) }
   set(sessionsAtom, [...get(sessionsAtom), { ...session, label }])
   set(tabsAtom, [...tabs, tab])
   set(activeTabIdAtom, tab.id)
@@ -374,7 +358,7 @@ function addTab(get: Getter, set: Setter, session: Session): void {
 function resolveActive(
   get: Getter,
   set: Setter,
-  tabs: Tab[],
+  tabs: TabType[],
   removedSessionId: string | null,
 ): void {
   let activeTabId = get(activeTabIdAtom)

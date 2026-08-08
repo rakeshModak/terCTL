@@ -2,23 +2,23 @@ import { useRef, type MouseEvent } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useRouterState } from '@tanstack/react-router'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { Columns2, Minus, PanelRight, Plus, Square, X } from 'lucide-react'
+import { Columns2, Minus, PanelRight, Square, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { TerctlLogo } from './TerctlLogo'
+import { TerctlLogo } from '../../components/chrome/TerctlLogo'
+import NewSessionMenu from '../sessions/new-session-menu'
 import {
   activeTabIdAtom,
   closeTabAtom,
   sessionsAtom,
   setActiveTabAtom,
   setDraggingTabAtom,
-  setNewTabPickerAtom,
   showInspectorAtom,
   splitActiveTabAtom,
   tabsAtom,
   toggleInspectorAtom,
 } from '../../store/app'
 import { paneSessionIds } from '../../lib/layout'
-import { IS_MAC, PALETTE_HINT } from '../../lib/platform'
+import { IS_MAC } from '../../lib/platform'
 
 const PATH_LABELS: Record<string, string> = {
   '/sessions': 'Terminal',
@@ -30,7 +30,7 @@ const PATH_LABELS: Record<string, string> = {
 
 const BAR_SURFACE = 'color-mix(in srgb, var(--brand) 4%, var(--sidebar))'
 
-export function TitleBar() {
+function Header() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const onSessions = pathname === '/sessions'
   const tabs = useAtomValue(tabsAtom)
@@ -39,7 +39,6 @@ export function TitleBar() {
   const showInspector = useAtomValue(showInspectorAtom)
   const setActiveTab = useSetAtom(setActiveTabAtom)
   const closeTab = useSetAtom(closeTabAtom)
-  const setNewTabPicker = useSetAtom(setNewTabPickerAtom)
   const toggleInspector = useSetAtom(toggleInspectorAtom)
   const setDraggingTab = useSetAtom(setDraggingTabAtom)
   const splitActiveTab = useSetAtom(splitActiveTabAtom)
@@ -47,6 +46,8 @@ export function TitleBar() {
   const lastDownRef = useRef(0)
   const onMouseDown = (e: MouseEvent) => {
     if (e.button !== 0) return
+    if (!e.currentTarget.contains(e.target as Node)) return
+
     if ((e.target as HTMLElement).closest('[data-no-drag]')) return
 
     const now = Date.now()
@@ -162,15 +163,8 @@ export function TitleBar() {
               </div>
             )
           })}
-          <button
-            data-no-drag
-            type="button"
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-foreground/4 text-muted-foreground hover:bg-primary/10 hover:text-primary"
-            onClick={() => setNewTabPicker(true)}
-            title="New tab"
-          >
-            <Plus className="size-4" />
-          </button>
+          {/* Owned by the sessions module — it decides what a new session is. */}
+          <NewSessionMenu />
         </div>
       ) : (
         <span className="text-xs tracking-wide text-muted-foreground">
@@ -196,7 +190,6 @@ export function TitleBar() {
           <PanelRight className="size-4" />
         </button>
       )}
-      <span className="font-mono text-[11.5px] text-muted-foreground">{PALETTE_HINT}</span>
       {!IS_MAC && <WindowControls />}
     </div>
   )
@@ -234,3 +227,5 @@ function WindowControls() {
     </div>
   )
 }
+
+export default Header

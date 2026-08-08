@@ -1,15 +1,15 @@
 import { call } from './config/tauri-api'
-import type { Group, Host, NewHost } from '../models'
+import type { GroupType, HostType, NewHostType } from '@/types/host'
 
 export const hostsService = {
-  list: () => call<Host[]>('list_hosts'),
-  add: (newHost: NewHost) => call<Host>('add_host', { newHost }),
-  update: (host: Host) => call<void>('update_host', { host }),
+  list: () => call<HostType[]>('list_hosts'),
+  add: (newHost: NewHostType) => call<HostType>('add_host', { newHost }),
+  update: (host: HostType) => call<void>('update_host', { host }),
   remove: (id: string) => call<void>('delete_host', { id }),
 
-  listGroups: () => call<Group[]>('list_groups'),
+  listGroups: () => call<GroupType[]>('list_groups'),
   addGroup: (name: string, parentId: string | null = null) =>
-    call<Group>('add_group', { name, parentId }),
+    call<GroupType>('add_group', { name, parentId }),
   renameGroup: (id: string, name: string) => call<void>('rename_group', { id, name }),
   deleteGroup: (id: string) => call<void>('delete_group', { id }),
 

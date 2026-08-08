@@ -7,7 +7,7 @@ interface TerminalSchemePickerProps {
 }
 
 
-export function TerminalSchemePicker({ value, onChange }: TerminalSchemePickerProps) {
+export default function TerminalSchemePicker({ value, onChange }: TerminalSchemePickerProps) {
   return (
     <div className="flex flex-wrap gap-2.5">
       {Object.entries(TERM_SWATCH).map(([name, swatch]) => {

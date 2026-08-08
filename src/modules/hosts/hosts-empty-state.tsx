@@ -16,7 +16,7 @@ interface HostsEmptyStateProps {
 }
 
 /** First-run state: no hosts and no groups exist yet. */
-export function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptyStateProps) {
+export default function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptyStateProps) {
     const glowId = useId()
   return (
     <Empty className="animate-[rise_0.4s_ease_both]">
@@ -111,7 +111,7 @@ export function HostsEmptyState({ onNewHost, onNewGroup }: HostsEmptyStateProps)
           </Button>
           <Button variant="outline" onClick={onNewGroup}>
             <FolderPlus />
-            New Group
+            New GroupType
           </Button>
         </div>
       </EmptyContent>

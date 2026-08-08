@@ -5,7 +5,7 @@ const KEYS = [
 ]
 
 // Static preview — the key/agent backend isn't wired yet.
-export function KeysView() {
+export default function KeysView() {
   return (
     <div className="flex-1 overflow-y-auto bg-[var(--bg)]">
       <div className="mx-auto max-w-[920px] px-8 py-[26px]">

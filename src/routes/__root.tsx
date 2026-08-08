@@ -7,11 +7,11 @@ import { refreshAllAtom } from '../store/app'
 import { checkForUpdateAtom } from '../store/updater'
 import { loadAppVersionAtom } from '../store/version'
 import { BootSplash } from '../components/chrome/BootSplash'
-import { TitleBar } from '../components/chrome/TitleBar'
-import { ActivityRail } from '../components/chrome/ActivityRail'
+import Header from '../modules/layout/header'
+import Sidebar from '../modules/layout/sidebar'
 import { Dialogs } from '../components/Dialogs'
 import { UpdateBanner } from '../components/UpdateBanner'
-import { SessionsView } from '../modules/sessions'
+import SessionsView from '../modules/sessions'
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -27,14 +27,17 @@ function RootLayout() {
 
   useEffect(() => {
     void refreshAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     void checkForUpdate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     void loadVersion()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -47,10 +50,9 @@ function RootLayout() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-(--bg) text-(--text)">
       <BootSplash />
-      <TitleBar />
+      <Header />
       <div className="flex min-h-0 flex-1">
-        <ActivityRail />
-        {/* Persistent terminal workspace — stays mounted; hidden when off '/'. */}
+        <Sidebar />
         <div className="min-w-0 flex-1" style={{ display: onSessions ? 'flex' : 'none' }}>
           <SessionsView />
         </div>

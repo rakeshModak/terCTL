@@ -3,7 +3,8 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { hostsAtom } from '../../store/app'
 import { promptAtom } from '../../store/dialog'
 import { sftpService } from '../../services/sftp.service'
-import type { FileEntry, Host } from '../../models'
+import type { FileEntryType } from '@/types/file'
+import type { HostType } from '@/types/host'
 import { TerctlLoader } from '../../components/chrome/TerctlLogo'
 import { LOCAL_MACHINE_LABEL } from '../../lib/platform'
 
@@ -36,15 +37,15 @@ function fmtDate(unix: number | null): string {
   )
 }
 
-export function TransferView() {
+export default function TransferView() {
   const hosts = useAtomValue(hostsAtom)
   const prompt = useSetAtom(promptAtom)
   const [hostId, setHostId] = useState<string>('')
 
   const [localPath, setLocalPath] = useState('')
   const [remotePath, setRemotePath] = useState('')
-  const [local, setLocal] = useState<FileEntry[]>([])
-  const [remote, setRemote] = useState<FileEntry[]>([])
+  const [local, setLocal] = useState<FileEntryType[]>([])
+  const [remote, setRemote] = useState<FileEntryType[]>([])
   const [remoteBusy, setRemoteBusy] = useState(false)
   const [remoteErr, setRemoteErr] = useState<string | null>(null)
   const [status, setStatus] = useState<{ msg: string; kind: 'info' | 'error' } | null>(null)
@@ -101,7 +102,7 @@ export function TransferView() {
       })
   }, [hostId, loadRemote])
 
-  const upload = async (f: FileEntry) => {
+  const upload = async (f: FileEntryType) => {
     if (!hostId) return
     setStatus({ msg: `Uploading ${f.name}…`, kind: 'info' })
     try {
@@ -112,7 +113,7 @@ export function TransferView() {
       setStatus({ msg: `Upload failed: ${e}`, kind: 'error' })
     }
   }
-  const download = async (f: FileEntry) => {
+  const download = async (f: FileEntryType) => {
     if (!hostId) return
     setStatus({ msg: `Downloading ${f.name}…`, kind: 'info' })
     try {
@@ -134,7 +135,7 @@ export function TransferView() {
       setStatus({ msg: `Couldn't create folder: ${e}`, kind: 'error' })
     }
   }
-  const renameLocal = async (f: FileEntry) => {
+  const renameLocal = async (f: FileEntryType) => {
     const name = await prompt({ title: `Rename “${f.name}”`, initialValue: f.name, confirmLabel: 'Rename' })
     if (!name || name === f.name) return
     try {
@@ -155,7 +156,7 @@ export function TransferView() {
       setStatus({ msg: `Couldn't create folder: ${e}`, kind: 'error' })
     }
   }
-  const renameRemote = async (f: FileEntry) => {
+  const renameRemote = async (f: FileEntryType) => {
     if (!hostId) return
     const name = await prompt({ title: `Rename “${f.name}”`, initialValue: f.name, confirmLabel: 'Rename' })
     if (!name || name === f.name) return
@@ -224,7 +225,7 @@ function HostSelect({
   value,
   onChange,
 }: {
-  hosts: Host[]
+  hosts: HostType[]
   value: string
   onChange: (id: string) => void
 }) {
@@ -308,17 +309,17 @@ interface PaneProps {
   title: string
   side: 'local' | 'remote'
   path: string
-  entries: FileEntry[]
+  entries: FileEntryType[]
   busy?: boolean
   error?: string | null
   empty?: string
   disabled?: boolean
-  onOpen: (f: FileEntry) => void
+  onOpen: (f: FileEntryType) => void
   onUp: () => void
   onRefresh: () => void
   onNewFolder: () => void
-  onRename: (f: FileEntry) => void
-  action: { label: string; dir: string; onClick: (f: FileEntry) => void; enabled: boolean }
+  onRename: (f: FileEntryType) => void
+  action: { label: string; dir: string; onClick: (f: FileEntryType) => void; enabled: boolean }
 }
 
 function Pane({

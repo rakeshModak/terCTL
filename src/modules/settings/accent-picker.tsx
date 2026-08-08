@@ -8,7 +8,7 @@ interface AccentPickerProps {
   mode: ResolvedMode
 }
 
-export function AccentPicker({ value, onChange, mode }: AccentPickerProps) {
+export default function AccentPicker({ value, onChange, mode }: AccentPickerProps) {
   return (
     <div className="flex flex-wrap gap-3">
       {Object.keys(ACCENTS).map((name) => {

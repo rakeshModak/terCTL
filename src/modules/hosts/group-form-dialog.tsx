@@ -22,7 +22,7 @@ interface GroupFormDialogProps {
   onSubmit: (name: string) => void
 }
 
-export function GroupFormDialog({
+export default function GroupFormDialog({
   open,
   onOpenChange,
   title,

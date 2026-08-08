@@ -33,7 +33,7 @@ function Swatch({ scheme }: { scheme: string | null }) {
 }
 
 /** Per-host terminal color scheme, with a live text-on-background swatch. */
-export function TermSchemeSelect({ value, onChange }: TermSchemeSelectProps) {
+export default function TermSchemeSelect({ value, onChange }: TermSchemeSelectProps) {
   const options = [
     { value: INHERIT, label: 'Use global default' },
     ...Object.keys(TERM_SWATCH).map((name) => ({ value: name, label: name })),

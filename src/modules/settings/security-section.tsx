@@ -1,10 +1,10 @@
 import { ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { SettingRow, SettingRowList } from './SettingRow'
-import { SettingsSection } from './SettingsSection'
+import SettingRow, { SettingRowList } from './setting-row'
+import SettingsSection from './settings-section'
 
-export function SecuritySection() {
+export default function SecuritySection() {
   return (
     <SettingsSection title="Security" description="Agent, host keys, and locking policy.">
       <div className="mb-5 flex items-center gap-3 rounded-xl border border-chart-4/25 bg-chart-4/10 px-4 py-3">
