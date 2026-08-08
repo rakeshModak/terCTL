@@ -126,6 +126,7 @@ function PromptForm({
         ref={focusRef}
         value={value}
         placeholder={req.placeholder}
+        aria-label={req.placeholder || req.title}
         onChange={(e) => setValue(e.currentTarget.value)}
       />
 
