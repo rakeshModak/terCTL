@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import { Palette, ShieldCheck, TerminalSquare } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  Palette,
+  ShieldCheck,
+  TerminalSquare,
+} from 'lucide-react';
 import { useResolvedMode } from '@/hooks/useResolvedMode';
 import AppearanceSection from '@/modules/settings/sections/appearance';
+import ImportExportSection from '@/modules/settings/sections/import-export';
 import SecuritySection from '@/modules/settings/sections/security-section';
 import SettingsNav, {
   type SettingsCategory,
@@ -13,6 +19,7 @@ const CATEGORIES: SettingsCategory[] = [
   { id: 'appearance', name: 'Appearance', Icon: Palette },
   { id: 'terminal', name: 'Terminal', Icon: TerminalSquare },
   { id: 'security', name: 'Security', Icon: ShieldCheck },
+  { id: 'import-export', name: 'Import & Export', Icon: ArrowLeftRight },
 ];
 
 export default function SettingsView() {
@@ -33,6 +40,7 @@ export default function SettingsView() {
         )}
         {category === 'terminal' && <TerminalSection />}
         {category === 'security' && <SecuritySection />}
+        {category === 'import-export' && <ImportExportSection />}
         <UpdateRow />
       </div>
     </div>

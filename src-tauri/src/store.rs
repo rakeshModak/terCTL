@@ -6,6 +6,12 @@ use uuid::Uuid;
 
 pub struct Store(pub Mutex<Connection>);
 
+#[derive(Debug, Clone)]
+pub struct HostRecord {
+    pub host: Host,
+    pub host_key_fingerprint: Option<String>,
+}
+
 impl Store {
     pub fn new(db_path: &Path) -> rusqlite::Result<Self> {
         let conn = Connection::open(db_path)?;
@@ -113,6 +119,83 @@ impl Store {
             })
         })?;
         rows.collect()
+    }
+
+    pub fn list_host_records(&self) -> rusqlite::Result<Vec<HostRecord>> {
+        let conn = self.0.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint
+             FROM hosts ORDER BY label",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok(HostRecord {
+                host: Host {
+                    id: row.get(0)?,
+                    label: row.get(1)?,
+                    hostname: row.get(2)?,
+                    port: row.get::<_, i64>(3)? as u16,
+                    username: row.get(4)?,
+                    auth_kind: AuthKind::from_str(&row.get::<_, String>(5)?),
+                    key_ref: row.get(6)?,
+                    group_id: row.get(7)?,
+                    tags: Self::decode_tags(row.get(8)?),
+                    accent: row.get(9)?,
+                    term_scheme: row.get(10)?,
+                },
+                host_key_fingerprint: row.get(11)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// Bulk insert for import, in a single transaction: either every host and
+    /// group lands or none does. Callers pass rows already filtered for
+    /// collisions — this preserves the supplied ids rather than minting new
+    /// ones, because keychain entries are keyed by host id.
+    pub fn insert_imported(
+        &self,
+        hosts: &[(Host, Option<String>)],
+        groups: &[Group],
+    ) -> rusqlite::Result<()> {
+        let mut conn = self.0.lock().unwrap();
+        let tx = conn.transaction()?;
+        for group in groups {
+            tx.execute(
+                "INSERT INTO groups (id, name, parent_id) VALUES (?1, ?2, ?3)",
+                params![group.id, group.name, group.parent_id],
+            )?;
+        }
+        for (host, fingerprint) in hosts {
+            tx.execute(
+                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+                params![
+                    host.id,
+                    host.label,
+                    host.hostname,
+                    host.port,
+                    host.username,
+                    host.auth_kind.as_str(),
+                    host.key_ref,
+                    host.group_id,
+                    Self::encode_tags(&host.tags),
+                    host.accent,
+                    host.term_scheme,
+                    fingerprint,
+                ],
+            )?;
+        }
+        tx.commit()
+    }
+
+    /// Used to undo an import whose keychain writes failed partway.
+    pub fn delete_hosts(&self, ids: &[String]) -> rusqlite::Result<()> {
+        let mut conn = self.0.lock().unwrap();
+        let tx = conn.transaction()?;
+        for id in ids {
+            tx.execute("DELETE FROM hosts WHERE id = ?1", params![id])?;
+        }
+        tx.commit()
     }
 
     pub fn add_host(&self, new_host: NewHost) -> rusqlite::Result<Host> {
@@ -281,6 +364,8 @@ mod tests {
             key_ref: Some("prod-key".into()),
             group_id: None,
             tags: vec![],
+            accent: None,
+            term_scheme: None,
         }
     }
 

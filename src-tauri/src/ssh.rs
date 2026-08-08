@@ -4,16 +4,13 @@ use crate::store::Store;
 use crate::vault::{self, SecretKind};
 use russh::client::{self, Handle};
 use russh::keys::ssh_key::PublicKey;
-use russh::keys::{load_secret_key, HashAlg, PrivateKeyWithHashAlg};
+use russh::keys::{decode_secret_key, load_secret_key, HashAlg, PrivateKeyWithHashAlg};
 use russh::{ChannelMsg, Disconnect};
 use std::sync::{Arc, Mutex as StdMutex};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-/// Verifies the server's host key against what we've seen before (TOFU).
-/// The first successful connection to a host pins its fingerprint; every
-/// connection after that must match, or the connection is refused.
 pub(crate) struct ClientHandler {
     expected_fingerprint: Option<String>,
     observed_fingerprint: Arc<StdMutex<Option<String>>>,
@@ -54,15 +51,23 @@ async fn authenticate(session: &mut Handle<ClientHandler>, host: &Host) -> Resul
                 .map_err(|e| e.to_string())?
         }
         AuthKind::Key => {
-            let key_ref = host
-                .key_ref
-                .as_deref()
-                .ok_or_else(|| "no private key configured for this host".to_string())?;
-            let key_path = expand_tilde(key_ref);
             let passphrase = vault::get_secret(&host.id, SecretKind::Passphrase)
                 .map_err(|e| e.to_string())?;
-            let key_pair = load_secret_key(&key_path, passphrase.as_deref())
-                .map_err(|e| format!("failed to load private key '{key_path}': {e}"))?;
+            let stored_key =
+                vault::get_secret(&host.id, SecretKind::PrivateKey).map_err(|e| e.to_string())?;
+            let key_pair = match stored_key {
+                Some(pem) => decode_secret_key(&pem, passphrase.as_deref())
+                    .map_err(|e| format!("failed to decode the stored private key: {e}"))?,
+                None => {
+                    let key_ref = host
+                        .key_ref
+                        .as_deref()
+                        .ok_or_else(|| "no private key configured for this host".to_string())?;
+                    let key_path = expand_tilde(key_ref);
+                    load_secret_key(&key_path, passphrase.as_deref())
+                        .map_err(|e| format!("failed to load private key '{key_path}': {e}"))?
+                }
+            };
             let hash_alg = session
                 .best_supported_rsa_hash()
                 .await
@@ -85,8 +90,6 @@ async fn authenticate(session: &mut Handle<ClientHandler>, host: &Host) -> Resul
     Ok(())
 }
 
-/// Opens an SSH connection to a host: TCP + key exchange + TOFU host-key
-/// verification + authentication. Shared by the terminal and SFTP code.
 pub(crate) async fn connect_host(
     store: &Store,
     host_id: &str,
@@ -106,8 +109,6 @@ pub(crate) async fn connect_host(
         observed_fingerprint: observed_fingerprint.clone(),
     };
 
-    // Keep-alive so idle sessions survive NAT/firewall/server idle timeouts —
-    // a ping every 20s, dropped only after 3 unanswered (~60s of silence).
     let config = Arc::new(client::Config {
         keepalive_interval: Some(std::time::Duration::from_secs(20)),
         keepalive_max: 3,

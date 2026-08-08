@@ -1,3 +1,4 @@
+mod backup;
 mod commands;
 mod local_term;
 mod metrics;
@@ -18,6 +19,7 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
@@ -48,6 +50,10 @@ pub fn run() {
             commands::has_credential,
             commands::delete_credential,
             commands::frontend_log,
+            backup::backup_preview,
+            backup::inspect_backup,
+            backup::export_config,
+            backup::import_config,
             ssh::ssh_connect,
             local_term::local_connect,
             session::term_send_input,

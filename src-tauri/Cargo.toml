@@ -31,6 +31,12 @@ keyring = { version = "4.1.2", features = [
     "windows-native-keyring-store",
     "zbus-secret-service-keyring-store",
 ] }
+tauri-plugin-dialog = "2"
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+base64 = "0.22"
+rand = "0.9"
+zeroize = { version = "1", features = ["derive"] }
 russh = "0.62.1"
 tokio = { version = "1.52.3", features = ["rt-multi-thread", "io-util", "sync", "macros", "time", "fs"] }
 portable-pty = "0.9.0"
