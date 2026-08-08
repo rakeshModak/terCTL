@@ -11,6 +11,7 @@ import {
 import { settingsAtom } from '../store/settings';
 import { sshService } from '../services/ssh.service';
 import { IS_MAC } from '../lib/platform';
+import { readClipboard, writeClipboard } from '../lib/clipboard';
 import {
   Search,
   ChevronUp,
@@ -33,7 +34,6 @@ interface TermClosedEvent {
 interface TerminalProps {
   sessionId: string;
   onClosed: (error: string | null) => void;
-  /** Per-host terminal color scheme override; falls back to the global setting. */
   scheme?: string | null;
 }
 
@@ -46,35 +46,48 @@ const findToggle = (on: boolean) =>
       : 'text-[var(--text-faint)] hover:bg-foreground/10 hover:text-[var(--text)]'
   }`;
 
+function handleClipboardChord(term: XTerm, e: KeyboardEvent): boolean {
+  if (IS_MAC || !e.ctrlKey || e.altKey || e.metaKey) return false;
+  const key = e.key.toLowerCase();
+
+  if (key === 'v' && e.shiftKey) {
+    e.preventDefault();
+    void readClipboard().then((text) => {
+      if (text) term.paste(text);
+    });
+    return true;
+  }
+
+  if (key !== 'c') return false;
+  const selection = term.getSelection();
+  if (!selection && !e.shiftKey) return false;
+
+  e.preventDefault();
+  if (selection) {
+    void writeClipboard(selection);
+    term.clearSelection();
+  }
+  return true;
+}
+
 export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  // Keep the latest onClosed without making it an effect dependency — otherwise
-  // the effect re-runs on every parent render, disposing and recreating xterm
-  // (losing all scrollback) even though the session is unchanged.
   const onClosedRef = useRef(onClosed);
   onClosedRef.current = onClosed;
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
-  // Match positions (absolute buffer row/col/length), rescanned as the query or
-  // buffer changes; drives both the counter and next/prev navigation.
   const matchesRef = useRef<{ row: number; col: number; length: number }[]>([]);
-  // Live xterm decorations painting every match; disposed/rebuilt on each render.
   const highlightsRef = useRef<Array<{ dispose(): void }>>([]);
   const findInputRef = useRef<HTMLInputElement | null>(null);
-  // Find-in-terminal (⌘F / Ctrl+Shift+F) — searches the xterm scrollback buffer.
   const [findOpen, setFindOpen] = useState(false);
   const [findQuery, setFindQuery] = useState('');
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
-  // The match count is computed from the buffer ourselves (see countMatches). The
-  // addon's own counter is unreliable on a live-streaming log — each incoming write
-  // resets its result set — so we don't trust its onDidChangeResults for the count.
   const [matchCount, setMatchCount] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const settings = useAtomValue(settingsAtom);
   const fontSize = settings.fontSize;
   const globalScheme = settings.termScheme;
-  // HostType override wins over the global scheme when set to a known scheme.
   const termScheme = scheme && TERM_SCHEMES[scheme] ? scheme : globalScheme;
 
   useEffect(() => {
@@ -83,7 +96,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       fontFamily: terminalFontFamily,
       fontSize: getDefaultStore().get(settingsAtom).fontSize,
       theme: TERM_SCHEMES[termScheme] ?? TERM_SCHEMES.TerCTL,
-      // Required for the find-match decorations (registerMarker/registerDecoration).
       allowProposedApi: true,
     });
     const fitAddon = new FitAddon();
@@ -91,8 +103,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     termRef.current = term;
     fitRef.current = fitAddon;
 
-    // Re-scan matches as new output streams in, so the counter stays live while
-    // logs scroll. Debounced; only active while the find bar is open with a query.
     let recountTimer: ReturnType<typeof setTimeout> | undefined;
     const writeParsedDisposable = term.onWriteParsed(() => {
       if (!findOpenRef.current || !findQueryRef.current) return;
@@ -108,16 +118,16 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
         renderHighlightsRef.current(clamped);
       }, 150);
     });
-    // Open the find bar on the platform's find shortcut. On macOS ⌘F is free;
-    // on Win/Linux Ctrl+F is a live terminal control code, so use Ctrl+Shift+F.
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== 'keydown') return true;
+
+      if (handleClipboardChord(term, e)) return false;
+
       const findCombo = IS_MAC
         ? e.metaKey && !e.ctrlKey && !e.altKey
         : e.ctrlKey && e.shiftKey;
       if (findCombo && (e.key === 'f' || e.key === 'F')) {
         e.preventDefault();
-        // Prefill from a single-line terminal selection, if any (⌘F on selected text).
         const sel = term.getSelection().trim();
         if (sel && !sel.includes('\n')) setFindQuery(sel);
         setFindOpen(true);
@@ -127,9 +137,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       return true;
     });
 
-    // xterm renders blank if it was in a display:none container (e.g. while on
-    // another view). Refit + repaint whenever it becomes visible/resized —
-    // coalesced with rAF so the split-transition doesn't fire a fit storm.
     let rafId = 0;
     let settleTimer: ReturnType<typeof setTimeout> | undefined;
     const fitNow = () => {
@@ -149,9 +156,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
           fitNow();
         });
       }
-      // Pane splits/resizes animate (~180ms); the rAF fits track the motion, but
-      // one final fit after it settles guarantees the row count matches the final
-      // pane height so the bottom row isn't left clipped.
       if (settleTimer) clearTimeout(settleTimer);
       settleTimer = setTimeout(fitNow, 240);
     };
@@ -160,8 +164,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       term.open(containerRef.current);
       fitAddon.fit();
       term.focus();
-      // macOS spell-checks xterm's hidden input textarea as output streams,
-      // spamming "NSSpellServer … timed out" logs. Turn it off.
       const helper = containerRef.current.querySelector<HTMLTextAreaElement>(
         '.xterm-helper-textarea',
       );
@@ -193,10 +195,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       void sshService.resize(sessionId, cols, rows);
     });
 
-    // The initial fit() above ran before this onResize handler existed, so its
-    // resize event was dropped and the remote PTY stayed at the 80x24 default —
-    // full-screen TUIs (nano/vim/top) then draw into a too-short area, leaving a
-    // blank gap. Push the real fitted size to the backend now.
     void sshService.resize(sessionId, term.cols, term.rows);
 
     const resizeObserver = new ResizeObserver(() => repaint());
@@ -213,9 +211,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     window.addEventListener('resize', repaint);
 
     return () => {
-      // Only tear down the UI here — never the backend session. The SSH/PTY
-      // session lives independently (Termius model); it's closed explicitly
-      // via closeSession (tab ✕ / Disconnect), not when this view unmounts.
       if (rafId) cancelAnimationFrame(rafId);
       if (settleTimer) clearTimeout(settleTimer);
       window.removeEventListener('resize', repaint);
@@ -244,11 +239,8 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     fitRef.current?.fit();
   }, [fontSize]);
 
-  // Live-update the color scheme (terminal text/cursor) from Settings.
   useEffect(() => {
     const nextScheme = TERM_SCHEMES[termScheme] ?? TERM_SCHEMES.TerCTL;
-    // Expose the scheme background so split-pane containers can match it and the
-    // rounded corners blend seamlessly with the terminal.
     if (nextScheme.background) {
       document.documentElement.style.setProperty(
         '--term-bg',
@@ -261,9 +253,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     term.refresh(0, term.rows - 1);
   }, [termScheme]);
 
-  // Scan the buffer for every match of the query, returning absolute
-  // {row, col, length} positions. Source of truth for both the counter and
-  // navigation — fully independent of the (streaming-unreliable) search addon.
   const scanMatches = useCallback(
     (q: string): { row: number; col: number; length: number }[] => {
       const term = termRef.current;
@@ -293,8 +282,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     [useRegex, caseSensitive],
   );
 
-  // Select + scroll the terminal to the match at idx (wraps). Mirrors the addon's
-  // own centering math: only scroll when the match is off-screen.
   const goToMatch = useCallback((idx: number) => {
     const term = termRef.current;
     const matches = matchesRef.current;
@@ -313,8 +300,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     highlightsRef.current = [];
   }, []);
 
-  // Paint a colored decoration over every match — dim amber for all, bright accent
-  // for the active one — so matches stand out far more than the selection alone.
   const renderHighlights = useCallback(
     (activeIdx: number) => {
       const term = termRef.current;
@@ -349,8 +334,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     [clearHighlights],
   );
 
-  // Refs so the mount-time onWriteParsed handler reads the latest find state and
-  // scan/highlight fns without re-subscribing on every keystroke.
   const findOpenRef = useRef(findOpen);
   findOpenRef.current = findOpen;
   const findQueryRef = useRef(findQuery);
