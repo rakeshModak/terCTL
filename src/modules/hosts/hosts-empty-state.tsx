@@ -15,7 +15,6 @@ interface HostsEmptyStateProps {
   onNewGroup: () => void;
 }
 
-/** First-run state: no hosts and no groups exist yet. */
 export default function HostsEmptyState({
   onNewHost,
   onNewGroup,
@@ -24,7 +23,6 @@ export default function HostsEmptyState({
   return (
     <Empty className="animate-[rise_0.4s_ease_both]">
       <EmptyHeader className="max-w-md">
-        {/* Default (not "icon") variant: this is full artwork, not a glyph. */}
         <EmptyMedia className="animate-[bootFloaty_7s_ease-in-out_infinite]">
           <svg
             width="300"
@@ -166,7 +164,7 @@ export default function HostsEmptyState({
           </Button>
           <Button variant="outline" onClick={onNewGroup}>
             <FolderPlus />
-            New GroupType
+            New Group
           </Button>
         </div>
       </EmptyContent>
