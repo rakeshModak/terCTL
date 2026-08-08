@@ -1,4 +1,3 @@
-// TerCTL — SSH connection manager (desktop).
 mod commands;
 mod local_term;
 mod metrics;
@@ -60,11 +59,13 @@ pub fn run() {
             sftp::sftp_upload,
             sftp::sftp_mkdir,
             sftp::sftp_rename,
+            sftp::sftp_remove,
             sftp::sftp_disconnect,
             sftp::local_home,
             sftp::local_list,
             sftp::local_mkdir,
             sftp::local_rename,
+            sftp::local_remove,
             metrics::ssh_metrics,
             metrics::metrics_disconnect,
         ])

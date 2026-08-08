@@ -1,5 +1,5 @@
 :root {
-  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
   --text: var(--foreground);
   --text-muted: var(--muted-foreground);

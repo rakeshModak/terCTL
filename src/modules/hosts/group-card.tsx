@@ -68,7 +68,7 @@ export default function GroupCard({
             <MoreHorizontal />
             <span className="sr-only">Group actions</span>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className={"w-44"}>
             <DropdownMenuItem onClick={onRename}>
               <Pencil />
               Rename

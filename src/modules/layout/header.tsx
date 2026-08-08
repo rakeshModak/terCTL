@@ -98,7 +98,7 @@ function Header() {
       {showTabs ? (
         <div
           data-no-drag
-          className="flex min-w-0 [scrollbar-width:none] items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 scrollbar-none items-center gap-1 overflow-x-auto [&::-webkit-scrollbar]:hidden"
         >
           {tabs.map((tab) => {
             const active = tab.id === activeTabId;

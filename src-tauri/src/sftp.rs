@@ -206,6 +206,26 @@ pub async fn sftp_rename(
     .await
 }
 
+/// Remove a remote file or directory. Directories are removed recursively —
+/// SFTP has no recursive remove, so the tree is walked depth-first.
+#[tauri::command]
+pub async fn sftp_remove(
+    store: State<'_, Store>,
+    sftp: State<'_, SftpManager>,
+    host_id: String,
+    path: String,
+    is_dir: bool,
+) -> Result<(), String> {
+    sftp.with_conn(&store, &host_id, move |conn| async move {
+        if is_dir {
+            remove_dir_recursive(&conn.sftp, &path).await
+        } else {
+            conn.sftp.remove_file(&path).await.map_err(|e| e.to_string())
+        }
+    })
+    .await
+}
+
 #[tauri::command]
 pub async fn sftp_disconnect(sftp: State<'_, SftpManager>, host_id: String) -> Result<(), String> {
     sftp.drop_host(&host_id).await;
@@ -254,6 +274,37 @@ pub fn local_mkdir(path: String) -> Result<(), String> {
 #[tauri::command]
 pub fn local_rename(from: String, to: String) -> Result<(), String> {
     std::fs::rename(&from, &to).map_err(|e| e.to_string())
+}
+
+/// Depth-first removal: SFTP's rmdir only succeeds on an empty directory, so
+/// the tree has to be emptied from the leaves up.
+///
+/// Box::pin because an async fn that awaits itself needs a boxed future — the
+/// return type would otherwise be infinitely sized.
+async fn remove_dir_recursive(sftp: &SftpSession, path: &str) -> Result<(), String> {
+    let read = sftp.read_dir(path).await.map_err(|e| e.to_string())?;
+    for entry in read {
+        let name = entry.file_name();
+        if name == "." || name == ".." {
+            continue;
+        }
+        let child = join_remote(path, &name);
+        if entry.metadata().is_dir() {
+            Box::pin(remove_dir_recursive(sftp, &child)).await?;
+        } else {
+            sftp.remove_file(&child).await.map_err(|e| e.to_string())?;
+        }
+    }
+    sftp.remove_dir(path).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn local_remove(path: String, is_dir: bool) -> Result<(), String> {
+    if is_dir {
+        std::fs::remove_dir_all(&path).map_err(|e| e.to_string())
+    } else {
+        std::fs::remove_file(&path).map_err(|e| e.to_string())
+    }
 }
 
 fn sort_entries(entries: &mut [FileEntry]) {

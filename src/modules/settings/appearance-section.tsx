@@ -65,7 +65,7 @@ export default function AppearanceSection({
           description="Used for panels and navigation"
           action={
             <Badge variant="secondary" className="font-mono">
-              Space Grotesk
+              Inter
             </Badge>
           }
         />

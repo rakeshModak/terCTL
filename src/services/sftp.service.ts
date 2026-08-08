@@ -14,6 +14,8 @@ export const sftpService = {
     call<void>('sftp_mkdir', { hostId, path }),
   rename: (hostId: string, from: string, to: string) =>
     call<void>('sftp_rename', { hostId, from, to }),
+  remove: (hostId: string, path: string, isDir: boolean) =>
+    call<void>('sftp_remove', { hostId, path, isDir }),
   disconnect: (hostId: string) => call<void>('sftp_disconnect', { hostId }),
 
   // Local filesystem
@@ -22,4 +24,6 @@ export const sftpService = {
   localMkdir: (path: string) => call<void>('local_mkdir', { path }),
   localRename: (from: string, to: string) =>
     call<void>('local_rename', { from, to }),
+  localRemove: (path: string, isDir: boolean) =>
+    call<void>('local_remove', { path, isDir }),
 };

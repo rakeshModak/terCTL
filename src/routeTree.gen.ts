@@ -8,75 +8,75 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root';
-import { Route as IndexRouteImport } from './routes/index';
-import { Route as HostsRouteImport } from './routes/hosts';
-import { Route as KeysRouteImport } from './routes/keys';
-import { Route as SessionsRouteImport } from './routes/sessions';
-import { Route as SettingsRouteImport } from './routes/settings';
-import { Route as TransferRouteImport } from './routes/transfer';
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as HostsRouteImport } from './routes/hosts'
+import { Route as KeysRouteImport } from './routes/keys'
+import { Route as SessionsRouteImport } from './routes/sessions'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TransferRouteImport } from './routes/transfer'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const HostsRoute = HostsRouteImport.update({
   id: '/hosts',
   path: '/hosts',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const KeysRoute = KeysRouteImport.update({
   id: '/keys',
   path: '/keys',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SessionsRoute = SessionsRouteImport.update({
   id: '/sessions',
   path: '/sessions',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const TransferRoute = TransferRouteImport.update({
   id: '/transfer',
   path: '/transfer',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute;
-  '/hosts': typeof HostsRoute;
-  '/keys': typeof KeysRoute;
-  '/sessions': typeof SessionsRoute;
-  '/settings': typeof SettingsRoute;
-  '/transfer': typeof TransferRoute;
+  '/': typeof IndexRoute
+  '/hosts': typeof HostsRoute
+  '/keys': typeof KeysRoute
+  '/sessions': typeof SessionsRoute
+  '/settings': typeof SettingsRoute
+  '/transfer': typeof TransferRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute;
-  '/hosts': typeof HostsRoute;
-  '/keys': typeof KeysRoute;
-  '/sessions': typeof SessionsRoute;
-  '/settings': typeof SettingsRoute;
-  '/transfer': typeof TransferRoute;
+  '/': typeof IndexRoute
+  '/hosts': typeof HostsRoute
+  '/keys': typeof KeysRoute
+  '/sessions': typeof SessionsRoute
+  '/settings': typeof SettingsRoute
+  '/transfer': typeof TransferRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  '/': typeof IndexRoute;
-  '/hosts': typeof HostsRoute;
-  '/keys': typeof KeysRoute;
-  '/sessions': typeof SessionsRoute;
-  '/settings': typeof SettingsRoute;
-  '/transfer': typeof TransferRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/hosts': typeof HostsRoute
+  '/keys': typeof KeysRoute
+  '/sessions': typeof SessionsRoute
+  '/settings': typeof SettingsRoute
+  '/transfer': typeof TransferRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/' | '/hosts' | '/keys' | '/sessions' | '/settings' | '/transfer';
-  fileRoutesByTo: FileRoutesByTo;
-  to: '/' | '/hosts' | '/keys' | '/sessions' | '/settings' | '/transfer';
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths: '/' | '/hosts' | '/keys' | '/sessions' | '/settings' | '/transfer'
+  fileRoutesByTo: FileRoutesByTo
+  to: '/' | '/hosts' | '/keys' | '/sessions' | '/settings' | '/transfer'
   id:
     | '__root__'
     | '/'
@@ -84,62 +84,62 @@ export interface FileRouteTypes {
     | '/keys'
     | '/sessions'
     | '/settings'
-    | '/transfer';
-  fileRoutesById: FileRoutesById;
+    | '/transfer'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  HostsRoute: typeof HostsRoute;
-  KeysRoute: typeof KeysRoute;
-  SessionsRoute: typeof SessionsRoute;
-  SettingsRoute: typeof SettingsRoute;
-  TransferRoute: typeof TransferRoute;
+  IndexRoute: typeof IndexRoute
+  HostsRoute: typeof HostsRoute
+  KeysRoute: typeof KeysRoute
+  SessionsRoute: typeof SessionsRoute
+  SettingsRoute: typeof SettingsRoute
+  TransferRoute: typeof TransferRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
-      id: '/';
-      path: '/';
-      fullPath: '/';
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hosts': {
-      id: '/hosts';
-      path: '/hosts';
-      fullPath: '/hosts';
-      preLoaderRoute: typeof HostsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/hosts'
+      path: '/hosts'
+      fullPath: '/hosts'
+      preLoaderRoute: typeof HostsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/keys': {
-      id: '/keys';
-      path: '/keys';
-      fullPath: '/keys';
-      preLoaderRoute: typeof KeysRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/keys'
+      path: '/keys'
+      fullPath: '/keys'
+      preLoaderRoute: typeof KeysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sessions': {
-      id: '/sessions';
-      path: '/sessions';
-      fullPath: '/sessions';
-      preLoaderRoute: typeof SessionsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof SessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
-      id: '/settings';
-      path: '/settings';
-      fullPath: '/settings';
-      preLoaderRoute: typeof SettingsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transfer': {
-      id: '/transfer';
-      path: '/transfer';
-      fullPath: '/transfer';
-      preLoaderRoute: typeof TransferRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+      id: '/transfer'
+      path: '/transfer'
+      fullPath: '/transfer'
+      preLoaderRoute: typeof TransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -150,7 +150,7 @@ const rootRouteChildren: RootRouteChildren = {
   SessionsRoute: SessionsRoute,
   SettingsRoute: SettingsRoute,
   TransferRoute: TransferRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
