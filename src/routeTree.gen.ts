@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HostsRouteImport } from './routes/hosts'
-import { Route as KeysRouteImport } from './routes/keys'
 import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TransferRouteImport } from './routes/transfer'
@@ -24,11 +23,6 @@ const IndexRoute = IndexRouteImport.update({
 const HostsRoute = HostsRouteImport.update({
   id: '/hosts',
   path: '/hosts',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KeysRoute = KeysRouteImport.update({
-  id: '/keys',
-  path: '/keys',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SessionsRoute = SessionsRouteImport.update({
@@ -50,7 +44,6 @@ const TransferRoute = TransferRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hosts': typeof HostsRoute
-  '/keys': typeof KeysRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/transfer': typeof TransferRoute
@@ -58,7 +51,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/hosts': typeof HostsRoute
-  '/keys': typeof KeysRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/transfer': typeof TransferRoute
@@ -67,30 +59,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/hosts': typeof HostsRoute
-  '/keys': typeof KeysRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/transfer': typeof TransferRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/hosts' | '/keys' | '/sessions' | '/settings' | '/transfer'
+  fullPaths: '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/hosts' | '/keys' | '/sessions' | '/settings' | '/transfer'
-  id:
-    | '__root__'
-    | '/'
-    | '/hosts'
-    | '/keys'
-    | '/sessions'
-    | '/settings'
-    | '/transfer'
+  to: '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
+  id: '__root__' | '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HostsRoute: typeof HostsRoute
-  KeysRoute: typeof KeysRoute
   SessionsRoute: typeof SessionsRoute
   SettingsRoute: typeof SettingsRoute
   TransferRoute: typeof TransferRoute
@@ -110,13 +93,6 @@ declare module '@tanstack/react-router' {
       path: '/hosts'
       fullPath: '/hosts'
       preLoaderRoute: typeof HostsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/keys': {
-      id: '/keys'
-      path: '/keys'
-      fullPath: '/keys'
-      preLoaderRoute: typeof KeysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sessions': {
@@ -146,7 +122,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HostsRoute: HostsRoute,
-  KeysRoute: KeysRoute,
   SessionsRoute: SessionsRoute,
   SettingsRoute: SettingsRoute,
   TransferRoute: TransferRoute,

@@ -1,7 +1,6 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import {
   ArrowLeftRight,
-  KeyRound,
   Server,
   Settings,
   SquareTerminal,
@@ -25,7 +24,6 @@ const NAV: NavItem[] = [
   { to: '/hosts', label: 'Hosts', Icon: Server },
   { to: '/sessions', label: 'Terminal', Icon: SquareTerminal },
   { to: '/transfer', label: 'Transfer', Icon: ArrowLeftRight },
-  { to: '/keys', label: 'Keys', Icon: KeyRound },
   { to: '/settings', label: 'Settings', Icon: Settings },
 ];
 
