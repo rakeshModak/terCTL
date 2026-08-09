@@ -91,7 +91,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   const settings = useAtomValue(settingsAtom);
   const fontSize = settings.fontSize;
   const globalScheme = settings.termScheme;
-  const termScheme = hasTermScheme(scheme) ? (scheme as string) : globalScheme;
+  const termScheme = hasTermScheme(scheme) ? scheme : globalScheme;
   const mode = useResolvedMode();
 
   useEffect(() => {

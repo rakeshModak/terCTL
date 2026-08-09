@@ -172,7 +172,7 @@ const SCHEME_SPECS: Record<string, Record<ResolvedMode, SchemeSpec>> = {
 
 export const TERM_SCHEME_NAMES = Object.keys(SCHEME_SPECS);
 
-export function hasTermScheme(name: string | null | undefined): boolean {
+export function hasTermScheme(name: string | null | undefined): name is string {
   return !!name && name in SCHEME_SPECS;
 }
 
