@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
-import { TERM_SWATCH } from '@/constants/terminal-schemes';
+import { TERM_SCHEME_NAMES, termSwatch } from '@/constants/terminal-schemes';
+import { useResolvedMode } from '@/hooks/useResolvedMode';
 
 interface TerminalSchemePickerProps {
   value: string;
@@ -10,9 +11,11 @@ export default function TerminalSchemePicker({
   value,
   onChange,
 }: TerminalSchemePickerProps) {
+  const mode = useResolvedMode();
   return (
     <div className="flex flex-wrap gap-2.5">
-      {Object.entries(TERM_SWATCH).map(([name, swatch]) => {
+      {TERM_SCHEME_NAMES.map((name) => {
+        const swatch = termSwatch(name, mode);
         const active = name === value;
         return (
           <button

@@ -13,7 +13,7 @@ interface ModePickerProps {
   onChange: (mode: ThemeMode) => void;
 }
 
-export default function ModePicker({ value, onChange }: ModePickerProps) {
+export default function ModePicker({ value, onChange }: Readonly<ModePickerProps>) {
   return (
     <Tabs
       value={value}
@@ -21,9 +21,9 @@ export default function ModePicker({ value, onChange }: ModePickerProps) {
         if (typeof next === 'string') onChange(next as ThemeMode);
       }}
     >
-      <TabsList aria-label="Color mode">
+      <TabsList aria-label="Color mode" className={"py-6"}>
         {OPTIONS.map(({ value: mode, label, Icon }) => (
-          <TabsTrigger key={mode} value={mode}>
+          <TabsTrigger key={mode} value={mode} className={"w-30 py-5"}>
             <Icon />
             {label}
           </TabsTrigger>

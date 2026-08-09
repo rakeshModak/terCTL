@@ -28,8 +28,6 @@ const PATH_LABELS: Record<string, string> = {
   '/settings': 'Settings',
 };
 
-const BAR_SURFACE = 'color-mix(in srgb, var(--brand) 4%, var(--sidebar))';
-
 function Header() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onSessions = pathname === '/sessions';
@@ -82,9 +80,8 @@ function Header() {
   return (
     <div
       onMouseDown={onMouseDown}
-      style={{ background: BAR_SURFACE }}
       className={cn(
-        'border-border flex h-[46px] shrink-0 items-center gap-3.5 border-b',
+        'border-border bg-background flex h-[46px] shrink-0 items-center gap-3.5 border-b',
         IS_MAC ? 'pr-3.5 pl-[86px]' : 'pr-0 pl-3.5',
       )}
     >

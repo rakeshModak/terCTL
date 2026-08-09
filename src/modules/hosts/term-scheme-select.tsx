@@ -6,7 +6,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TERM_SWATCH } from '../../constants/terminal-schemes';
+import {
+  TERM_SCHEME_NAMES,
+  termSwatch,
+} from '../../constants/terminal-schemes';
+import { useResolvedMode } from '../../hooks/useResolvedMode';
 
 interface TermSchemeSelectProps {
   /** null = inherit the global terminal scheme. */
@@ -18,7 +22,8 @@ interface TermSchemeSelectProps {
 const INHERIT = '__inherit__';
 
 function Swatch({ scheme }: { scheme: string | null }) {
-  const sw = scheme ? TERM_SWATCH[scheme] : undefined;
+  const mode = useResolvedMode();
+  const sw = scheme ? termSwatch(scheme, mode) : undefined;
   if (!sw) {
     return (
       <span className="bg-muted ring-border size-4 shrink-0 rounded-sm ring-1" />
@@ -41,7 +46,7 @@ export default function TermSchemeSelect({
 }: TermSchemeSelectProps) {
   const options = [
     { value: INHERIT, label: 'Use global default' },
-    ...Object.keys(TERM_SWATCH).map((name) => ({ value: name, label: name })),
+    ...TERM_SCHEME_NAMES.map((name) => ({ value: name, label: name })),
   ];
 
   return (

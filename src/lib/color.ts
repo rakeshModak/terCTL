@@ -66,17 +66,12 @@ export function luminance(hex: string): number {
   );
 }
 
-/** Contrast ratio between two #rrggbb colors, 1-21. */
 export function contrast(a: string, b: string): number {
   const la = luminance(a) + 0.05;
   const lb = luminance(b) + 0.05;
   return la > lb ? la / lb : lb / la;
 }
 
-/**
- * Whichever of the two inks lands the higher contrast ratio on `bg`. Used for
- * text sitting on a brand-colored fill, where the accent is user-chosen.
- */
 export function readableOn(
   bg: string,
   darkInk: string,
@@ -85,25 +80,7 @@ export function readableOn(
   return contrast(bg, darkInk) >= contrast(bg, lightInk) ? darkInk : lightInk;
 }
 
-/**
- * Step `ink` toward black until it clears `target` contrast against `bg`.
- *
- * Tinted hues carry more luminance at the same HSL lightness, so a single
- * hand-picked lightness that reads fine on a neutral theme can fall under AA
- * on a green or teal one. Deriving the stopping point keeps every theme — and
- * any added later — legible without per-theme tuning.
- */
-export function darkenToContrast(ink: Hsl, bg: string, target: number): string {
-  return ensureContrast(ink, bg, target);
-}
 
-/**
- * Step `ink`'s lightness away from `bg` until it clears `target` contrast.
- *
- * Direction follows the background: colors lighten on a dark surface and darken
- * on a light one. Hue and saturation are preserved, so a red stays red — only
- * its lightness moves. 0.02 steps are fine enough not to overshoot.
- */
 export function ensureContrast(ink: Hsl, bg: string, target: number): string {
   const step = luminance(bg) < 0.35 ? 0.02 : -0.02;
   let { l } = ink;

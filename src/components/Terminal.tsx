@@ -5,12 +5,15 @@ import { listen } from '@tauri-apps/api/event';
 import { getDefaultStore, useAtomValue } from 'jotai';
 import '@xterm/xterm/css/xterm.css';
 import {
+  hasTermScheme,
   terminalFontFamily,
-  TERM_SCHEMES,
+  termTheme,
 } from '../constants/terminal-schemes';
+import { useResolvedMode } from '../hooks/useResolvedMode';
 import { settingsAtom } from '../store/settings';
 import { sshService } from '../services/ssh.service';
 import { IS_MAC } from '../lib/platform';
+import { readableOn } from '../lib/color';
 import { readClipboard, writeClipboard } from '../lib/clipboard';
 import {
   Search,
@@ -42,7 +45,7 @@ const FIND_ICON_BTN =
 const findToggle = (on: boolean) =>
   `flex h-[24px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${
     on
-      ? 'bg-[var(--brand)] text-[#0b0d10] shadow-[0_1px_4px_rgb(0_0_0_/_0.3)]'
+      ? 'bg-[var(--brand)] text-[var(--brand-contrast)] shadow-[0_1px_4px_rgb(0_0_0_/_0.3)]'
       : 'text-[var(--text-faint)] hover:bg-foreground/10 hover:text-[var(--text)]'
   }`;
 
@@ -88,14 +91,15 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   const settings = useAtomValue(settingsAtom);
   const fontSize = settings.fontSize;
   const globalScheme = settings.termScheme;
-  const termScheme = scheme && TERM_SCHEMES[scheme] ? scheme : globalScheme;
+  const termScheme = hasTermScheme(scheme) ? (scheme as string) : globalScheme;
+  const mode = useResolvedMode();
 
   useEffect(() => {
     const term = new XTerm({
       convertEol: true,
       fontFamily: terminalFontFamily,
       fontSize: getDefaultStore().get(settingsAtom).fontSize,
-      theme: TERM_SCHEMES[termScheme] ?? TERM_SCHEMES.TerCTL,
+      theme: termTheme(termScheme, mode),
       allowProposedApi: true,
     });
     const fitAddon = new FitAddon();
@@ -240,7 +244,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   }, [fontSize]);
 
   useEffect(() => {
-    const nextScheme = TERM_SCHEMES[termScheme] ?? TERM_SCHEMES.TerCTL;
+    const nextScheme = termTheme(termScheme, mode);
     if (nextScheme.background) {
       document.documentElement.style.setProperty(
         '--term-bg',
@@ -251,7 +255,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     if (!term) return;
     term.options.theme = nextScheme;
     term.refresh(0, term.rows - 1);
-  }, [termScheme]);
+  }, [termScheme, mode]);
 
   const scanMatches = useCallback(
     (q: string): { row: number; col: number; length: number }[] => {
@@ -310,6 +314,12 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
         getComputedStyle(document.documentElement)
           .getPropertyValue('--brand')
           .trim() || '#d9795f';
+      // Non-active matches borrow the scheme's own yellow so the highlight
+      // sits on the terminal's canvas rather than assuming a dark one, and
+      // each fill picks whichever ink actually reads on top of it.
+      const theme = termTheme(termScheme, mode);
+      const idle = theme.yellow ?? '#6b5a2e';
+      const inkOn = (bg: string) => readableOn(bg, '#0b0d10', '#ffffff');
       const buf = term.buffer.active;
       const cursorAbs = buf.baseY + buf.cursorY;
       const n = matches.length;
@@ -319,19 +329,20 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
         const m = matches[k];
         const marker = term.registerMarker(m.row - cursorAbs);
         if (!marker) continue;
+        const fill = k === active ? accent : idle;
         const decoration = term.registerDecoration({
           marker,
           x: m.col,
           width: m.length,
-          backgroundColor: k === active ? accent : '#6b5a2e',
-          foregroundColor: '#0b0d10',
+          backgroundColor: fill,
+          foregroundColor: inkOn(fill),
           layer: 'top',
         });
         highlightsRef.current.push(marker);
         if (decoration) highlightsRef.current.push(decoration);
       }
     },
-    [clearHighlights],
+    [clearHighlights, termScheme, mode],
   );
 
   const findOpenRef = useRef(findOpen);

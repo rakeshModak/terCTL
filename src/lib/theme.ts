@@ -1,6 +1,11 @@
 import { ACCENTS, DEFAULT_ACCENT } from '../constants/accents';
-import { DEFAULT_THEME, THEMES, type ThemePalette } from '../constants/themes';
-import { darkenToContrast, hexToHsl, hslToHex, readableOn } from './color';
+import {
+  DEFAULT_THEME,
+  THEMES,
+  type ThemePalette,
+  type ThemeSurfaces,
+} from '../constants/themes';
+import { ensureContrast, hexToHsl, readableOn } from './color';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type ResolvedMode = 'light' | 'dark';
@@ -35,17 +40,6 @@ export function getSystemMode(): ResolvedMode {
   return resolveMode('system');
 }
 
-interface Surfaces {
-  background: string;
-  card: string;
-  popover: string;
-  secondary: string;
-  accentSurface: string;
-  sidebar: string;
-  sidebarAccent: string;
-  deep: string;
-}
-
 interface Ink {
   text: string;
   bright: string;
@@ -70,32 +64,68 @@ interface Status {
   red: string;
 }
 
-function darkSurfaces(p: ThemePalette): Surfaces {
+
+const FLOORS: Record<keyof Ink, number> = {
+  text: 11,
+  bright: 8.5,
+  dim: 6.0,
+  muted: 4.8,
+  faint: 3.6,
+  faintest: 2.6,
+};
+
+const DARK_INK_LIGHTNESS: Record<keyof Ink, number> = {
+  text: 0.93,
+  bright: 0.85,
+  dim: 0.68,
+  muted: 0.58,
+  faint: 0.47,
+  faintest: 0.39,
+};
+
+const LIGHT_INK_LIGHTNESS: Record<keyof Ink, number> = {
+  text: 0.13,
+  bright: 0.22,
+  dim: 0.33,
+  muted: 0.41,
+  faint: 0.5,
+  faintest: 0.59,
+};
+
+const DARK_INK_HUE = 218;
+const DARK_INK_SAT = 0.11;
+const LIGHT_INK_SAT = 0.12;
+
+
+function inkRamp(surfaces: ThemeSurfaces, mode: ResolvedMode): Ink {
+  const dark = mode === 'dark';
+  const hue = dark ? DARK_INK_HUE : hexToHsl(surfaces.sidebarAccent).h;
+  const s = dark ? DARK_INK_SAT : LIGHT_INK_SAT;
+  const lightness = dark ? DARK_INK_LIGHTNESS : LIGHT_INK_LIGHTNESS;
+
+  const rung = (key: keyof Ink) =>
+    ensureContrast({ h: hue, s, l: lightness[key] }, surfaces.card, FLOORS[key]);
+
   return {
-    background: p.bg,
-    card: p.bgCard,
-    popover: p.bgCardTop,
-    secondary: p.bgCard2,
-    accentSurface: p.bgCardTop,
-    sidebar: p.bgPanel,
-    sidebarAccent: p.bgInspectorTop,
-    deep: p.bgDeep,
+    text: rung('text'),
+    bright: rung('bright'),
+    dim: rung('dim'),
+    muted: rung('muted'),
+    faint: rung('faint'),
+    faintest: rung('faintest'),
   };
 }
 
-const DARK_INK_RAMP: Ink = {
-  text: '#e8eaee',
-  bright: '#cdd3dd',
-  dim: '#9aa3b2',
-  muted: '#7d8696',
-  faint: '#5f6875',
-  faintest: '#3a4150',
+const DARK_STROKES: Strokes = {
+  border: 'rgba(255, 255, 255, 0.09)',
+  border2: 'rgba(255, 255, 255, 0.13)',
+  strong: 'rgba(255, 255, 255, 0.2)',
 };
 
-const DARK_STROKES: Strokes = {
-  border: 'rgba(255, 255, 255, 0.06)',
-  border2: 'rgba(255, 255, 255, 0.08)',
-  strong: 'rgba(255, 255, 255, 0.12)',
+const LIGHT_STROKES: Strokes = {
+  border: 'rgba(15, 23, 42, 0.12)',
+  border2: 'rgba(15, 23, 42, 0.16)',
+  strong: 'rgba(15, 23, 42, 0.26)',
 };
 
 const DARK_STATUS: Status = {
@@ -107,62 +137,17 @@ const DARK_STATUS: Status = {
   red: '#ff5f56',
 };
 
-function themeTint(p: ThemePalette): { h: number; s: number } {
-  const { h, s } = hexToHsl(p.bgInspectorTop);
-  return { h, s: Math.min(s * 0.55, 0.1) };
-}
-
-function lightSurfaces(p: ThemePalette): Surfaces {
-  const { h, s } = themeTint(p);
-  const step = (l: number) => hslToHex({ h, s, l });
-  return {
-    background: step(0.985),
-    card: step(1),
-    popover: step(1),
-    secondary: step(0.955),
-    accentSurface: step(0.94),
-    sidebar: step(0.972),
-    sidebarAccent: step(0.925),
-    deep: step(0.962),
-  };
-}
-
-const AA_CONTRAST = 4.5;
-
-function lightInk(p: ThemePalette, background: string): Ink {
-  const { h } = themeTint(p);
-  const s = 0.08;
-  const step = (l: number) => hslToHex({ h, s, l });
-  return {
-    text: step(0.13),
-    bright: step(0.22),
-    dim: step(0.36),
-    muted: darkenToContrast({ h, s, l: 0.45 }, background, AA_CONTRAST),
-    faint: step(0.55),
-    faintest: step(0.7),
-  };
-}
-
-const LIGHT_STROKES: Strokes = {
-  border: 'rgba(0, 0, 0, 0.09)',
-  border2: 'rgba(0, 0, 0, 0.12)',
-  strong: 'rgba(0, 0, 0, 0.18)',
-};
-
 const LIGHT_STATUS: Status = {
-  green: '#0f8a5f',
-  amber: '#a16207',
-  blue: '#2563eb',
-  purple: '#7c3aed',
-  purple2: '#6d28d9',
-  red: '#dc2626',
+  green: '#0a7f57',
+  amber: '#8a5a06',
+  blue: '#1d5fd6',
+  purple: '#6d28d9',
+  purple2: '#5b21b6',
+  red: '#c92a2a',
 };
 
-function adaptAccent(hex: string, mode: ResolvedMode): string {
-  if (mode === 'dark') return hex;
-  const { h, s, l } = hexToHsl(hex);
-  if (l <= 0.55) return hex;
-  return hslToHex({ h, s: Math.max(s, 0.08), l: 0.45 });
+function surfacesFor(p: ThemePalette, mode: ResolvedMode): ThemeSurfaces {
+  return mode === 'dark' ? p.dark : p.light;
 }
 
 export function themeTokens({
@@ -175,16 +160,15 @@ export function themeTokens({
   mode: ResolvedMode;
 }): Record<string, string> {
   const p = THEMES[theme] ?? THEMES[DEFAULT_THEME];
-  const rawAccent = ACCENTS[accent] ?? ACCENTS[DEFAULT_ACCENT];
+  const a = ACCENTS[accent] ?? ACCENTS[DEFAULT_ACCENT];
   const dark = mode === 'dark';
 
-  const surfaces = dark ? darkSurfaces(p) : lightSurfaces(p);
-  const ink = dark ? DARK_INK_RAMP : lightInk(p, surfaces.background);
+  const surfaces = surfacesFor(p, mode);
+  const ink = inkRamp(surfaces, mode);
   const strokes = dark ? DARK_STROKES : LIGHT_STROKES;
   const status = dark ? DARK_STATUS : LIGHT_STATUS;
 
-  const brand = adaptAccent(rawAccent.c, mode);
-  const brand2 = adaptAccent(rawAccent.c2, mode);
+  const { c: brand, c2: brand2 } = dark ? a.dark : a.light;
   const onBrand = readableOn(brand, DARK_INK, LIGHT_INK);
 
   return {
@@ -242,13 +226,15 @@ export function themeTokens({
 }
 
 export function themeSwatch(theme: string, mode: ResolvedMode): string {
-  const tokens = themeTokens({ accent: DEFAULT_ACCENT, theme, mode });
-  return `linear-gradient(135deg, ${tokens['--background']}, ${tokens['--accent']})`;
+  const p = THEMES[theme] ?? THEMES[DEFAULT_THEME];
+  const s = surfacesFor(p, mode);
+  return `linear-gradient(135deg, ${s.background}, ${s.sidebarAccent})`;
 }
 
 export function accentSwatch(accent: string, mode: ResolvedMode): string {
   const a = ACCENTS[accent] ?? ACCENTS[DEFAULT_ACCENT];
-  return `linear-gradient(135deg, ${adaptAccent(a.c, mode)}, ${adaptAccent(a.c2, mode)})`;
+  const { c, c2 } = mode === 'dark' ? a.dark : a.light;
+  return `linear-gradient(135deg, ${c}, ${c2})`;
 }
 
 export function applyTheme(
