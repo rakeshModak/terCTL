@@ -71,13 +71,27 @@ export const settingsAtom = atom(
 const clamp = (n: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, n));
 
+export const FONT_SIZE_MIN = 9;
+export const FONT_SIZE_MAX = 24;
+export const FONT_SIZE_DEFAULT = DEFAULTS.fontSize;
+
 export const setFontSizeAtom = atom(null, (get, set, n: number) => {
-  set(settingsAtom, { ...get(settingsAtom), fontSize: clamp(n, 9, 24) });
+  set(settingsAtom, {
+    ...get(settingsAtom),
+    fontSize: clamp(n, FONT_SIZE_MIN, FONT_SIZE_MAX),
+  });
 });
 
 export const bumpFontSizeAtom = atom(null, (get, set, delta: number) => {
   const s = get(settingsAtom);
-  set(settingsAtom, { ...s, fontSize: clamp(s.fontSize + delta, 9, 24) });
+  set(settingsAtom, {
+    ...s,
+    fontSize: clamp(s.fontSize + delta, FONT_SIZE_MIN, FONT_SIZE_MAX),
+  });
+});
+
+export const resetFontSizeAtom = atom(null, (get, set) => {
+  set(settingsAtom, { ...get(settingsAtom), fontSize: FONT_SIZE_DEFAULT });
 });
 
 export const setAccentAtom = atom(null, (get, set, accent: string) => {

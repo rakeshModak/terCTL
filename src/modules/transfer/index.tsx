@@ -1,22 +1,30 @@
 import { useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { CircleAlert, CircleCheck, Server, X } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFileTransfer } from '@/hooks/useFileTransfer';
 import { LOCAL_MACHINE_LABEL } from '@/lib/platform';
 import { hostsAtom } from '@/store/app';
 import FilePane from './file-pane';
 import HostPickerDialog from './host-picker-dialog';
+import TransferProgressPanel from './transfer-progress-panel';
 
 export default function TransferView() {
   const hosts = useAtomValue(hostsAtom);
-  const { hostId, setHostId, status, dismissStatus, local, remote, upload, download } =
-    useFileTransfer();
+  const {
+    hostId,
+    setHostId,
+    transfers,
+    cancelTransfer,
+    clearFinishedTransfers,
+    local,
+    remote,
+    upload,
+    download,
+  } = useFileTransfer();
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const selectedHost = hosts.find((h) => h.id === hostId);
-  const isError = status?.kind === 'error';
 
   const chooseServerButton = (
     <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
@@ -30,18 +38,6 @@ export default function TransferView() {
       <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
         <h1 className="font-heading text-lg font-bold tracking-tight">Transfer</h1>
         <div className="flex-1" />
-        {status && (
-          <Alert
-            variant={isError ? 'destructive' : 'default'}
-            className="w-auto max-w-md items-center py-1.5"
-          >
-            {isError ? <CircleAlert /> : <CircleCheck />}
-            <AlertDescription className="truncate">{status.message}</AlertDescription>
-            <Button variant="ghost" size="icon-xs" onClick={dismissStatus} title="Dismiss">
-              <X />
-            </Button>
-          </Alert>
-        )}
       </header>
 
       <div className="flex min-h-0 flex-1">
@@ -65,6 +61,12 @@ export default function TransferView() {
           onDropInto={(entries, destDir) => void upload(entries, destDir)}
         />
       </div>
+
+      <TransferProgressPanel
+        transfers={transfers}
+        onCancel={cancelTransfer}
+        onClear={clearFinishedTransfers}
+      />
 
       <HostPickerDialog
         open={pickerOpen}

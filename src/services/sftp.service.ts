@@ -1,15 +1,45 @@
+import { listen } from '@tauri-apps/api/event';
 import { call } from './config/tauri-api';
 import type { FileEntryType } from '@/types/file';
+import type {
+  TransferProgressType,
+  TransferResultType,
+} from '@/types/transfer';
 
 export const sftpService = {
-  // Remote (SSH host)
   home: (hostId: string) => call<string>('sftp_home', { hostId }),
   list: (hostId: string, path: string) =>
     call<FileEntryType[]>('sftp_list', { hostId, path }),
-  download: (hostId: string, remotePath: string, localPath: string) =>
-    call<void>('sftp_download', { hostId, remotePath, localPath }),
-  upload: (hostId: string, localPath: string, remotePath: string) =>
-    call<void>('sftp_upload', { hostId, localPath, remotePath }),
+  download: (
+    hostId: string,
+    remotePath: string,
+    localPath: string,
+    transferId: string,
+  ) =>
+    call<TransferResultType>('sftp_download', {
+      hostId,
+      remotePath,
+      localPath,
+      transferId,
+    }),
+  upload: (
+    hostId: string,
+    localPath: string,
+    remotePath: string,
+    transferId: string,
+  ) =>
+    call<TransferResultType>('sftp_upload', {
+      hostId,
+      localPath,
+      remotePath,
+      transferId,
+    }),
+  cancelTransfer: (transferId: string) =>
+    call<void>('sftp_cancel_transfer', { transferId }),
+  onTransferProgress: (handler: (progress: TransferProgressType) => void) =>
+    listen<TransferProgressType>('transfer://progress', (event) =>
+      handler(event.payload),
+    ),
   mkdir: (hostId: string, path: string) =>
     call<void>('sftp_mkdir', { hostId, path }),
   rename: (hostId: string, from: string, to: string) =>

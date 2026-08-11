@@ -1,4 +1,5 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { useAtomValue } from 'jotai';
 import {
   ArrowLeftRight,
   Server,
@@ -11,8 +12,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatSpeed } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { transferSummaryAtom } from '@/store/transfer';
 import ConnectedSessions from './connected-sessions';
+import TerminalZoom from './terminal-zoom';
 
 interface NavItem {
   to: string;
@@ -30,11 +34,13 @@ const NAV: NavItem[] = [
 export default function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const transfer = useAtomValue(transferSummaryAtom);
 
   return (
     <nav className="border-border bg-sidebar flex w-15 shrink-0 flex-col items-center gap-1.5 border-r py-3">
       {NAV.map(({ to, label, Icon }) => {
         const active = pathname === to;
+        const busy = to === '/transfer' && transfer.running > 0;
         return (
           <Tooltip key={to}>
             <TooltipTrigger
@@ -60,13 +66,23 @@ export default function Sidebar() {
                 )}
               />
               <Icon className="size-5" />
+              {busy && (
+                <span className="bg-primary text-primary-foreground absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-[9px] font-semibold tabular-nums">
+                  {transfer.running}
+                </span>
+              )}
             </TooltipTrigger>
-            <TooltipContent side="right">{label}</TooltipContent>
+            <TooltipContent side="right">
+              {busy
+                ? `${label} — ${transfer.running} running · ${formatSpeed(transfer.bytesPerSec)}`
+                : label}
+            </TooltipContent>
           </Tooltip>
         );
       })}
 
       <ConnectedSessions />
+      <TerminalZoom />
     </nav>
   );
 }

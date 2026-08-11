@@ -2,7 +2,6 @@
 
 import globals from 'globals';
 import js from '@eslint/js';
-import pluginQuery from '@tanstack/eslint-plugin-query';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
@@ -11,7 +10,6 @@ export default [
   { ignores: ['dist', 'src/components/ui'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  ...pluginQuery.configs['flat/recommended'],
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {

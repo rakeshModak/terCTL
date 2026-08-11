@@ -8,12 +8,15 @@ import { useEffect } from 'react';
 import { applyTheme, watchSystemMode } from '../lib/theme';
 import { settingsAtom } from '../store/settings';
 import { refreshAllAtom } from '../store/app';
+import { applyTransferProgressAtom } from '../store/transfer';
+import { sftpService } from '../services/sftp.service';
 import { checkForUpdateAtom } from '../store/updater';
 import { loadAppVersionAtom } from '../store/version';
 import { BootSplash } from '../components/chrome/BootSplash';
 import Header from '../modules/layout/header';
 import Sidebar from '../modules/layout/sidebar';
 import { Dialogs } from '../components/Dialogs';
+import { Toaster } from '../components/ui/sonner';
 import { UpdateBanner } from '../components/UpdateBanner';
 import SessionsView from '../modules/sessions';
 
@@ -26,6 +29,7 @@ function RootLayout() {
   const refreshAll = useSetAtom(refreshAllAtom);
   const checkForUpdate = useSetAtom(checkForUpdateAtom);
   const loadVersion = useSetAtom(loadAppVersionAtom);
+  const applyTransferProgress = useSetAtom(applyTransferProgressAtom);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onSessions = pathname === '/sessions';
 
@@ -43,6 +47,13 @@ function RootLayout() {
     void loadVersion();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const unlisten = sftpService.onTransferProgress(applyTransferProgress);
+    return () => {
+      void unlisten.then((off) => off());
+    };
+  }, [applyTransferProgress]);
 
   useEffect(() => {
     const choice = { accent, theme, mode };
@@ -66,6 +77,7 @@ function RootLayout() {
         <Outlet />
       </div>
       <Dialogs />
+      <Toaster />
       <UpdateBanner />
     </div>
   );

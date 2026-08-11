@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
 import { listen } from '@tauri-apps/api/event';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { getDefaultStore, useAtomValue } from 'jotai';
 import '@xterm/xterm/css/xterm.css';
 import {
@@ -10,11 +12,16 @@ import {
   termTheme,
 } from '../constants/terminal-schemes';
 import { useResolvedMode } from '../hooks/useResolvedMode';
-import { settingsAtom } from '../store/settings';
+import {
+  bumpFontSizeAtom,
+  resetFontSizeAtom,
+  settingsAtom,
+} from '../store/settings';
 import { sshService } from '../services/ssh.service';
 import { IS_MAC } from '../lib/platform';
 import { readableOn } from '../lib/color';
 import { readClipboard, writeClipboard } from '../lib/clipboard';
+import { debugLog } from '../lib/debugLog';
 import {
   Search,
   ChevronUp,
@@ -48,6 +55,58 @@ const findToggle = (on: boolean) =>
       ? 'bg-[var(--brand)] text-[var(--brand-contrast)] shadow-[0_1px_4px_rgb(0_0_0_/_0.3)]'
       : 'text-[var(--text-faint)] hover:bg-foreground/10 hover:text-[var(--text)]'
   }`;
+
+const WHEEL_ZOOM_STEP = 40;
+const isLinkActivation = (e: MouseEvent) => e.ctrlKey || (IS_MAC && e.metaKey);
+
+function openTerminalLink(uri: string) {
+  if (!/^https?:\/\//i.test(uri)) return;
+  void openUrl(uri).catch((e) => debugLog(`could not open ${uri}: ${e}`));
+}
+
+const DROP_RING = ['outline-2', '-outline-offset-2', 'outline-primary'];
+
+function fileUriToPath(value: string): string {
+  if (!value.startsWith('file://')) return value;
+  try {
+    const path = decodeURIComponent(new URL(value).pathname);
+    return /^\/[a-z]:/i.test(path) ? path.slice(1) : path;
+  } catch {
+    return value;
+  }
+}
+
+function droppedPaths(dt: DataTransfer): string[] {
+  const raw = dt.getData('text/uri-list') || dt.getData('text/plain');
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith('#')) // uri-list comments
+    .map(fileUriToPath);
+}
+
+function quoteForShell(path: string): string {
+  if (/^[\w@%+=:,./-]+$/.test(path)) return path;
+  return `'${path.replace(/'/g, `'\\''`)}'`;
+}
+
+function handleZoomChord(e: KeyboardEvent): boolean {
+  if (e.altKey || !(e.ctrlKey || (IS_MAC && e.metaKey))) return false;
+  const store = getDefaultStore();
+
+  if (e.key === '+' || (e.key === '=' && !e.shiftKey)) {
+    store.set(bumpFontSizeAtom, 1);
+  } else if (e.key === '-' && !e.shiftKey) {
+    store.set(bumpFontSizeAtom, -1);
+  } else if (e.key === '0' && !e.shiftKey) {
+    store.set(resetFontSizeAtom);
+  } else {
+    return false;
+  }
+
+  e.preventDefault();
+  return true;
+}
 
 function handleClipboardChord(term: XTerm, e: KeyboardEvent): boolean {
   if (IS_MAC || !e.ctrlKey || e.altKey || e.metaKey) return false;
@@ -101,9 +160,20 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       fontSize: getDefaultStore().get(settingsAtom).fontSize,
       theme: termTheme(termScheme, mode),
       allowProposedApi: true,
+      linkHandler: {
+        activate: (event, text) => {
+          if (isLinkActivation(event)) openTerminalLink(text);
+        },
+        allowNonHttpProtocols: false,
+      },
     });
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
+    term.loadAddon(
+      new WebLinksAddon((event, uri) => {
+        if (isLinkActivation(event)) openTerminalLink(uri);
+      }),
+    );
     termRef.current = term;
     fitRef.current = fitAddon;
 
@@ -125,6 +195,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== 'keydown') return true;
 
+      if (handleZoomChord(e)) return false;
       if (handleClipboardChord(term, e)) return false;
 
       const findCombo = IS_MAC
@@ -201,6 +272,55 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
 
     void sshService.resize(sessionId, term.cols, term.rows);
 
+    let wheelTravel = 0;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !(IS_MAC && e.metaKey)) return;
+      e.preventDefault(); // otherwise the webview zooms the whole window
+      e.stopPropagation(); // and xterm scrolls the buffer under the zoom
+      const px =
+        e.deltaMode === 1
+          ? e.deltaY * 16
+          : e.deltaMode === 2
+            ? e.deltaY * 400
+            : e.deltaY;
+      wheelTravel += px;
+      if (Math.abs(wheelTravel) < WHEEL_ZOOM_STEP) return;
+      const direction = wheelTravel > 0 ? -1 : 1; // scrolling down zooms out
+      wheelTravel = 0;
+      getDefaultStore().set(bumpFontSizeAtom, direction);
+    };
+    const paneEl = containerRef.current;
+    paneEl?.addEventListener('wheel', onWheel, {
+      passive: false,
+      capture: true,
+    });
+
+    const canAcceptDrop = (dt: DataTransfer | null): dt is DataTransfer =>
+      !!dt &&
+      Array.from(dt.types).some((t) => t === 'Files' || t === 'text/uri-list');
+    const onDragOver = (e: DragEvent) => {
+      if (!canAcceptDrop(e.dataTransfer)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      paneEl?.classList.add(...DROP_RING);
+    };
+    const onDragLeave = (e: DragEvent) => {
+      if (paneEl?.contains(e.relatedTarget as Node)) return;
+      paneEl?.classList.remove(...DROP_RING);
+    };
+    const onDrop = (e: DragEvent) => {
+      paneEl?.classList.remove(...DROP_RING);
+      if (!canAcceptDrop(e.dataTransfer)) return;
+      e.preventDefault();
+      const paths = droppedPaths(e.dataTransfer);
+      if (paths.length === 0) return;
+      term.paste(paths.map(quoteForShell).join(' '));
+      term.focus();
+    };
+    paneEl?.addEventListener('dragover', onDragOver);
+    paneEl?.addEventListener('dragleave', onDragLeave);
+    paneEl?.addEventListener('drop', onDrop);
+
     const resizeObserver = new ResizeObserver(() => repaint());
     const intersectionObserver = new IntersectionObserver(
       (entries) => {
@@ -218,6 +338,10 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       if (rafId) cancelAnimationFrame(rafId);
       if (settleTimer) clearTimeout(settleTimer);
       window.removeEventListener('resize', repaint);
+      paneEl?.removeEventListener('wheel', onWheel, { capture: true });
+      paneEl?.removeEventListener('dragover', onDragOver);
+      paneEl?.removeEventListener('dragleave', onDragLeave);
+      paneEl?.removeEventListener('drop', onDrop);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       dataDisposable.dispose();
@@ -314,9 +438,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
         getComputedStyle(document.documentElement)
           .getPropertyValue('--brand')
           .trim() || '#d9795f';
-      // Non-active matches borrow the scheme's own yellow so the highlight
-      // sits on the terminal's canvas rather than assuming a dark one, and
-      // each fill picks whichever ink actually reads on top of it.
       const theme = termTheme(termScheme, mode);
       const idle = theme.yellow ?? '#6b5a2e';
       const inkOn = (bg: string) => readableOn(bg, '#0b0d10', '#ffffff');
@@ -356,7 +477,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   const renderHighlightsRef = useRef(renderHighlights);
   renderHighlightsRef.current = renderHighlights;
 
-  // Rescan and jump to the first match as the query or flags change; clear when emptied.
   useEffect(() => {
     if (!findOpen) return;
     if (!findQuery) {
@@ -500,11 +620,6 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
           </button>
         </div>
       )}
-      {/* Pinned to the pane edges via absolute offsets (never padding/height:100%).
-          The spacing lives in the inset offsets — NOT container padding — because
-          the fit-addon measures this element to compute rows, and WebKit mis-reports
-          a padded border-box height, over-counting by a row that then clips at the
-          bottom. Offsets give the same 6/4/4/8 gap with a clean, padding-free box. */}
       <div
         ref={containerRef}
         className="absolute top-[6px] right-[4px] bottom-[4px] left-[8px]"

@@ -1,15 +1,38 @@
 import type { FileEntryType } from '@/types/file';
 
-/** Which half of the transfer view a pane represents. */
 export type TransferSideType = 'local' | 'remote';
+export type TransferDirectionType = 'upload' | 'download';
+export type TransferStateType =
+  | 'queued'
+  | 'active'
+  | 'done'
+  | 'cancelled'
+  | 'error';
 
-/** Transient feedback line shown in the transfer header. */
-export interface TransferStatusType {
-  message: string;
-  kind: 'info' | 'error';
+export interface TransferItemType {
+  id: string;
+  name: string;
+  direction: TransferDirectionType;
+  destDir: string;
+  total: number;
+  transferred: number;
+  bytesPerSec: number;
+  state: TransferStateType;
+  error?: string;
 }
 
-/** Broad file family, used to colour the row icon. */
+export interface TransferProgressType {
+  id: string;
+  transferred: number;
+  total: number;
+  bytesPerSec: number;
+}
+
+export interface TransferResultType {
+  bytes: number;
+  cancelled: boolean;
+}
+
 export type FileKindType =
   | 'folder'
   | 'image'
@@ -19,10 +42,8 @@ export type FileKindType =
   | 'media'
   | 'file';
 
-/** The cross-pane action a row offers (upload from local, download from remote). */
 export interface PaneTransferActionType {
   label: string;
   enabled: boolean;
-  /** `destDir` defaults to the opposite pane's current folder. */
   run: (entries: FileEntryType[], destDir?: string) => void;
 }

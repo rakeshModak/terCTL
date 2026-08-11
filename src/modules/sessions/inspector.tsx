@@ -48,13 +48,7 @@ function Detail({
   );
 }
 
-/**
- * Right-hand details panel for the focused session.
- *
- * Renders for local shells too, not just SSH hosts — a local session has no
- * Host record, so the host grid, metrics and remote-only actions are omitted
- * rather than the whole panel being suppressed.
- */
+
 export default function Inspector({
   session,
   host,
@@ -68,7 +62,7 @@ export default function Inspector({
 
   return (
     <aside className="border-border bg-sidebar flex w-72 shrink-0 flex-col gap-3.5 overflow-y-auto border-l p-4">
-      <Card size="sm" className="gap-3 px-4">
+      <Card size="sm" className="shrink-0 gap-3 px-4">
         <div className="flex items-center gap-2.5">
           <span
             className={cn(
@@ -79,7 +73,10 @@ export default function Inspector({
               boxShadow: `0 0 9px ${connected ? 'var(--green)' : 'var(--red)'}`,
             }}
           />
-          <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+          <span
+            className="min-w-0 flex-1 truncate text-sm font-semibold"
+            title={host?.label ?? session.label}
+          >
             {host?.label ?? session.label}
           </span>
           <Badge
@@ -124,9 +121,6 @@ export default function Inspector({
         </dl>
       </Card>
 
-      {/* Metrics are read over SSH, so they only exist for a real host.
-          Keyed so switching host or reconnecting remounts and resets history,
-          rather than resetting state from inside the polling effect. */}
       {host && (
         <MetricsPanel
           key={`${host.id}-${connected}`}
@@ -135,7 +129,7 @@ export default function Inspector({
         />
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid shrink-0 grid-cols-2 gap-2">
         {host && (
           <>
             <Button variant="outline" size="sm" onClick={onOpenSftp}>

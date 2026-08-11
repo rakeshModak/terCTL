@@ -37,11 +37,6 @@ function fmtUptime(sec: number): string {
 
 const clampPct = (n: number) => Math.max(0, Math.min(100, n));
 
-/**
- * Severity ramp along a bar, btop-style: the fill starts at the accent and
- * escalates as it approaches full. Every stop is a token, so it follows the
- * accent and the light/dark mode instead of being hardcoded.
- */
 function fillColor(position: number): string {
   if (position < 0.6) return 'var(--brand)';
   if (position < 0.85) return 'var(--amber)';
@@ -50,13 +45,6 @@ function fillColor(position: number): string {
 
 const EMPTY_FILL = 'color-mix(in srgb, var(--foreground) 12%, transparent)';
 
-// --- primitives ----------------------------------------------------------
-
-/**
- * Bordered box with its label riding on the top border. A fieldset/legend does
- * this natively — the legend punches through the border without needing to know
- * the surface color behind it.
- */
 function Section({
   index,
   name,
@@ -77,7 +65,6 @@ function Section({
   );
 }
 
-/** Segmented meter. Each filled block takes its color from its own position. */
 function Meter({ pct }: { pct: number }) {
   const filled = Math.round((clampPct(pct) / 100) * BLOCKS);
   return (
@@ -95,7 +82,6 @@ function Meter({ pct }: { pct: number }) {
   );
 }
 
-/** Right-aligned history graph; slots stay blank until the buffer fills. */
 function History({
   data,
   max,
@@ -123,7 +109,6 @@ function History({
             key={i}
             className="flex-1 rounded-[1px]"
             style={{
-              // Floor non-empty samples so a near-zero reading still shows.
               height: v === null ? 0 : `${Math.max(ratio * 100, 4)}%`,
               background: v === null ? 'transparent' : fillColor(ratio),
             }}
@@ -134,7 +119,6 @@ function History({
   );
 }
 
-/** label ......... value */
 function Row({
   label,
   value,
@@ -158,7 +142,6 @@ function Row({
   );
 }
 
-/** A meter with its percentage pinned to the right. */
 function MeterRow({ pct }: { pct: number }) {
   return (
     <div className="mt-1 flex items-center gap-2">
@@ -170,15 +153,6 @@ function MeterRow({ pct }: { pct: number }) {
   );
 }
 
-// --- panel ---------------------------------------------------------------
-
-/**
- * Live host metrics, laid out like a terminal system monitor.
- *
- * Mounted with a key of hostId+connected (see Inspector), so switching host or
- * reconnecting remounts this and resets the history buffer — rather than
- * resetting state from inside the effect.
- */
 export default function MetricsPanel({
   hostId,
   connected,
@@ -222,7 +196,7 @@ export default function MetricsPanel({
 
   if (!m) {
     return (
-      <div className="text-muted-foreground flex min-h-45 flex-col items-center justify-center gap-3 font-mono text-xs">
+      <div className="text-muted-foreground flex min-h-45 shrink-0 flex-col items-center justify-center gap-3 font-mono text-xs">
         {err ? (
           <span className="text-destructive px-4 text-center">
             Couldn’t read metrics from this host.
@@ -243,7 +217,7 @@ export default function MetricsPanel({
   const netPeak = Math.max(...hist.map((s) => s.net), 1);
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex shrink-0 flex-col gap-2.5">
       <Section index={1} name="cpu">
         <Row
           label={`${m.cores} ${m.cores === 1 ? 'core' : 'cores'}`}

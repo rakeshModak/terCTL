@@ -1,77 +1,113 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useSetAtom } from 'jotai';
+import { useCallback, useEffect } from 'react';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { toast } from 'sonner';
 import { confirmAtom, promptAtom } from '@/store/dialog';
+import {
+  cancelledTransferIds,
+  cancelTransferAtom,
+  clearFinishedTransfersAtom,
+  enqueueTransfersAtom,
+  localPaneAtom,
+  patchTransferAtom,
+  remotePaneAtom,
+  setTransferHostAtom,
+  transferHostIdAtom,
+  transfersAtom,
+} from '@/store/transfer';
 import { sftpService } from '@/services/sftp.service';
 import { joinPath, parentPath } from '@/lib/path';
 import type { FileEntryType } from '@/types/file';
-import type { TransferStatusType } from '@/types/transfer';
-
-interface PaneState {
-  path: string;
-  entries: FileEntryType[];
-  busy: boolean;
-  error: string | null;
-}
-
-const emptyPane: PaneState = { path: '', entries: [], busy: false, error: null };
+import type {
+  TransferDirectionType,
+  TransferItemType,
+  TransferResultType,
+} from '@/types/transfer';
 
 export function useFileTransfer() {
   const prompt = useSetAtom(promptAtom);
   const confirm = useSetAtom(confirmAtom);
 
-  const [hostId, setHostId] = useState('');
-  const [local, setLocal] = useState<PaneState>(emptyPane);
-  const [remote, setRemote] = useState<PaneState>(emptyPane);
-  const [status, setStatus] = useState<TransferStatusType | null>(null);
+  const hostId = useAtomValue(transferHostIdAtom);
+  const setHostId = useSetAtom(setTransferHostAtom);
+  const [local, setLocal] = useAtom(localPaneAtom);
+  const [remote, setRemote] = useAtom(remotePaneAtom);
+  const transfers = useAtomValue(transfersAtom);
+  const enqueueTransfers = useSetAtom(enqueueTransfersAtom);
+  const patchTransfer = useSetAtom(patchTransferAtom);
+  const cancelTransfer = useSetAtom(cancelTransferAtom);
+  const clearFinishedTransfers = useSetAtom(clearFinishedTransfersAtom);
 
-  const fail = (message: string) => setStatus({ message, kind: 'error' });
-  const info = (message: string) => setStatus({ message, kind: 'info' });
+  const fail = (title: string, detail?: unknown) =>
+    toast.error(title, {
+      description: detail === undefined ? undefined : String(detail),
+      duration: 8000,
+    });
+  const info = (title: string, description?: string) =>
+    toast.success(title, { description });
 
-  const loadLocal = useCallback(async (path: string) => {
-    setLocal((s) => ({ ...s, busy: true, error: null }));
-    try {
-      const entries = await sftpService.localList(path);
-      setLocal({ path, entries, busy: false, error: null });
-    } catch (e) {
-      setLocal((s) => ({ ...s, busy: false, error: String(e) }));
-    }
-  }, []);
+  const loadLocal = useCallback(
+    async (path: string) => {
+      setLocal((s) => ({ ...s, busy: true, error: null }));
+      try {
+        const entries = await sftpService.localList(path);
+        setLocal({ path, entries, busy: false, error: null });
+      } catch (e) {
+        setLocal((s) => ({
+          ...s,
+          busy: false,
+          error: String(e),
+        }));
+      }
+    },
+    [setLocal],
+  );
 
-  const loadRemote = useCallback(async (hid: string, path: string) => {
-    setRemote((s) => ({ ...s, busy: true, error: null }));
-    try {
-      const entries = await sftpService.list(hid, path);
-      setRemote({ path, entries, busy: false, error: null });
-    } catch (e) {
-      setRemote((s) => ({ ...s, busy: false, error: String(e) }));
-    }
-  }, []);
+  const loadRemote = useCallback(
+    async (hid: string, path: string) => {
+      setRemote((s) => ({
+        ...s,
+        busy: true,
+        error: null,
+      }));
+      try {
+        const entries = await sftpService.list(hid, path);
+        setRemote({ path, entries, busy: false, error: null });
+      } catch (e) {
+        setRemote((s) => ({
+          ...s,
+          busy: false,
+          error: String(e),
+        }));
+      }
+    },
+    [setRemote],
+  );
 
-  // Open the local home directory once on mount.
   useEffect(() => {
+    if (local.path) return;
     void sftpService.localHome().then(loadLocal);
-  }, [loadLocal]);
+  }, [local.path, loadLocal]);
 
-  // Tear the SFTP channel down when the host changes or the view unmounts.
+  // Jump to the remote home when a server is first opened. Changing servers
+  // clears the pane (see setTransferHostAtom), which is what re-arms this.
   useEffect(() => {
-    if (!hostId) return;
-    return () => {
-      void sftpService.disconnect(hostId);
-    };
-  }, [hostId]);
-
-  // Jump to the remote home whenever a host is picked.
-  useEffect(() => {
-    if (!hostId) {
-      setRemote(emptyPane);
-      return;
-    }
-    setRemote((s) => ({ ...s, busy: true, error: null }));
+    if (!hostId || remote.path) return;
+    setRemote((s) => ({
+      ...s,
+      busy: true,
+      error: null,
+    }));
     sftpService
       .home(hostId)
       .then((home) => loadRemote(hostId, home))
-      .catch((e) => setRemote((s) => ({ ...s, busy: false, error: String(e) })));
-  }, [hostId, loadRemote]);
+      .catch((e) =>
+        setRemote((s) => ({
+          ...s,
+          busy: false,
+          error: String(e),
+        })),
+      );
+  }, [hostId, remote.path, loadRemote, setRemote]);
 
   const refreshLocal = useCallback(() => {
     void loadLocal(local.path);
@@ -80,12 +116,6 @@ export function useFileTransfer() {
     if (hostId) void loadRemote(hostId, remote.path);
   }, [hostId, loadRemote, remote.path]);
 
-  // --- transfers ---------------------------------------------------------
-
-  /**
-   * Directories can't go over `sftp_upload`/`sftp_download`, which take file
-   * paths — so they're filtered out and reported rather than failing per item.
-   */
   function splitTransferable(entries: FileEntryType[]) {
     return {
       files: entries.filter((e) => !e.isDir),
@@ -95,64 +125,132 @@ export function useFileTransfer() {
 
   const runBatch = async (
     entries: FileEntryType[],
+    direction: TransferDirectionType,
     verb: string,
     destDir: string,
-    transfer: (entry: FileEntryType) => Promise<void>,
+    transfer: (
+      entry: FileEntryType,
+      transferId: string,
+    ) => Promise<TransferResultType>,
     reload: () => Promise<void>,
   ) => {
     const { files, skipped } = splitTransferable(entries);
     if (files.length === 0) {
-      fail(
+      toast.warning(
         skipped > 0
-          ? `Folders can't be transferred yet — skipped ${skipped}.`
-          : 'Nothing to transfer.',
+          ? 'Folders can’t be transferred yet'
+          : 'Nothing to transfer',
+        {
+          description:
+            skipped > 0
+              ? `Skipped ${skipped} folder${skipped === 1 ? '' : 's'}.`
+              : undefined,
+        },
       );
       return;
     }
 
+    const queued: TransferItemType[] = files.map((entry) => ({
+      id: crypto.randomUUID(),
+      name: entry.name,
+      direction,
+      destDir,
+      total: entry.size,
+      transferred: 0,
+      bytesPerSec: 0,
+      state: 'queued',
+    }));
+    enqueueTransfers(queued);
+
     let done = 0;
-    for (const entry of files) {
-      info(`${verb} ${entry.name}… (${done + 1}/${files.length})`);
+    let cancelled = 0;
+    let failed = 0;
+
+    for (const [i, entry] of files.entries()) {
+      const { id } = queued[i];
+      if (cancelledTransferIds.delete(id)) {
+        cancelled += 1;
+        continue;
+      }
+      patchTransfer(id, { state: 'active' });
       try {
-        await transfer(entry);
-        done += 1;
+        const result = await transfer(entry, id);
+        if (result.cancelled) {
+          patchTransfer(id, { state: 'cancelled', bytesPerSec: 0 });
+          cancelled += 1;
+        } else {
+          patchTransfer(id, {
+            state: 'done',
+            transferred: result.bytes,
+            total: result.bytes,
+            bytesPerSec: 0,
+          });
+          done += 1;
+        }
       } catch (e) {
-        fail(`${verb} failed on ${entry.name}: ${e}`);
-        await reload();
-        return;
+        patchTransfer(id, { state: 'error', error: String(e), bytesPerSec: 0 });
+        failed += 1;
+      } finally {
+        cancelledTransferIds.delete(id);
       }
     }
 
-    const suffix = skipped > 0 ? ` · skipped ${skipped} folder${skipped === 1 ? '' : 's'}` : '';
-    info(`${verb} complete — ${done} item${done === 1 ? '' : 's'} → ${destDir}${suffix}`);
+    const notes = [
+      skipped > 0 ? `skipped ${skipped} folder${skipped === 1 ? '' : 's'}` : '',
+      cancelled > 0 ? `cancelled ${cancelled}` : '',
+      failed > 0 ? `failed ${failed}` : '',
+    ].filter(Boolean);
+    const suffix = notes.length ? ` · ${notes.join(' · ')}` : '';
+
+    if (failed > 0) {
+      fail(
+        `${verb} finished with errors`,
+        `${done} of ${files.length} done${suffix} — see the transfer list for details`,
+      );
+    } else {
+      info(
+        `${verb} complete`,
+        `${done} item${done === 1 ? '' : 's'} → ${destDir}${suffix}`,
+      );
+    }
     await reload();
   };
 
-  /** Local → remote. `destDir` defaults to the folder the remote pane shows. */
   const upload = async (entries: FileEntryType[], destDir = remote.path) => {
     if (!hostId) return;
     await runBatch(
       entries,
+      'upload',
       'Uploaded',
       destDir,
-      (entry) => sftpService.upload(hostId, entry.path, joinPath(destDir, entry.name)),
+      (entry, transferId) =>
+        sftpService.upload(
+          hostId,
+          entry.path,
+          joinPath(destDir, entry.name),
+          transferId,
+        ),
       () => loadRemote(hostId, remote.path),
     );
   };
 
-  /** Remote → local. `destDir` defaults to the folder the local pane shows. */
   const download = async (entries: FileEntryType[], destDir = local.path) => {
     if (!hostId) return;
     await runBatch(
       entries,
+      'download',
       'Downloaded',
       destDir,
-      (entry) => sftpService.download(hostId, entry.path, joinPath(destDir, entry.name)),
+      (entry, transferId) =>
+        sftpService.download(
+          hostId,
+          entry.path,
+          joinPath(destDir, entry.name),
+          transferId,
+        ),
       () => loadLocal(local.path),
     );
   };
-
-  // --- mutations ---------------------------------------------------------
 
   const askName = (title: string, initialValue?: string) =>
     prompt({
@@ -169,7 +267,7 @@ export function useFileTransfer() {
       await sftpService.localMkdir(joinPath(local.path, name));
       await loadLocal(local.path);
     } catch (e) {
-      fail(`Couldn't create folder: ${e}`);
+      fail('Couldn’t create folder', e);
     }
   };
 
@@ -181,7 +279,7 @@ export function useFileTransfer() {
       await sftpService.mkdir(hostId, joinPath(remote.path, name));
       await loadRemote(hostId, remote.path);
     } catch (e) {
-      fail(`Couldn't create folder: ${e}`);
+      fail('Couldn’t create folder', e);
     }
   };
 
@@ -189,10 +287,13 @@ export function useFileTransfer() {
     const name = await askName(`Rename “${entry.name}”`, entry.name);
     if (!name || name === entry.name) return;
     try {
-      await sftpService.localRename(entry.path, joinPath(parentPath(entry.path), name));
+      await sftpService.localRename(
+        entry.path,
+        joinPath(parentPath(entry.path), name),
+      );
       await loadLocal(local.path);
     } catch (e) {
-      fail(`Rename failed: ${e}`);
+      fail('Rename failed', e);
     }
   };
 
@@ -201,17 +302,17 @@ export function useFileTransfer() {
     const name = await askName(`Rename “${entry.name}”`, entry.name);
     if (!name || name === entry.name) return;
     try {
-      await sftpService.rename(hostId, entry.path, joinPath(parentPath(entry.path), name));
+      await sftpService.rename(
+        hostId,
+        entry.path,
+        joinPath(parentPath(entry.path), name),
+      );
       await loadRemote(hostId, remote.path);
     } catch (e) {
-      fail(`Rename failed: ${e}`);
+      fail('Rename failed', e);
     }
   };
 
-  /**
-   * Delete a batch after one confirmation. Directories are removed
-   * recursively by the backend, so the prompt says so explicitly.
-   */
   const removeEntries = async (
     entries: FileEntryType[],
     remove: (entry: FileEntryType) => Promise<void>,
@@ -222,7 +323,9 @@ export function useFileTransfer() {
     const only = entries.length === 1 ? entries[0] : null;
 
     const ok = await confirm({
-      title: only ? `Delete “${only.name}”?` : `Delete ${entries.length} items?`,
+      title: only
+        ? `Delete “${only.name}”?`
+        : `Delete ${entries.length} items?`,
       message: dirs
         ? 'Folders are deleted together with everything inside them. This cannot be undone.'
         : 'This cannot be undone.',
@@ -237,7 +340,7 @@ export function useFileTransfer() {
         await remove(entry);
         done += 1;
       } catch (e) {
-        fail(`Delete failed on ${entry.name}: ${e}`);
+        fail(`Delete failed on ${entry.name}`, e);
         await reload();
         return;
       }
@@ -263,8 +366,9 @@ export function useFileTransfer() {
   return {
     hostId,
     setHostId,
-    status,
-    dismissStatus: () => setStatus(null),
+    transfers,
+    cancelTransfer,
+    clearFinishedTransfers,
     local: {
       ...local,
       open: (entry: FileEntryType) => {

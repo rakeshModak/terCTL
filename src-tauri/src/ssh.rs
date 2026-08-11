@@ -112,6 +112,7 @@ pub(crate) async fn connect_host(
     let config = Arc::new(client::Config {
         keepalive_interval: Some(std::time::Duration::from_secs(20)),
         keepalive_max: 3,
+        window_size: 8 * 1024 * 1024,
         ..Default::default()
     });
     let mut session = client::connect(config, (host.hostname.as_str(), host.port), handler)
