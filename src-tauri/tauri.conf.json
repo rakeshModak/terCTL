@@ -30,6 +30,13 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Rakesh Modak & Sagar Sen",
+    "homepage": "https://github.com/rakeshModak/terCTL",
+    "copyright": "Copyright 2026 TerCTL Contributors",
+    "license": "MIT",
+    "category": "DeveloperTool",
+    "shortDescription": "Keyboard-first SSH client and terminal manager",
+    "longDescription": "TerCTL keeps a fleet of machines within reach: organize hosts into\ngroups, open secure terminals, split them into resizable panes, move\nfiles over SFTP, and watch a server's vitals - without reaching for\nthe mouse.\n\nIt is a native desktop application rather than a browser wrapper.\nSSH, PTYs, SFTP and OS keychain access all run in Rust, with a React\ninterface on top of Tauri.\n\nFeatures:\n * Real PTY sessions over SSH, rendered with xterm.js, with per-host\n   color schemes\n * Split a tab into resizable panes; every session stays live while\n   you rearrange them\n * In-terminal search across scrollback, with case and regex toggles\n * Host management with nested groups, tags and fast search\n * Dual-pane SFTP browser: upload, download, rename, new folder\n * Live host metrics: CPU, load average, memory, disk, network\n   throughput, uptime and top processes\n * Local shells alongside the remote ones\n * Passwords, passphrases and private keys are kept in the OS\n   keychain, never on disk\n * Encrypted configuration backup and restore\n * Ten themes with hand-tuned light and dark palettes\n * Signed automatic updates",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -37,7 +44,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "createUpdaterArtifacts": true
+    "createUpdaterArtifacts": true,
+    "linux": {
+      "deb": {
+        "section": "net",
+        "priority": "optional",
+        "files": {
+          "/usr/share/metainfo/com.terctl.app.metainfo.xml": "metainfo/com.terctl.app.metainfo.xml"
+        }
+      }
+    }
   },
   "plugins": {
     "updater": {
