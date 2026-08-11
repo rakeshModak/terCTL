@@ -4,6 +4,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { listen } from '@tauri-apps/api/event';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { toast } from 'sonner';
 import { getDefaultStore, useAtomValue } from 'jotai';
 import '@xterm/xterm/css/xterm.css';
 import {
@@ -108,17 +109,30 @@ function handleZoomChord(e: KeyboardEvent): boolean {
   return true;
 }
 
-function handleClipboardChord(term: XTerm, e: KeyboardEvent): boolean {
-  if (IS_MAC || !e.ctrlKey || e.altKey || e.metaKey) return false;
-  const key = e.key.toLowerCase();
+function isPasteChord(e: KeyboardEvent): boolean {
+  if (e.altKey) return false;
+  if (e.key === 'Insert' && e.shiftKey && !e.ctrlKey) return true;
+  return e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'v';
+}
 
-  if (key === 'v' && e.shiftKey) {
+async function pasteIntoTerminal(term: XTerm): Promise<void> {
+  const text = await readClipboard();
+  if (text === null) {
+    toast.error('Couldn’t read the clipboard');
+    return;
+  }
+  if (text) term.paste(text);
+}
+
+function handleClipboardChord(term: XTerm, e: KeyboardEvent): boolean {
+  if (isPasteChord(e)) {
     e.preventDefault();
-    void readClipboard().then((text) => {
-      if (text) term.paste(text);
-    });
+    void pasteIntoTerminal(term);
     return true;
   }
+
+  if (IS_MAC || !e.ctrlKey || e.altKey || e.metaKey) return false;
+  const key = e.key.toLowerCase();
 
   if (key !== 'c') return false;
   const selection = term.getSelection();
