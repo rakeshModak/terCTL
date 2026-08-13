@@ -34,7 +34,7 @@ export default function SettingsView() {
         onChange={setCategory}
       />
 
-      <div className="flex-1 overflow-y-auto px-8 py-7">
+      <div className="flex-1 overflow-y-auto px-6 py-5">
         {category === 'appearance' && (
           <AppearanceSection resolvedMode={resolvedMode} />
         )}

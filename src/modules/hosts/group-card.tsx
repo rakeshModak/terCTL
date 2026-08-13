@@ -34,9 +34,9 @@ export default function GroupCard({
   return (
     <Card
       size="sm"
-      className="group/group-card hover:bg-accent/50 relative flex-row items-center gap-3 px-5 py-4 transition-colors"
+      className="group/group-card hover:bg-accent/50 relative flex-row items-center gap-3 px-4 py-3 transition-colors"
     >
-      <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-xl">
+      <div className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
         <Folder className="size-4" />
       </div>
 

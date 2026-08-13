@@ -43,7 +43,7 @@ export default function HostCard({
     <Card
       size="sm"
       className={cn(
-        'group/host-card hover:bg-accent/50 relative gap-4 px-5 py-5 transition-colors',
+        'group/host-card hover:bg-accent/50 relative gap-3 px-4 py-4 transition-colors',
         connected && 'ring-primary/35',
       )}
     >
@@ -51,7 +51,7 @@ export default function HostCard({
         <span
           aria-hidden="true"
           className={cn(
-            'font-heading flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold',
+            'font-heading flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold',
             connected
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground',
@@ -103,14 +103,14 @@ export default function HostCard({
         <button
           type="button"
           onClick={onConnect}
-          className="font-heading block w-full truncate text-left text-[15px] font-semibold after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+          className="font-heading block w-full truncate text-left text-sm font-semibold after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
         >
           {host.label}
           <span className="sr-only">
             , {connected ? 'open session' : 'connect'}
           </span>
         </button>
-        <p className="text-muted-foreground mt-1 truncate font-mono text-xs">
+        <p className="text-muted-foreground mt-0.5 truncate font-mono text-2xs">
           {host.username}@{host.hostname}:{host.port}
         </p>
       </div>
@@ -125,7 +125,7 @@ export default function HostCard({
         </div>
       )}
 
-      <div className="mt-auto flex flex-col gap-3">
+      <div className="mt-auto flex flex-col gap-2">
         <Separator />
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="text-muted-foreground flex min-w-0 items-center gap-1.5">

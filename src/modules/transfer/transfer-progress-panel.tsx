@@ -84,7 +84,7 @@ function TransferRow({
           <div className="flex-1" />
           <span
             className={cn(
-              'shrink-0 text-[11px] tabular-nums',
+              'shrink-0 text-2xs tabular-nums',
               state === 'error'
                 ? 'text-destructive'
                 : 'text-muted-foreground',
@@ -107,7 +107,7 @@ function TransferRow({
         </div>
         <p
           className={cn(
-            'mt-1 truncate text-[11px] tabular-nums',
+            'mt-1 truncate text-2xs tabular-nums',
             state === 'error' ? 'text-destructive' : 'text-muted-foreground',
           )}
         >
@@ -149,7 +149,7 @@ export default function TransferProgressPanel({
     <section className="border-border bg-sidebar flex max-h-64 shrink-0 flex-col border-t">
       <header className="flex shrink-0 items-center gap-2 px-4 py-2">
         <h2 className="text-xs font-semibold">Transfers</h2>
-        <span className="text-muted-foreground truncate text-[11px] tabular-nums">
+        <span className="text-muted-foreground truncate text-2xs tabular-nums">
           {summary}
         </span>
         <div className="flex-1" />

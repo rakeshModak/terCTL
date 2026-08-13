@@ -35,7 +35,7 @@ export default function TransferView() {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col bg-background">
-      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2">
         <h1 className="font-heading text-lg font-bold tracking-tight">Transfer</h1>
         <div className="flex-1" />
       </header>

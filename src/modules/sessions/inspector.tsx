@@ -61,8 +61,8 @@ export default function Inspector({
   const isLocal = host === null;
 
   return (
-    <aside className="border-border bg-sidebar flex w-72 shrink-0 flex-col gap-3.5 overflow-y-auto border-l p-4">
-      <Card size="sm" className="shrink-0 gap-3 px-4">
+    <aside className="border-border bg-sidebar flex w-64 shrink-0 flex-col gap-2.5 overflow-y-auto border-l p-3">
+      <Card size="sm" className="shrink-0 gap-2 px-3 py-3">
         <div className="flex items-center gap-2.5">
           <span
             className={cn(
@@ -98,7 +98,7 @@ export default function Inspector({
           </Button>
         </div>
 
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1.5 font-mono text-xs">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-2xs">
           {host ? (
             <>
               <Detail label="host" value={host.hostname} />

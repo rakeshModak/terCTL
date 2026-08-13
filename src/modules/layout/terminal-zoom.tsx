@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/tooltip';
 import { MOD_KEY } from '@/lib/platform';
 import { cn } from '@/lib/utils';
+import { sessionsAtom } from '../../store/app';
 import {
   bumpFontSizeAtom,
   FONT_SIZE_MAX,
@@ -21,8 +22,11 @@ const STEP_BUTTON =
 
 export default function TerminalZoom() {
   const { fontSize } = useAtomValue(settingsAtom);
+  const sessions = useAtomValue(sessionsAtom);
   const bump = useSetAtom(bumpFontSizeAtom);
   const reset = useSetAtom(resetFontSizeAtom);
+
+  if (sessions.length === 0) return null;
 
   return (
     <>
@@ -56,7 +60,7 @@ export default function TerminalZoom() {
                 onClick={() => reset()}
                 className={cn(
                   STEP_BUTTON,
-                  'h-5 w-9 font-mono text-[10px] tabular-nums',
+                  'h-5 w-9 font-mono text-3xs tabular-nums',
                 )}
               />
             }

@@ -73,11 +73,10 @@ export default function FilePane({
         e.preventDefault();
         setDropActive(false);
         const entries = readDragPayload(e.dataTransfer, acceptsFrom);
-        // No destDir: falls back to the folder this pane currently shows.
         if (entries.length > 0) onDropInto(entries, pane.path);
       }}
     >
-      <header className="flex flex-col gap-2 border-b border-border bg-sidebar px-4 py-3">
+      <header className="flex flex-col gap-1.5 border-b border-border bg-sidebar px-3 py-2">
         <div className="flex items-center gap-2">
           <SideIcon className="size-4 shrink-0 text-muted-foreground" />
           <h2 className="truncate text-sm font-semibold">{title}</h2>

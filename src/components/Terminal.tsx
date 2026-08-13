@@ -49,9 +49,9 @@ interface TerminalProps {
 }
 
 const FIND_ICON_BTN =
-  'flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--text-dim)] transition-colors hover:bg-foreground/10 hover:text-[var(--text)]';
+  'flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--text-dim)] transition-colors hover:bg-foreground/10 hover:text-[var(--text)]';
 const findToggle = (on: boolean) =>
-  `flex h-[24px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${
+  `flex h-6 w-6.5 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${
     on
       ? 'bg-[var(--brand)] text-[var(--brand-contrast)] shadow-[0_1px_4px_rgb(0_0_0_/_0.3)]'
       : 'text-[var(--text-faint)] hover:bg-foreground/10 hover:text-[var(--text)]'
@@ -544,11 +544,11 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   return (
     <>
       {findOpen && (
-        <div className="border-foreground/10 absolute top-[10px] right-[14px] z-30 flex items-center gap-[6px] rounded-[12px] border bg-[color-mix(in_srgb,var(--bg-card)_84%,transparent)] py-[6px] pr-[7px] pl-[10px] shadow-[0_10px_34px_rgb(0_0_0_/_0.5)] backdrop-blur-md">
+        <div className="border-foreground/10 absolute top-2.5 right-3.5 z-30 flex items-center gap-1.5 rounded-xl border bg-(--bg-card) py-1.5 pr-1.75 pl-2.5 shadow-[0_10px_34px_rgb(0_0_0/0.5)]">
           <Search
             size={14}
             strokeWidth={2.2}
-            className="shrink-0 text-[var(--text-faint)]"
+            className="shrink-0 text-(--text-faint)"
           />
           <input
             ref={findInputRef}
@@ -573,13 +573,13 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
             autoComplete="off"
             data-1p-ignore
             data-lpignore="true"
-            className="w-[156px] bg-transparent text-[12.5px] text-[var(--text)] no-underline outline-none [text-decoration:none] placeholder:text-[var(--text-faint)]"
+            className="w-39 bg-transparent text-xs text-(--text) no-underline outline-none [text-decoration:none] placeholder:text-[var(--text-faint)]"
           />
           <span
-            className={`min-w-[46px] shrink-0 text-right text-[11px] tabular-nums ${
+            className={`min-w-11.5 shrink-0 text-right text-2xs tabular-nums ${
               findQuery && matchCount === 0
-                ? 'text-[var(--red)]'
-                : 'text-[var(--text-faint)]'
+                ? 'text-(--red)'
+                : 'text-(--text-faint)'
             }`}
           >
             {findQuery
@@ -588,7 +588,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
                 : `${activeIndex + 1}/${matchCount}`
               : ''}
           </span>
-          <span className="bg-foreground/10 h-[18px] w-px shrink-0" />
+          <span className="bg-foreground/10 h-4.5 w-px shrink-0" />
           <button
             type="button"
             title="Match case"
@@ -607,7 +607,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
           >
             <Regex size={14} strokeWidth={2} />
           </button>
-          <span className="bg-foreground/10 h-[18px] w-px shrink-0" />
+          <span className="bg-foreground/10 h-4.5 w-px shrink-0" />
           <button
             type="button"
             title="Previous match  (⇧⏎)"
@@ -636,7 +636,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       )}
       <div
         ref={containerRef}
-        className="absolute top-[6px] right-[4px] bottom-[4px] left-[8px]"
+        className="absolute top-1.5 right-1 bottom-1 left-2"
       />
     </>
   );

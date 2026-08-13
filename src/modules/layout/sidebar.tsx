@@ -67,7 +67,7 @@ export default function Sidebar() {
               />
               <Icon className="size-5" />
               {busy && (
-                <span className="bg-primary text-primary-foreground absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-[9px] font-semibold tabular-nums">
+                <span className="bg-primary text-primary-foreground absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-3xs font-semibold tabular-nums">
                   {transfer.running}
                 </span>
               )}

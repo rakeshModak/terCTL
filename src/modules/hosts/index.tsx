@@ -35,7 +35,7 @@ type GroupDialogArgs =
 type DeleteTarget =
   { kind: 'group'; group: GroupType } | { kind: 'host'; host: HostType };
 
-const GRID = 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(258px,1fr))]';
+const GRID = 'grid gap-3 grid-cols-[repeat(auto-fill,minmax(232px,1fr))]';
 
 export default function HostsPage() {
   const hosts = useAtomValue(hostsAtom);
@@ -141,7 +141,7 @@ export default function HostsPage() {
 
   return (
     <div className="bg-background flex-1 overflow-y-auto">
-      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-8 pt-10 pb-14">
+      <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-6 pt-6 pb-10">
         <HostsHeader
           hostCount={hosts.length}
           groupCount={view.rootGroupCount}
@@ -195,12 +195,6 @@ export default function HostsPage() {
           />
         ) : (
           <section>
-            <SectionHeading
-              detail={view.currentGroup?.name}
-              trailing={`${view.visibleHosts.length} host${view.visibleHosts.length === 1 ? '' : 's'}`}
-            >
-              Hosts
-            </SectionHeading>
             <div className={GRID}>
               {view.visibleHosts.map((host) => (
                 <HostCard

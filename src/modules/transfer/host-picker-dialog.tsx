@@ -19,10 +19,6 @@ interface HostPickerDialogProps {
   onSelect: (hostId: string) => void;
 }
 
-/**
- * Server chooser for the remote pane. A dialog rather than a dropdown: the
- * `user@hostname` line is long enough that an anchor-width popup clipped it.
- */
 export default function HostPickerDialog({
   open,
   onOpenChange,
@@ -37,7 +33,7 @@ export default function HostPickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg p-6">
         <DialogHeader>
           <DialogTitle>Connect to a server</DialogTitle>
           <DialogDescription>
@@ -56,7 +52,7 @@ export default function HostPickerDialog({
             </EmptyHeader>
           </Empty>
         ) : (
-          <ul className="-mx-1 max-h-80 overflow-y-auto">
+          <ul className="max-h-80 overflow-x-hidden overflow-y-auto">
             {hosts.map((host) => {
               const active = host.id === value;
               return (

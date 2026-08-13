@@ -55,8 +55,8 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <fieldset className="border-border rounded-md border px-2.5 pt-0.5 pb-2.5">
-      <legend className="px-1 font-mono text-[10px] tracking-wide">
+    <fieldset className="border-border rounded-md border px-2 pt-0 pb-2">
+      <legend className="px-1 font-mono text-3xs tracking-wide">
         <span className="text-primary">{index}</span>
         <span className="text-muted-foreground">{name}</span>
       </legend>
@@ -85,7 +85,7 @@ function Meter({ pct }: { pct: number }) {
 function History({
   data,
   max,
-  height = 34,
+  height = 28,
 }: {
   data: number[];
   max: number;
@@ -129,7 +129,7 @@ function Row({
   muted?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-2 font-mono text-[11px]">
+    <div className="flex items-baseline justify-between gap-2 font-mono text-2xs">
       <span className="text-muted-foreground">{label}</span>
       <span
         className={
@@ -144,9 +144,9 @@ function Row({
 
 function MeterRow({ pct }: { pct: number }) {
   return (
-    <div className="mt-1 flex items-center gap-2">
+    <div className="mt-0.5 flex items-center gap-2">
       <Meter pct={pct} />
-      <span className="w-8 shrink-0 text-right font-mono text-[11px] font-semibold tabular-nums">
+      <span className="w-8 shrink-0 text-right font-mono text-2xs font-semibold tabular-nums">
         {Math.round(clampPct(pct))}%
       </span>
     </div>
@@ -196,7 +196,7 @@ export default function MetricsPanel({
 
   if (!m) {
     return (
-      <div className="text-muted-foreground flex min-h-45 shrink-0 flex-col items-center justify-center gap-3 font-mono text-xs">
+      <div className="text-muted-foreground flex min-h-36 shrink-0 flex-col items-center justify-center gap-2 font-mono text-xs">
         {err ? (
           <span className="text-destructive px-4 text-center">
             Couldn’t read metrics from this host.
@@ -217,7 +217,7 @@ export default function MetricsPanel({
   const netPeak = Math.max(...hist.map((s) => s.net), 1);
 
   return (
-    <div className="flex shrink-0 flex-col gap-2.5">
+    <div className="flex shrink-0 flex-col gap-2">
       <Section index={1} name="cpu">
         <Row
           label={`${m.cores} ${m.cores === 1 ? 'core' : 'cores'}`}
@@ -225,10 +225,10 @@ export default function MetricsPanel({
           muted
         />
         <MeterRow pct={m.cpu} />
-        <div className="mt-1.5">
+        <div className="mt-1">
           <History data={hist.map((s) => s.cpu)} max={100} />
         </div>
-        <div className="text-muted-foreground mt-1.5 font-mono text-[11px]">
+        <div className="text-muted-foreground mt-1 font-mono text-2xs">
           load avg: {load[0] ?? '—'} {load[1] ?? '—'} {load[2] ?? '—'}
         </div>
       </Section>
@@ -236,7 +236,7 @@ export default function MetricsPanel({
       <Section index={2} name="mem">
         <Row label="Used" value={fmtGib(m.memUsedKb)} />
         <MeterRow pct={memPct} />
-        <div className="mt-1.5">
+        <div className="mt-1">
           <Row label="Total" value={fmtGib(m.memTotalKb)} muted />
         </div>
       </Section>
@@ -244,14 +244,14 @@ export default function MetricsPanel({
       <Section index={3} name="disk">
         <Row label="root" value={fmtGib(m.diskTotalKb)} />
         <MeterRow pct={diskPct} />
-        <div className="mt-1.5">
+        <div className="mt-1">
           <Row label="Used" value={fmtGib(m.diskUsedKb)} muted />
         </div>
       </Section>
 
       <Section index={4} name="net">
         <History data={hist.map((s) => s.net)} max={netPeak} height={28} />
-        <div className="mt-1.5 flex flex-col gap-0.5">
+        <div className="mt-1 flex flex-col gap-0.5">
           <Row label="▼ down" value={fmtRate(m.netRx)} />
           <Row label="▲ up" value={fmtRate(m.netTx)} />
         </div>
@@ -263,7 +263,7 @@ export default function MetricsPanel({
             {m.procs.map((p, i) => (
               <div
                 key={`${p.name}-${i}`}
-                className="flex items-baseline gap-2 font-mono text-[11px]"
+                className="flex items-baseline gap-2 font-mono text-2xs"
               >
                 <span className="text-foreground min-w-0 flex-1 truncate">
                   {p.name}
