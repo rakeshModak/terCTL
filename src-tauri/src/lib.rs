@@ -3,6 +3,7 @@ mod commands;
 mod local_term;
 mod metrics;
 mod models;
+mod osinfo;
 mod session;
 mod sftp;
 mod ssh;

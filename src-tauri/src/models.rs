@@ -43,6 +43,8 @@ pub struct Host {
     /// Optional per-host appearance overrides. `None` = use the global setting.
     pub accent: Option<String>,
     pub term_scheme: Option<String>,
+    #[serde(default)]
+    pub os: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

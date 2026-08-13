@@ -44,6 +44,7 @@ impl Store {
         Self::add_column_if_missing(conn, "hosts", "tags", "TEXT")?;
         Self::add_column_if_missing(conn, "hosts", "accent", "TEXT")?;
         Self::add_column_if_missing(conn, "hosts", "term_scheme", "TEXT")?;
+        Self::add_column_if_missing(conn, "hosts", "os", "TEXT")?;
         Self::add_column_if_missing(conn, "groups", "parent_id", "TEXT")?;
         Ok(())
     }
@@ -100,7 +101,7 @@ impl Store {
     pub fn list_hosts(&self) -> rusqlite::Result<Vec<Host>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, os
              FROM hosts ORDER BY label",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -116,6 +117,7 @@ impl Store {
                 tags: Self::decode_tags(row.get(8)?),
                 accent: row.get(9)?,
                 term_scheme: row.get(10)?,
+                os: row.get(11)?,
             })
         })?;
         rows.collect()
@@ -124,7 +126,7 @@ impl Store {
     pub fn list_host_records(&self) -> rusqlite::Result<Vec<HostRecord>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os
              FROM hosts ORDER BY label",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -141,6 +143,7 @@ impl Store {
                     tags: Self::decode_tags(row.get(8)?),
                     accent: row.get(9)?,
                     term_scheme: row.get(10)?,
+                    os: row.get(12)?,
                 },
                 host_key_fingerprint: row.get(11)?,
             })
@@ -167,8 +170,8 @@ impl Store {
         }
         for (host, fingerprint) in hosts {
             tx.execute(
-                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
                 params![
                     host.id,
                     host.label,
@@ -182,6 +185,7 @@ impl Store {
                     host.accent,
                     host.term_scheme,
                     fingerprint,
+                    host.os,
                 ],
             )?;
         }
@@ -230,6 +234,8 @@ impl Store {
             tags: new_host.tags,
             accent: new_host.accent,
             term_scheme: new_host.term_scheme,
+            // Unknown until the host is connected to for the first time.
+            os: None,
         })
     }
 
@@ -253,6 +259,24 @@ impl Store {
                 host.accent,
                 host.term_scheme,
             ],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_host_os(&self, host_id: &str) -> rusqlite::Result<Option<String>> {
+        let conn = self.0.lock().unwrap();
+        conn.query_row(
+            "SELECT os FROM hosts WHERE id = ?1",
+            params![host_id],
+            |row| row.get(0),
+        )
+    }
+
+    pub fn set_host_os(&self, host_id: &str, os: &str) -> rusqlite::Result<()> {
+        let conn = self.0.lock().unwrap();
+        conn.execute(
+            "UPDATE hosts SET os = ?2 WHERE id = ?1",
+            params![host_id, os],
         )?;
         Ok(())
     }

@@ -7,8 +7,9 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect } from 'react';
 import { applyTheme, watchSystemMode } from '../lib/theme';
 import { settingsAtom } from '../store/settings';
-import { refreshAllAtom } from '../store/app';
+import { refreshAllAtom, setHostOsAtom } from '../store/app';
 import { applyTransferProgressAtom } from '../store/transfer';
+import { hostsService } from '../services/hosts.service';
 import { sftpService } from '../services/sftp.service';
 import { checkForUpdateAtom } from '../store/updater';
 import { loadAppVersionAtom } from '../store/version';
@@ -30,6 +31,7 @@ function RootLayout() {
   const checkForUpdate = useSetAtom(checkForUpdateAtom);
   const loadVersion = useSetAtom(loadAppVersionAtom);
   const applyTransferProgress = useSetAtom(applyTransferProgressAtom);
+  const setHostOs = useSetAtom(setHostOsAtom);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onSessions = pathname === '/sessions';
 
@@ -54,6 +56,15 @@ function RootLayout() {
       void unlisten.then((off) => off());
     };
   }, [applyTransferProgress]);
+
+  useEffect(() => {
+    const unlisten = hostsService.onOsDetected(({ hostId, os }) =>
+      setHostOs(hostId, os),
+    );
+    return () => {
+      void unlisten.then((off) => off());
+    };
+  }, [setHostOs]);
 
   useEffect(() => {
     const choice = { accent, theme, mode };

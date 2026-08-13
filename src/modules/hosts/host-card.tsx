@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import type { HostType } from '@/types/host';
+import { osInfo } from './os-icon';
 
 interface HostCardProps {
   host: HostType;
@@ -38,6 +39,7 @@ export default function HostCard({
   const AuthIcon = host.authKind === 'key' ? KeyRound : Lock;
   const initial = (host.label.trim()[0] ?? '?').toUpperCase();
   const authLabel = host.authKind === 'key' ? 'Key' : 'Password';
+  const os = osInfo(host.os);
 
   return (
     <Card
@@ -50,6 +52,7 @@ export default function HostCard({
       <div className="flex items-center justify-between gap-3">
         <span
           aria-hidden="true"
+          title={os?.label}
           className={cn(
             'font-heading flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold',
             connected
@@ -57,7 +60,7 @@ export default function HostCard({
               : 'bg-muted text-muted-foreground',
           )}
         >
-          {initial}
+          {os ? <os.Icon className="size-4.5" /> : initial}
         </span>
 
         <div className="relative z-10 -mr-1 flex shrink-0 items-center gap-1.5">
@@ -107,7 +110,8 @@ export default function HostCard({
         >
           {host.label}
           <span className="sr-only">
-            , {connected ? 'open session' : 'connect'}
+            {os ? `, ${os.label}` : ''},{' '}
+            {connected ? 'open session' : 'connect'}
           </span>
         </button>
         <p className="text-muted-foreground mt-0.5 truncate font-mono text-2xs">

@@ -137,6 +137,43 @@ pub(crate) async fn connect_host(
     Ok(session)
 }
 
+/// Payload of the `host://os` event.
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct HostOsDetected {
+    host_id: String,
+    os: String,
+}
+
+/// Identify the remote OS the first time a host is reached, and remember it.
+///
+/// Runs before the shell is opened, so it costs one round trip on the very
+/// first connect and nothing afterwards. Failure is not an error worth
+/// surfacing — the host simply stays unmarked and is probed again next time.
+async fn record_os_on_first_connect(
+    app: &AppHandle,
+    store: &Store,
+    host_id: &str,
+    session: &Handle<ClientHandler>,
+) {
+    if store.get_host_os(host_id).ok().flatten().is_some() {
+        return;
+    }
+    let Some(os) = crate::osinfo::detect_os(session).await else {
+        return;
+    };
+    if store.set_host_os(host_id, &os).is_err() {
+        return;
+    }
+    let _ = app.emit(
+        "host://os",
+        HostOsDetected {
+            host_id: host_id.to_string(),
+            os,
+        },
+    );
+}
+
 #[tauri::command]
 pub async fn ssh_connect(
     app: AppHandle,
@@ -145,6 +182,7 @@ pub async fn ssh_connect(
     host_id: String,
 ) -> Result<String, String> {
     let mut session = connect_host(&store, &host_id).await?;
+    record_os_on_first_connect(&app, &store, &host_id, &session).await;
 
     let mut channel = session
         .channel_open_session()
@@ -244,6 +282,7 @@ mod tests {
             tags: vec![],
             accent: None,
             term_scheme: None,
+            os: None,
         };
 
         let handler = ClientHandler {

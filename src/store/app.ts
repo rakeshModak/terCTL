@@ -215,6 +215,16 @@ export const refreshTagsAtom = atom(null, async (_get, set) => {
   set(allTagsAtom, await hostsService.listTags());
 });
 
+export const setHostOsAtom = atom(
+  null,
+  (get, set, hostId: string, os: string) => {
+    set(
+      hostsAtom,
+      get(hostsAtom).map((h) => (h.id === hostId ? { ...h, os } : h)),
+    );
+  },
+);
+
 export const refreshAllAtom = atom(null, async (_get, set) => {
   await Promise.all([
     set(refreshHostsAtom),

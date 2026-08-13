@@ -867,6 +867,7 @@ fn plan_import(
                 tags: host.tags.clone(),
                 accent: host.accent.clone(),
                 term_scheme: host.term_scheme.clone(),
+                os: None,
             },
             host.host_key_fingerprint.clone(),
         ));
@@ -1065,6 +1066,7 @@ mod tests {
                 tags: vec![],
                 accent: None,
                 term_scheme: None,
+                os: None,
             },
             host_key_fingerprint: Some("SHA256:different".into()),
         }];

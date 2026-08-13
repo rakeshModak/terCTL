@@ -10,9 +10,9 @@ export interface HostType {
   keyRef: string | null;
   groupId: string | null;
   tags: string[];
-  /** Per-host appearance overrides; null = use the global setting. */
   accent: string | null;
   termScheme: string | null;
+  os: string | null;
 }
 
 export interface NewHostType {

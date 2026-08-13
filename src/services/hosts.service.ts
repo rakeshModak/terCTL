@@ -1,8 +1,16 @@
+import { listen } from '@tauri-apps/api/event';
 import { call } from './config/tauri-api';
 import type { GroupType, HostType, NewHostType } from '@/types/host';
 
+export interface HostOsDetectedType {
+  hostId: string;
+  os: string;
+}
+
 export const hostsService = {
   list: () => call<HostType[]>('list_hosts'),
+  onOsDetected: (handler: (detected: HostOsDetectedType) => void) =>
+    listen<HostOsDetectedType>('host://os', (event) => handler(event.payload)),
   add: (newHost: NewHostType) => call<HostType>('add_host', { newHost }),
   update: (host: HostType) => call<void>('update_host', { host }),
   remove: (id: string) => call<void>('delete_host', { id }),
