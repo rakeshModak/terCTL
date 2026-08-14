@@ -10,7 +10,50 @@ on:
   workflow_dispatch:
 
 jobs:
+  # The three build jobs run in parallel, and each one asked tauri-action to
+  # find-or-create the draft release for this tag. When two looked before
+  # either had created one, both created their own and the artifacts split
+  # across a pair of drafts — which is how v1.1.0 first shipped empty.
+  #
+  # So the release is created exactly once, here, and every build job uploads
+  # into that specific id. Nothing downstream resolves a release by tag.
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.create.outputs.release_id }}
+    steps:
+      # A failed run leaves its half-filled release behind, and there may be
+      # more than one, so delete every release carrying this tag rather than
+      # whichever a tag lookup happens to resolve to. The tag is untouched.
+      - name: Clear any stale releases for this tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository }}/releases" --paginate \
+            --jq '.[] | select(.tag_name == "${{ github.ref_name }}") | .id' \
+          | while read -r id; do
+              echo "Deleting stale release $id"
+              gh api -X DELETE "repos/${{ github.repository }}/releases/$id"
+            done
+
+      - name: Create the draft release
+        id: create
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          id=$(gh api "repos/${{ github.repository }}/releases" \
+                 -f tag_name="${{ github.ref_name }}" \
+                 -f name="TerCTL ${{ github.ref_name }}" \
+                 -f body='Download the installer for your OS below. AppImage (Linux) runs directly — chmod +x and launch.' \
+                 -F draft=true -F prerelease=false \
+                 --jq '.id')
+          echo "Created draft release $id"
+          echo "release_id=$id" >> "$GITHUB_OUTPUT"
+
   release:
+    needs: prepare
     permissions:
       contents: write
     strategy:
@@ -73,11 +116,9 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'TerCTL ${{ github.ref_name }}'
-          releaseBody: 'Download the installer for your OS below. AppImage (Linux) runs directly — chmod +x and launch.'
-          releaseDraft: true
-          prerelease: false
+          # Upload into the one release `prepare` made. Passing a tag instead
+          # lets each parallel job create its own draft — see the note there.
+          releaseId: ${{ needs.prepare.outputs.release_id }}
           args: ${{ matrix.args }} --verbose
 
 
@@ -92,12 +133,36 @@ jobs:
 
 
   publish:
-    needs: release
+    needs: [prepare, release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      # Three green build jobs is not proof the artifacts landed. A healthy
+      # release carries ~14 assets across the platforms, so under 10 means
+      # something went missing — fail loudly rather than publish a release the
+      # updater cannot read, since its endpoint is
+      # releases/latest/download/latest.json.
+      - name: Verify the artifacts are attached
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          count=$(gh api "repos/${{ github.repository }}/releases/${{ needs.prepare.outputs.release_id }}" \
+                    --jq '.assets | length')
+          echo "Found $count assets on release ${{ needs.prepare.outputs.release_id }}."
+          if [ "$count" -lt 10 ]; then
+            echo "::error::Refusing to publish ${{ github.ref_name }} with only $count assets."
+            exit 1
+          fi
+          gh api "repos/${{ github.repository }}/releases/${{ needs.prepare.outputs.release_id }}" \
+            --jq '.assets[].name' | sort
+
+      # By id, not by tag — a tag lookup is what published the wrong object
+      # the first time around.
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "${{ github.ref_name }}" --draft=false --repo "${{ github.repository }}"
+        run: |
+          gh api -X PATCH \
+            "repos/${{ github.repository }}/releases/${{ needs.prepare.outputs.release_id }}" \
+            -F draft=false --jq '"published: \(.html_url)"'
