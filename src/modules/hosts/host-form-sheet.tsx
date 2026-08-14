@@ -103,8 +103,6 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
   const [saving, setSaving] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
 
-  // Excluding self only stops the one-hop loop; a longer cycle is still
-  // possible to configure, and `connect_host` rejects it with the chain named.
   const jumpCandidates = hosts.filter((h) => h.id !== host?.id);
 
   const handleCreateGroup = async (name: string) => {

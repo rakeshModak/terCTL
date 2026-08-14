@@ -76,8 +76,6 @@ impl From<SftpError> for OpError {
 }
 
 struct SftpConn {
-    /// Holds the session — and any bastions it tunnels through — open for as
-    /// long as this connection lives.
     _handle: SshConnection,
     sftp: Arc<RawSftpSession>,
     max_read: usize,
@@ -233,7 +231,6 @@ impl Progress {
             last_done: 0,
             rate: 0.0,
         };
-        // Announce the real size straight away so the bar is never a mystery.
         p.send();
         p
     }

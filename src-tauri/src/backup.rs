@@ -145,7 +145,6 @@ struct BackupHost {
     accent: Option<String>,
     term_scheme: Option<String>,
     host_key_fingerprint: Option<String>,
-    /// `default` so backups written before jump hosts existed still import.
     #[serde(default)]
     jump_host_id: Option<String>,
     #[serde(default)]
@@ -872,9 +871,6 @@ fn plan_import(
                 accent: host.accent.clone(),
                 term_scheme: host.term_scheme.clone(),
                 os: None,
-                // Host ids survive an import, so this still points at the
-                // right bastion — unless that host collided and was skipped,
-                // which `connect_host` reports rather than crashing.
                 jump_host_id: host.jump_host_id.clone(),
             },
             host.host_key_fingerprint.clone(),
