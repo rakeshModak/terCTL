@@ -1,5 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <svg x="132" y="132" width="760" height="760" viewBox="0 0 64 64" fill="#f0f0f2">
+  <!--
+    The mark is near-white, so it needs to carry its own dark ground. Shipped
+    on bare transparency it vanished: macOS Tahoe composites a legacy icon over
+    a light backing, which rendered TerCTL as an almost blank white tile in the
+    Dock. Light Windows and Linux surfaces had the same problem.
+
+    Geometry follows the macOS icon grid — an 824px rounded square centred on a
+    1024px canvas — so the icon reads correctly on macOS versions that draw the
+    .icns as-is rather than masking it themselves.
+  -->
+  <rect x="100" y="100" width="824" height="824" rx="180" ry="180" fill="#0a0a0a"/>
+  <svg x="256" y="256" width="512" height="512" viewBox="0 0 64 64" fill="#f0f0f2">
     <rect x="0" y="0" width="64" height="14"/>
     <rect x="0" y="50" width="64" height="14"/>
     <rect x="0" y="14" width="10" height="11"/>
