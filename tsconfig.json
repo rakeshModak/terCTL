@@ -3,5 +3,14 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  // Solution-style configs compile nothing ("files": []), but the shadcn CLI
+  // reads *this* file (not tsconfig.app.json) to resolve the "@/*" alias from
+  // components.json. Without it, `shadcn add` writes to a literal "@/" folder.
+  // The real alias for the build lives in tsconfig.app.json + vite.config.ts.
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
 }

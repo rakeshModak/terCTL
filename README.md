@@ -6,8 +6,8 @@
 
 ### Your servers, one keystroke away.
 
-A fast, keyboard-first **SSH client & terminal manager** for macOS, Windows, and Linux.<br/>
-Terminals, split-pane Decks, SFTP, and live host metrics — in one native, buttery app.
+A keyboard-first **SSH client and terminal manager** for macOS, Windows, and Linux.<br/>
+Terminals, split-pane Decks, SFTP, and live host metrics in one native app.
 
 <br/>
 
@@ -19,43 +19,44 @@ Terminals, split-pane Decks, SFTP, and live host metrics — in one native, butt
 ![macOS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat&logo=windows&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black)
-![License](https://img.shields.io/badge/license-TBD-lightgrey?style=flat)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat)
 
 </div>
 
 <br/>
 
-> [!NOTE]
-> **TerCTL** keeps your fleet a single keystroke away — organize hosts, open secure terminals,
-> split them into workspaces, browse files over SFTP, and watch a server's vitals in real time,
-> without leaving the keyboard.
+TerCTL keeps a fleet of machines within reach: organize hosts into groups, open
+secure terminals, split them into workspaces, move files over SFTP, and watch a
+server's vitals — without reaching for the mouse.
 
-<br/>
+It's a real desktop app, not a browser wrapper. SSH, PTYs, SFTP, and keychain
+access all run in Rust; the UI is React on top of Tauri.
 
-<!-- Replace with a real screenshot / GIF once hosted -->
 <div align="center">
   <em>📸 Screenshots coming soon</em>
 </div>
 
 ---
 
-## ✨ Features
+## Features
 
-| | |
-|---|---|
-| 🖥️ **SSH Terminals** | Real PTY sessions over `russh` with full [xterm.js](https://xtermjs.org) rendering and per-host color schemes. |
-| 🪟 **Decks** | Split a tab into multiple panes — drag panes to re-split, drag dividers to resize, all sessions stay live. |
-| 🗂️ **Host Management** | Nested groups, tags, and instant search across labels, hostnames, users, and tags. |
-| 📁 **SFTP Transfer** | Dual-pane local ⇄ remote browser: upload, download, rename, new folder, hidden-file toggle. |
-| 📊 **Live Metrics** | CPU + core count, load average, memory, disk, network throughput, uptime, and top processes. |
-| ⚡ **Local Shells** | Spin up a local terminal right beside your remote sessions. |
-| 🔐 **Secure by Default** | Passwords & key passphrases live in the **OS keychain** — never written to disk. |
-| 🎨 **Themeable** | Multiple base themes, accent colors, and terminal color schemes. |
-| 🌍 **Cross-platform** | One codebase → native installers for macOS, Windows, and Linux. |
+|                           |                                                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 🖥️ **SSH terminals**      | Real PTY sessions over `russh`, rendered with [xterm.js](https://xtermjs.org), with per-host color schemes. |
+| 🪟 **Decks**              | Split a tab into panes. Drag a pane to re-split, drag a divider to resize — every session stays live.       |
+| 🔍 **In-terminal search** | Find across scrollback with case and regex toggles, and jump between matches.                               |
+| 🗂️ **Host management**    | Nested groups, tags, and search across labels, hostnames, users, and tags.                                  |
+| 📁 **SFTP transfer**      | Dual-pane local ⇄ remote browser: upload, download, rename, new folder, hidden-file toggle.                 |
+| 📊 **Live metrics**       | CPU and core count, load average, memory, disk, network throughput, uptime, top processes.                  |
+| ⚡ **Local shells**       | Open a local terminal alongside the remote ones.                                                            |
+| 🔐 **Keychain-backed**    | Passwords, passphrases, and private keys go to the OS keychain — never to disk or the database.             |
+| 💾 **Config backup**      | Export and import your setup as an encrypted file (Argon2id + XChaCha20-Poly1305).                          |
+| 🎨 **Themeable**          | Ten themes with hand-tuned light and dark palettes, sixteen accents, nine terminal schemes.                 |
+| 🔄 **Auto-update**        | Signed updates delivered straight from GitHub Releases.                                                     |
 
 ---
 
-## 🧰 Tech Stack
+## Tech stack
 
 <table>
 <tr>
@@ -87,78 +88,124 @@ Terminals, split-pane Decks, SFTP, and live host metrics — in one native, butt
 
 ---
 
-## 🚀 Getting Started
+## Getting started
 
 ### Prerequisites
-- **Node 22+** — a `.node-version` is pinned; [fnm](https://github.com/Schniz/fnm) / nvm pick it up automatically.
+
+- **Node 22** — pinned in `.node-version`, so [fnm](https://github.com/Schniz/fnm)
+  or nvm will pick it up on their own.
 - **Rust** (stable) — [rustup.rs](https://rustup.rs)
-- Tauri platform toolchains — [prerequisites](https://tauri.app/start/prerequisites/).
+- **Platform toolchain** — follow Tauri's
+  [prerequisites](https://tauri.app/start/prerequisites/) for your OS. On Debian and
+  Ubuntu that means WebKitGTK and a few build packages; the exact list is in
+  [`.github/workflows/release.yml`](.github/workflows/release.yml).
 
 ### Run it
 
 ```bash
 npm install
-npm run tauri dev      # 🔥 app with hot-reload
+npm run tauri dev
 ```
 
-### Ship it
+On Linux, if the window fails to start, try `npm run tauri:dev` instead — it clears
+a `GTK_PATH` that some distros set and WebKit doesn't like.
+
+### Build an installer
 
 ```bash
-npm run tauri build    # 📦 native installer for the current OS
+npm run tauri build
 ```
+
+Output lands in `src-tauri/target/release/bundle/`.
 
 ---
 
-## 🏗️ Architecture
+## How it fits together
 
-The frontend follows the **CalmUI** layout — a clean one-way flow:
+The frontend flows one way, top to bottom:
 
 ```
  routes  ──▶  modules  ──▶  services  ──▶  Tauri IPC  ──▶  Rust backend
 (routing)   (features)    (typed API)     (invoke)      (SSH · PTY · SFTP)
 ```
 
+Everything that touches the network, the filesystem, or the OS keychain happens in
+Rust. The React side never opens a socket.
+
 ```
 src/
-├── routes/       # TanStack file-based routes ( / · hosts · sessions · transfer · keys · settings )
-├── modules/      # one folder per feature   (hosts · sessions · transfer · settings · keys)
-├── store/        # Jotai atoms              (app · settings · dialog)
-├── services/     # typed Tauri IPC clients  (hosts · ssh · sftp · metrics · credentials)
-├── models/       # shared domain types
-├── components/   # shared UI + window chrome (title bar · activity rail · dialogs)
-├── lib/          # layout math · platform detection · helpers
+├── routes/       # file-based routes ( / · hosts · sessions · transfer · settings )
+├── modules/      # one folder per feature (hosts · sessions · transfer · settings · layout)
+├── store/        # Jotai atoms (app · settings · dialog · updater · version)
+├── services/     # typed Tauri IPC clients — the only place invoke() is called
+├── types/        # shared domain types
+├── hooks/        # cross-feature React hooks
+├── components/   # shared UI, window chrome, and shadcn primitives in ui/
+├── lib/          # color math · layout math · platform detection · helpers
 ├── constants/    # accents · themes · terminal color schemes
-└── styles/       # theme.css — design tokens, keyframes, base resets
+└── styles/       # theme.css — tokens, keyframes, base resets
 
-src-tauri/        # Rust backend — SSH, SFTP, PTY, metrics, keychain, SQLite
+src-tauri/src/
+├── commands.rs   # hosts, groups, credentials
+├── ssh.rs        # SSH connect + auth
+├── local_term.rs # local shell sessions
+├── session.rs    # PTY input, resize, teardown
+├── sftp.rs       # remote and local file operations
+├── metrics.rs    # live host stats
+├── backup.rs     # encrypted config export/import
+├── store.rs      # SQLite (hosts, groups, known-host keys)
+└── vault.rs      # OS keychain access
 ```
+
+### Where your data goes
+
+Hosts, groups, tags, and known-host fingerprints sit in a SQLite file in the app
+data directory. Secrets never join them — passwords, passphrases, and private keys
+go to the macOS Keychain, Windows Credential Manager, or the Secret Service on
+Linux. Config exports are encrypted with Argon2id and XChaCha20-Poly1305.
 
 ---
 
-## 📦 Releases
+## Contributing
 
-Push a `v*` tag → GitHub Actions builds & publishes installers for **all three platforms**:
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
+conventions, and what makes a change easy to review.
+
+---
+
+## Releases
+
+Pushing a `v*` tag builds installers for all three platforms and publishes them:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+npm run release          # patch — also try release:minor / release:major
 ```
+
+The script builds first, bumps the version, tags, and pushes. CI takes it from
+there: three OS runners upload into a draft release, and it only goes public once
+all three finish.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-- [ ] **Keys & Identity** — manage SSH keys and the agent (currently a preview)
-- [ ] **Port forwarding** — local / remote tunnels
+- [ ] **Port forwarding** — local and remote tunnels
 - [ ] **Command palette** (`⌘K` / `Ctrl K`)
-- [ ] Native window controls on Windows & Linux
-- [ ] Auto-update
+- [ ] **SSH key management** — generate, import, and manage the agent
+- [ ] Native window controls on Windows and Linux
+- [ ] Screenshots and a proper landing page
+
+---
+
+## License
+
+[MIT](LICENSE) — use it, fork it, ship it. Just keep the copyright notice.
 
 ---
 
 <div align="center">
 
-Built with 🦀 Rust + ⚛️ React, wrapped in [Tauri](https://tauri.app).
+Built with 🦀 Rust and ⚛️ React, wrapped in [Tauri](https://tauri.app).
 
 <sub>© TerCTL</sub>
 

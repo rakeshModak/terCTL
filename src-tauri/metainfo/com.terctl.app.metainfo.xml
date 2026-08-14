@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AppStream metadata, installed to /usr/share/metainfo/ by the deb bundle (see
+  bundle.linux.deb.files in tauri.conf.json).
+
+  The Description field in the Debian control file is what `apt show` and GDebi
+  render. Ubuntu's graphical installer reads this file instead, so without it the
+  app shows up there with a bare name and no summary.
+
+  The launchable id must match the desktop entry Tauri generates, which is named
+  after productName — TerCTL.desktop.
+-->
+<component type="desktop-application">
+  <id>com.terctl.app</id>
+  <launchable type="desktop-id">TerCTL.desktop</launchable>
+
+  <name>TerCTL</name>
+  <summary>Keyboard-first SSH client and terminal manager</summary>
+  <developer_name>TerCTL Contributors</developer_name>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <description>
+    <p>
+      TerCTL keeps a fleet of machines within reach: organize hosts into groups,
+      open secure terminals, split them into resizable panes, move files over
+      SFTP, and watch a server's vitals - without reaching for the mouse.
+    </p>
+    <p>
+      It is a native desktop application rather than a browser wrapper. SSH,
+      PTYs, SFTP and OS keychain access all run in Rust, with a React interface
+      on top of Tauri.
+    </p>
+    <ul>
+      <li>Real PTY sessions over SSH, rendered with xterm.js, with per-host color schemes</li>
+      <li>Split a tab into resizable panes; every session stays live while you rearrange them</li>
+      <li>In-terminal search across scrollback, with case and regex toggles</li>
+      <li>Host management with nested groups, tags and fast search</li>
+      <li>Dual-pane SFTP browser: upload, download, rename, new folder</li>
+      <li>Live host metrics: CPU, load average, memory, disk, network throughput, uptime and top processes</li>
+      <li>Local shells alongside the remote ones</li>
+      <li>Passwords, passphrases and private keys are kept in the OS keychain, never on disk</li>
+      <li>Encrypted configuration backup and restore</li>
+      <li>Ten themes with hand-tuned light and dark palettes</li>
+      <li>Signed automatic updates</li>
+    </ul>
+  </description>
+
+  <categories>
+    <category>Development</category>
+    <category>Network</category>
+  </categories>
+
+  <keywords>
+    <keyword>ssh</keyword>
+    <keyword>terminal</keyword>
+    <keyword>sftp</keyword>
+    <keyword>server</keyword>
+    <keyword>console</keyword>
+  </keywords>
+
+  <url type="homepage">https://github.com/rakeshModak/terCTL</url>
+  <url type="bugtracker">https://github.com/rakeshModak/terCTL/issues</url>
+
+  <content_rating type="oars-1.1" />
+</component>
