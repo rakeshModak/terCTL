@@ -48,14 +48,11 @@ function DialogContent({
   return (
     <DialogPortal>
       <DialogOverlay />
-      {/* Flex positioner: centres without a transform (no half-pixel blur)
-          and lets the popup size to its content instead of the viewport.
-          pointer-events-none so clicks fall through to the backdrop. */}
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         <DialogPrimitive.Popup
           data-slot="dialog-content"
           className={cn(
-            'bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 pointer-events-auto relative z-50 grid max-h-full w-full gap-6 overflow-y-auto rounded-xl p-6 text-sm ring-1 duration-100 outline-none sm:max-w-md',
+            'bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 pointer-events-auto relative z-50 grid max-h-full w-full gap-6 overflow-x-hidden overflow-y-auto rounded-xl p-6 text-sm ring-1 duration-100 outline-none sm:max-w-md',
             className,
           )}
           {...props}

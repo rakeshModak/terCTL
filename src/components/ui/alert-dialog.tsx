@@ -48,13 +48,12 @@ function AlertDialogContent({
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
-      {/* See DialogContent: flex positioner instead of transform centring. */}
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         <AlertDialogPrimitive.Popup
           data-slot="alert-dialog-content"
           data-size={size}
           className={cn(
-            'group/alert-dialog-content bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 pointer-events-auto relative z-50 grid max-h-full w-full gap-4 overflow-y-auto rounded-xl p-4 ring-1 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm',
+            'group/alert-dialog-content bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 pointer-events-auto relative z-50 grid max-h-full w-full gap-4 overflow-x-hidden overflow-y-auto rounded-xl p-4 ring-1 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm',
             className,
           )}
           {...props}

@@ -35,7 +35,7 @@ type GroupDialogArgs =
 type DeleteTarget =
   { kind: 'group'; group: GroupType } | { kind: 'host'; host: HostType };
 
-const GRID = 'grid gap-3 grid-cols-[repeat(auto-fill,minmax(232px,1fr))]';
+const GRID = 'grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(204px,1fr))]';
 
 export default function HostsPage() {
   const hosts = useAtomValue(hostsAtom);

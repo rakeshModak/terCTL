@@ -1,10 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import {
   InputGroup,
   InputGroupAddon,
+  InputGroupButton,
   InputGroupInput,
 } from '@/components/ui/input-group';
+import { PALETTE_HINT } from '@/lib/platform';
+
 interface HostsSearchProps {
   value: string;
   onChange: (value: string) => void;
@@ -26,8 +29,8 @@ export default function HostsSearch({ value, onChange }: HostsSearchProps) {
   }, []);
 
   return (
-    <InputGroup className="bg-card ring-foreground/10 dark:bg-card mb-7 h-11 rounded-xl border-transparent ring-1">
-      <InputGroupAddon className="pl-3">
+    <InputGroup className="mb-5">
+      <InputGroupAddon>
         <Search className="text-muted-foreground" />
       </InputGroupAddon>
 
@@ -35,10 +38,28 @@ export default function HostsSearch({ value, onChange }: HostsSearchProps) {
         ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.currentTarget.value)}
+        onKeyDown={(e) => e.key === 'Escape' && onChange('')}
         placeholder="Search hosts by name, address or tag…"
         aria-label="Search hosts"
-        className="h-11"
       />
+      <InputGroupAddon align="inline-end">
+        {value ? (
+          <InputGroupButton
+            size="icon-xs"
+            aria-label="Clear search"
+            onClick={() => {
+              onChange('');
+              inputRef.current?.focus();
+            }}
+          >
+            <X />
+          </InputGroupButton>
+        ) : (
+          <kbd className="bg-muted text-muted-foreground pointer-events-none px-1.5 py-0.5 font-mono text-2xs font-medium">
+            {PALETTE_HINT}
+          </kbd>
+        )}
+      </InputGroupAddon>
     </InputGroup>
   );
 }

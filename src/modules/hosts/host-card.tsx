@@ -45,7 +45,7 @@ export default function HostCard({
     <Card
       size="sm"
       className={cn(
-        'group/host-card hover:bg-accent/50 relative gap-3 px-4 py-4 transition-colors',
+        'group/host-card hover:bg-accent/50 relative gap-2.5 px-3.5 py-3 transition-colors',
         connected && 'ring-primary/35',
       )}
     >
@@ -54,13 +54,13 @@ export default function HostCard({
           aria-hidden="true"
           title={os?.label}
           className={cn(
-            'font-heading flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-semibold',
+            'font-heading flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold',
             connected
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground',
           )}
         >
-          {os ? <os.Icon className="size-4.5" /> : initial}
+          {os ? <os.Icon className="size-4" /> : initial}
         </span>
 
         <div className="relative z-10 -mr-1 flex shrink-0 items-center gap-1.5">
@@ -129,7 +129,7 @@ export default function HostCard({
         </div>
       )}
 
-      <div className="mt-auto flex flex-col gap-2">
+      <div className="mt-auto flex flex-col gap-1.5">
         <Separator />
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="text-muted-foreground flex min-w-0 items-center gap-1.5">
