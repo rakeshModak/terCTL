@@ -4,8 +4,11 @@ version = "1.1.0"
 # `authors` becomes the Maintainer field of the .deb — it takes precedence over
 # bundle.publisher in tauri.conf.json, so the placeholder that used to live here
 # shipped as `Maintainer: you`.
+#
+# Spelled "and" rather than "&": this string also reaches the MSI Manufacturer
+# field, and `main.wxs` is XML, where a bare ampersand is a parse error.
 description = "Keyboard-first SSH client and terminal manager"
-authors = ["Rakesh Modak & Sagar Sen"]
+authors = ["Rakesh Modak and Sagar Sen"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -30,7 +30,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "publisher": "Rakesh Modak & Sagar Sen",
+    "publisher": "Rakesh Modak and Sagar Sen",
     "homepage": "https://github.com/rakeshModak/terCTL",
     "copyright": "Copyright 2026 TerCTL Contributors",
     "license": "MIT",
