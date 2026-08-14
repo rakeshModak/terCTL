@@ -1,9 +1,12 @@
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   bumpFontSizeAtom,
+  CAN_CHOOSE_TITLE_BAR,
   setAccentAtom,
   setModeAtom,
+  setSystemTitleBarAtom,
   setTermSchemeAtom,
   setThemeAtom,
   settingsAtom,
@@ -19,19 +22,19 @@ import SettingsSection, {
 import TerminalSchemePicker from '@/modules/settings/sections/terminal/terminal-scheme-picker';
 import ThemePicker from '@/modules/settings/sections/appearance/theme-picker';
 
-/** `mode` is the user's choice; `resolvedMode` is what is actually rendering. */
 export default function AppearanceSection({
   resolvedMode,
 }: {
   resolvedMode: ResolvedMode;
 }) {
-  const { fontSize, accent, theme, termScheme, mode } =
+  const { fontSize, accent, theme, termScheme, mode, systemTitleBar } =
     useAtomValue(settingsAtom);
   const bumpFontSize = useSetAtom(bumpFontSizeAtom);
   const setAccent = useSetAtom(setAccentAtom);
   const setTheme = useSetAtom(setThemeAtom);
   const setTermScheme = useSetAtom(setTermSchemeAtom);
   const setMode = useSetAtom(setModeAtom);
+  const setSystemTitleBar = useSetAtom(setSystemTitleBarAtom);
 
   return (
     <SettingsSection
@@ -76,6 +79,18 @@ export default function AppearanceSection({
           description="Monospace size for terminals and logs"
           action={<FontSizeStepper value={fontSize} onBump={bumpFontSize} />}
         />
+        {CAN_CHOOSE_TITLE_BAR && (
+          <SettingRow
+            title="Use system title bar"
+            description="Let your desktop draw the window frame, so dragging, snapping and double-click to maximise behave like every other app"
+            action={
+              <Switch
+                checked={systemTitleBar}
+                onCheckedChange={setSystemTitleBar}
+              />
+            }
+          />
+        )}
       </SettingRowList>
 
       <p className="text-muted-foreground mt-3 text-xs">

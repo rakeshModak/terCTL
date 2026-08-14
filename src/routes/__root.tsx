@@ -5,8 +5,9 @@ import {
 } from '@tanstack/react-router';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { applyTheme, watchSystemMode } from '../lib/theme';
-import { settingsAtom } from '../store/settings';
+import { CAN_CHOOSE_TITLE_BAR, settingsAtom } from '../store/settings';
 import { refreshAllAtom, setHostOsAtom } from '../store/app';
 import { applyTransferProgressAtom } from '../store/transfer';
 import { hostsService } from '../services/hosts.service';
@@ -26,7 +27,7 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
-  const { accent, theme, mode } = useAtomValue(settingsAtom);
+  const { accent, theme, mode, systemTitleBar } = useAtomValue(settingsAtom);
   const refreshAll = useSetAtom(refreshAllAtom);
   const checkForUpdate = useSetAtom(checkForUpdateAtom);
   const loadVersion = useSetAtom(loadAppVersionAtom);
@@ -72,6 +73,11 @@ function RootLayout() {
     if (mode !== 'system') return;
     return watchSystemMode(() => applyTheme(choice));
   }, [accent, theme, mode]);
+
+  useEffect(() => {
+    if (!CAN_CHOOSE_TITLE_BAR) return;
+    void getCurrentWindow().setDecorations(systemTitleBar);
+  }, [systemTitleBar]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-(--bg) text-(--text)">

@@ -19,6 +19,7 @@ import {
 } from '../../store/app';
 import { paneSessionIds } from '../../lib/layout';
 import { IS_MAC } from '../../lib/platform';
+import { settingsAtom } from '../../store/settings';
 
 const PATH_LABELS: Record<string, string> = {
   '/sessions': 'Terminal',
@@ -41,8 +42,12 @@ function Header() {
   const setDraggingTab = useSetAtom(setDraggingTabAtom);
   const splitActiveTab = useSetAtom(splitActiveTabAtom);
 
+  const { systemTitleBar } = useAtomValue(settingsAtom);
+  const actsAsTitleBar = IS_MAC || !systemTitleBar;
+
   const lastDownRef = useRef(0);
   const onMouseDown = (e: MouseEvent) => {
+    if (!actsAsTitleBar) return;
     if (e.button !== 0) return;
     if (!e.currentTarget.contains(e.target as Node)) return;
 
@@ -82,7 +87,8 @@ function Header() {
       onMouseDown={onMouseDown}
       className={cn(
         'border-border bg-background flex h-[46px] shrink-0 items-center gap-3.5 border-b',
-        IS_MAC ? 'pr-3.5 pl-[86px]' : 'pr-0 pl-3.5',
+        IS_MAC ? 'pl-[86px]' : 'pl-3.5',
+        IS_MAC || systemTitleBar ? 'pr-3.5' : 'pr-0',
       )}
     >
       <div className="text-foreground flex shrink-0 items-center gap-2.5">
@@ -168,7 +174,6 @@ function Header() {
               </div>
             );
           })}
-          {/* Owned by the sessions module — it decides what a new session is. */}
           <NewSessionMenu />
         </div>
       ) : (
@@ -195,7 +200,7 @@ function Header() {
           <PanelRight className="size-4" />
         </button>
       )}
-      {!IS_MAC && <WindowControls />}
+      {!IS_MAC && !systemTitleBar && <WindowControls />}
     </div>
   );
 }

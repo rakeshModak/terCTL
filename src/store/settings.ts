@@ -3,29 +3,28 @@ import { atomWithStorage } from 'jotai/utils';
 import { ACCENTS, DEFAULT_ACCENT } from '../constants/accents';
 import { DEFAULT_THEME, THEMES } from '../constants/themes';
 import { THEME_MODES, type ThemeMode } from '../lib/theme';
+import { IS_LINUX } from '../lib/platform';
 
 export interface Settings {
   fontSize: number;
-  /** Rows of terminal history retained above the viewport. */
   scrollback: number;
   accent: string;
   theme: string;
   termScheme: string;
   mode: ThemeMode;
+  systemTitleBar: boolean;
 }
 
 const STORAGE_KEY = 'terctl-settings';
 
 const DEFAULTS: Settings = {
   fontSize: 13,
-  // xterm's own default is 1000 rows, which drops history within a single
-  // build log. 10k matches what GNOME Terminal ships and costs roughly 10 MB
-  // per pane at worst — see SCROLLBACK_OPTIONS for the trade-off at the top end.
   scrollback: 10_000,
   accent: DEFAULT_ACCENT,
   theme: DEFAULT_THEME,
   termScheme: 'Mono',
   mode: 'dark',
+  systemTitleBar: false,
 };
 
 const isThemeMode = (v: unknown): v is ThemeMode =>
@@ -52,6 +51,10 @@ export function normalizeSettings(raw: unknown): Settings {
     termScheme:
       typeof v.termScheme === 'string' ? v.termScheme : DEFAULTS.termScheme,
     mode: isThemeMode(v.mode) ? v.mode : DEFAULTS.mode,
+    systemTitleBar:
+      typeof v.systemTitleBar === 'boolean'
+        ? v.systemTitleBar
+        : DEFAULTS.systemTitleBar,
   };
 }
 
@@ -136,4 +139,15 @@ export const setModeAtom = atom(null, (get, set, mode: ThemeMode) => {
     ...get(settingsAtom),
     mode: isThemeMode(mode) ? mode : DEFAULTS.mode,
   });
+});
+
+/**
+ * Linux only. macOS needs `titleBarStyle: "Overlay"` for its traffic lights,
+ * and Windows is left exactly as it ships. This is really "any Linux" rather
+ * than Ubuntu specifically — the webview user agent cannot name the desktop.
+ */
+export const CAN_CHOOSE_TITLE_BAR = IS_LINUX;
+
+export const setSystemTitleBarAtom = atom(null, (get, set, on: boolean) => {
+  set(settingsAtom, { ...get(settingsAtom), systemTitleBar: on });
 });
