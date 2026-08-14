@@ -10,7 +10,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  # A failed run leaves its half-filled release behind. If a later run for the
+  # same tag then finds two release objects sharing that tag, the publish step
+  # below can resolve to the wrong one and the artifacts are lost with the
+  # draft. Clearing first guarantees the matrix builds into a single, fresh
+  # release. The tag itself is untouched.
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Clear any stale release for this tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "${{ github.ref_name }}" \
+            --yes --repo "${{ github.repository }}" || true
+
   release:
+    needs: prepare
     permissions:
       contents: write
     strategy:
@@ -97,6 +115,24 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Every job reporting success is not proof the artifacts landed — they
+      # upload to a release resolved by tag, and that lookup can go wrong. A
+      # healthy release carries ~14 assets across the three platforms, so
+      # anything under 10 means something was lost. Fail loudly instead of
+      # publishing an empty release, which would also break the updater:
+      # its endpoint is releases/latest/download/latest.json.
+      - name: Verify the artifacts are attached
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          count=$(gh release view "${{ github.ref_name }}" \
+                    --repo "${{ github.repository }}" --json assets --jq '.assets | length')
+          echo "Found $count assets on ${{ github.ref_name }}."
+          if [ "$count" -lt 10 ]; then
+            echo "::error::Refusing to publish ${{ github.ref_name }} with only $count assets."
+            exit 1
+          fi
+
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
