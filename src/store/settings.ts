@@ -1,63 +1,139 @@
-import { atom } from 'jotai'
-import { atomWithStorage } from 'jotai/utils'
-import { ACCENTS } from '../constants/accents'
-import { THEMES } from '../constants/themes'
+import { atom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
+import { ACCENTS, DEFAULT_ACCENT } from '../constants/accents';
+import { DEFAULT_THEME, THEMES } from '../constants/themes';
+import { THEME_MODES, type ThemeMode } from '../lib/theme';
 
 export interface Settings {
-  fontSize: number
-  accent: string
-  theme: string
-  termScheme: string
+  fontSize: number;
+  /** Rows of terminal history retained above the viewport. */
+  scrollback: number;
+  accent: string;
+  theme: string;
+  termScheme: string;
+  mode: ThemeMode;
 }
 
-const DEFAULTS: Settings = { fontSize: 13, accent: 'Chrome', theme: 'Carbon', termScheme: 'Mono' }
+const STORAGE_KEY = 'terctl-settings';
 
-// Raw persisted value. Typed as unknown because localStorage may hold a legacy
-// shape (the old zustand-persist wrapper stored the state under `.state`).
-const storedSettingsAtom = atomWithStorage<unknown>('terctl-settings', DEFAULTS)
+const DEFAULTS: Settings = {
+  fontSize: 13,
+  // xterm's own default is 1000 rows, which drops history within a single
+  // build log. 10k matches what GNOME Terminal ships and costs roughly 10 MB
+  // per pane at worst — see SCROLLBACK_OPTIONS for the trade-off at the top end.
+  scrollback: 10_000,
+  accent: DEFAULT_ACCENT,
+  theme: DEFAULT_THEME,
+  termScheme: 'Mono',
+  mode: 'dark',
+};
 
-// Public settings — always a complete, valid Settings object. Missing/legacy
-// fields fall back to defaults so nothing ever reads as undefined; writing back
-// normalizes the stored value to the clean shape.
-export const settingsAtom = atom(
-  (get): Settings => {
-    const raw = get(storedSettingsAtom)
-    // Unwrap the old zustand-persist envelope ({ state, version }) if present.
-    const src =
-      raw && typeof raw === 'object' && 'state' in (raw as object)
-        ? (raw as { state?: unknown }).state
-        : raw
-    const v = (src && typeof src === 'object' ? src : {}) as Partial<Settings>
-    return {
-      fontSize: typeof v.fontSize === 'number' ? v.fontSize : DEFAULTS.fontSize,
-      accent: typeof v.accent === 'string' ? v.accent : DEFAULTS.accent,
-      theme: typeof v.theme === 'string' ? v.theme : DEFAULTS.theme,
-      termScheme: typeof v.termScheme === 'string' ? v.termScheme : DEFAULTS.termScheme,
-    }
+const isThemeMode = (v: unknown): v is ThemeMode =>
+  typeof v === 'string' && (THEME_MODES as string[]).includes(v);
+
+export function normalizeSettings(raw: unknown): Settings {
+  const src =
+    raw && typeof raw === 'object' && 'state' in (raw as object)
+      ? (raw as { state?: unknown }).state
+      : raw;
+  const v = (src && typeof src === 'object' ? src : {}) as Partial<Settings>;
+  return {
+    fontSize: typeof v.fontSize === 'number' ? v.fontSize : DEFAULTS.fontSize,
+    scrollback:
+      typeof v.scrollback === 'number' && v.scrollback > 0
+        ? v.scrollback
+        : DEFAULTS.scrollback,
+    accent:
+      typeof v.accent === 'string' && ACCENTS[v.accent]
+        ? v.accent
+        : DEFAULTS.accent,
+    theme:
+      typeof v.theme === 'string' && THEMES[v.theme] ? v.theme : DEFAULTS.theme,
+    termScheme:
+      typeof v.termScheme === 'string' ? v.termScheme : DEFAULTS.termScheme,
+    mode: isThemeMode(v.mode) ? v.mode : DEFAULTS.mode,
+  };
+}
+
+export function readStoredSettings(): Settings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return normalizeSettings(raw === null ? null : JSON.parse(raw));
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+const storedSettingsAtom = atomWithStorage<unknown>(
+  STORAGE_KEY,
+  DEFAULTS,
+  undefined,
+  {
+    getOnInit: true,
   },
+);
+
+export const settingsAtom = atom(
+  (get): Settings => normalizeSettings(get(storedSettingsAtom)),
   (_get, set, next: Settings) => set(storedSettingsAtom, next),
-)
+);
 
-const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n))
+const clamp = (n: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, n));
 
-// Write-only action atoms — mirror the old store's validated setters.
+export const FONT_SIZE_MIN = 9;
+export const FONT_SIZE_MAX = 24;
+export const FONT_SIZE_DEFAULT = DEFAULTS.fontSize;
+
 export const setFontSizeAtom = atom(null, (get, set, n: number) => {
-  set(settingsAtom, { ...get(settingsAtom), fontSize: clamp(n, 9, 24) })
-})
+  set(settingsAtom, {
+    ...get(settingsAtom),
+    fontSize: clamp(n, FONT_SIZE_MIN, FONT_SIZE_MAX),
+  });
+});
 
 export const bumpFontSizeAtom = atom(null, (get, set, delta: number) => {
-  const s = get(settingsAtom)
-  set(settingsAtom, { ...s, fontSize: clamp(s.fontSize + delta, 9, 24) })
-})
+  const s = get(settingsAtom);
+  set(settingsAtom, {
+    ...s,
+    fontSize: clamp(s.fontSize + delta, FONT_SIZE_MIN, FONT_SIZE_MAX),
+  });
+});
+
+export const resetFontSizeAtom = atom(null, (get, set) => {
+  set(settingsAtom, { ...get(settingsAtom), fontSize: FONT_SIZE_DEFAULT });
+});
+
+export const SCROLLBACK_OPTIONS = [1_000, 10_000, 50_000, 100_000] as const;
+
+export const setScrollbackAtom = atom(null, (get, set, rows: number) => {
+  set(settingsAtom, {
+    ...get(settingsAtom),
+    scrollback: clamp(Math.round(rows), 500, 500_000),
+  });
+});
 
 export const setAccentAtom = atom(null, (get, set, accent: string) => {
-  set(settingsAtom, { ...get(settingsAtom), accent: ACCENTS[accent] ? accent : 'Chrome' })
-})
+  set(settingsAtom, {
+    ...get(settingsAtom),
+    accent: ACCENTS[accent] ? accent : DEFAULT_ACCENT,
+  });
+});
 
 export const setThemeAtom = atom(null, (get, set, theme: string) => {
-  set(settingsAtom, { ...get(settingsAtom), theme: THEMES[theme] !== undefined ? theme : 'Carbon' })
-})
+  set(settingsAtom, {
+    ...get(settingsAtom),
+    theme: THEMES[theme] ? theme : DEFAULT_THEME,
+  });
+});
 
 export const setTermSchemeAtom = atom(null, (get, set, termScheme: string) => {
-  set(settingsAtom, { ...get(settingsAtom), termScheme })
-})
+  set(settingsAtom, { ...get(settingsAtom), termScheme });
+});
+
+export const setModeAtom = atom(null, (get, set, mode: ThemeMode) => {
+  set(settingsAtom, {
+    ...get(settingsAtom),
+    mode: isThemeMode(mode) ? mode : DEFAULTS.mode,
+  });
+});

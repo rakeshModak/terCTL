@@ -1,74 +1,95 @@
-import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { useEffect } from 'react'
-import { ACCENTS } from '../constants/accents'
-import { THEMES } from '../constants/themes'
-import { settingsAtom } from '../store/settings'
-import { refreshAllAtom } from '../store/app'
-import { checkForUpdateAtom } from '../store/updater'
-import { loadAppVersionAtom } from '../store/version'
-import { BootSplash } from '../components/chrome/BootSplash'
-import { TitleBar } from '../components/chrome/TitleBar'
-import { ActivityRail } from '../components/chrome/ActivityRail'
-import { Dialogs } from '../components/Dialogs'
-import { UpdateBanner } from '../components/UpdateBanner'
-import { SessionsView } from '../modules/sessions'
+import {
+  createRootRoute,
+  Outlet,
+  useRouterState,
+} from '@tanstack/react-router';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { useEffect } from 'react';
+import { applyTheme, watchSystemMode } from '../lib/theme';
+import { settingsAtom } from '../store/settings';
+import { refreshAllAtom, setHostOsAtom } from '../store/app';
+import { applyTransferProgressAtom } from '../store/transfer';
+import { hostsService } from '../services/hosts.service';
+import { sftpService } from '../services/sftp.service';
+import { checkForUpdateAtom } from '../store/updater';
+import { loadAppVersionAtom } from '../store/version';
+import { BootSplash } from '../components/chrome/BootSplash';
+import Header from '../modules/layout/header';
+import Sidebar from '../modules/layout/sidebar';
+import { Dialogs } from '../components/Dialogs';
+import { Toaster } from '../components/ui/sonner';
+import { UpdateBanner } from '../components/UpdateBanner';
+import SessionsView from '../modules/sessions';
 
 export const Route = createRootRoute({
   component: RootLayout,
-})
+});
 
-// The app shell: boot splash, title bar (Deck tabs), activity rail, the
-// persistent terminal workspace, and the active route via <Outlet />.
-//
-// SessionsView is mounted permanently and merely hidden when off '/', so live
-// PTY/SSH terminals survive navigation. The other views render through <Outlet />.
 function RootLayout() {
-  const { accent, theme } = useAtomValue(settingsAtom)
-  const refreshAll = useSetAtom(refreshAllAtom)
-  const checkForUpdate = useSetAtom(checkForUpdateAtom)
-  const loadVersion = useSetAtom(loadAppVersionAtom)
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const onSessions = pathname === '/sessions'
+  const { accent, theme, mode } = useAtomValue(settingsAtom);
+  const refreshAll = useSetAtom(refreshAllAtom);
+  const checkForUpdate = useSetAtom(checkForUpdateAtom);
+  const loadVersion = useSetAtom(loadAppVersionAtom);
+  const applyTransferProgress = useSetAtom(applyTransferProgressAtom);
+  const setHostOs = useSetAtom(setHostOsAtom);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onSessions = pathname === '/sessions';
 
-  // Load hosts/groups/tags once when the shell mounts.
   useEffect(() => {
-    void refreshAll()
-  }, [refreshAll])
+    void refreshAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Quietly check for an app update on launch (surfaces the banner if found).
   useEffect(() => {
-    void checkForUpdate()
-  }, [checkForUpdate])
+    void checkForUpdate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Read the real app version once, so the UI never shows a hardcoded number.
   useEffect(() => {
-    void loadVersion()
-  }, [loadVersion])
+    void loadVersion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Apply accent + base theme to the document root (CSS derives everything else).
   useEffect(() => {
-    const a = ACCENTS[accent] ?? ACCENTS.Ember
-    const root = document.documentElement
-    root.style.setProperty('--accent', a.c)
-    root.style.setProperty('--accent-2', a.c2)
-    root.dataset.theme = THEMES[theme] ?? ''
-  }, [accent, theme])
+    const unlisten = sftpService.onTransferProgress(applyTransferProgress);
+    return () => {
+      void unlisten.then((off) => off());
+    };
+  }, [applyTransferProgress]);
+
+  useEffect(() => {
+    const unlisten = hostsService.onOsDetected(({ hostId, os }) =>
+      setHostOs(hostId, os),
+    );
+    return () => {
+      void unlisten.then((off) => off());
+    };
+  }, [setHostOs]);
+
+  useEffect(() => {
+    const choice = { accent, theme, mode };
+    applyTheme(choice);
+    if (mode !== 'system') return;
+    return watchSystemMode(() => applyTheme(choice));
+  }, [accent, theme, mode]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[var(--bg)] text-[var(--text)]">
+    <div className="flex h-screen flex-col overflow-hidden bg-(--bg) text-(--text)">
       <BootSplash />
-      <TitleBar />
+      <Header />
       <div className="flex min-h-0 flex-1">
-        <ActivityRail />
-        {/* Persistent terminal workspace — stays mounted; hidden when off '/'. */}
-        <div className="min-w-0 flex-1" style={{ display: onSessions ? 'flex' : 'none' }}>
+        <Sidebar />
+        <div
+          className="min-w-0 flex-1"
+          style={{ display: onSessions ? 'flex' : 'none' }}
+        >
           <SessionsView />
         </div>
         <Outlet />
       </div>
       <Dialogs />
+      <Toaster />
       <UpdateBanner />
     </div>
-  )
+  );
 }

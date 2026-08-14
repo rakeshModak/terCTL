@@ -1,8 +1,9 @@
-// TerCTL — SSH connection manager (desktop).
+mod backup;
 mod commands;
 mod local_term;
 mod metrics;
 mod models;
+mod osinfo;
 mod session;
 mod sftp;
 mod ssh;
@@ -19,6 +20,8 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
@@ -49,6 +52,10 @@ pub fn run() {
             commands::has_credential,
             commands::delete_credential,
             commands::frontend_log,
+            backup::backup_preview,
+            backup::inspect_backup,
+            backup::export_config,
+            backup::import_config,
             ssh::ssh_connect,
             local_term::local_connect,
             session::term_send_input,
@@ -60,11 +67,14 @@ pub fn run() {
             sftp::sftp_upload,
             sftp::sftp_mkdir,
             sftp::sftp_rename,
+            sftp::sftp_remove,
+            sftp::sftp_cancel_transfer,
             sftp::sftp_disconnect,
             sftp::local_home,
             sftp::local_list,
             sftp::local_mkdir,
             sftp::local_rename,
+            sftp::local_remove,
             metrics::ssh_metrics,
             metrics::metrics_disconnect,
         ])

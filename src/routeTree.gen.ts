@@ -9,31 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TransferRouteImport } from './routes/transfer'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SessionsRouteImport } from './routes/sessions'
-import { Route as KeysRouteImport } from './routes/keys'
-import { Route as HostsRouteImport } from './routes/hosts'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HostsRouteImport } from './routes/hosts'
+import { Route as SessionsRouteImport } from './routes/sessions'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TransferRouteImport } from './routes/transfer'
 
-const TransferRoute = TransferRouteImport.update({
-  id: '/transfer',
-  path: '/transfer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SessionsRoute = SessionsRouteImport.update({
-  id: '/sessions',
-  path: '/sessions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KeysRoute = KeysRouteImport.update({
-  id: '/keys',
-  path: '/keys',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HostsRoute = HostsRouteImport.update({
@@ -41,16 +25,25 @@ const HostsRoute = HostsRouteImport.update({
   path: '/hosts',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SessionsRoute = SessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TransferRoute = TransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hosts': typeof HostsRoute
-  '/keys': typeof KeysRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/transfer': typeof TransferRoute
@@ -58,7 +51,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/hosts': typeof HostsRoute
-  '/keys': typeof KeysRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/transfer': typeof TransferRoute
@@ -67,30 +59,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/hosts': typeof HostsRoute
-  '/keys': typeof KeysRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/transfer': typeof TransferRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/hosts' | '/keys' | '/sessions' | '/settings' | '/transfer'
+  fullPaths: '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/hosts' | '/keys' | '/sessions' | '/settings' | '/transfer'
-  id:
-    | '__root__'
-    | '/'
-    | '/hosts'
-    | '/keys'
-    | '/sessions'
-    | '/settings'
-    | '/transfer'
+  to: '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
+  id: '__root__' | '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HostsRoute: typeof HostsRoute
-  KeysRoute: typeof KeysRoute
   SessionsRoute: typeof SessionsRoute
   SettingsRoute: typeof SettingsRoute
   TransferRoute: typeof TransferRoute
@@ -98,32 +81,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/transfer': {
-      id: '/transfer'
-      path: '/transfer'
-      fullPath: '/transfer'
-      preLoaderRoute: typeof TransferRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sessions': {
-      id: '/sessions'
-      path: '/sessions'
-      fullPath: '/sessions'
-      preLoaderRoute: typeof SessionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/keys': {
-      id: '/keys'
-      path: '/keys'
-      fullPath: '/keys'
-      preLoaderRoute: typeof KeysRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hosts': {
@@ -133,11 +95,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/sessions': {
+      id: '/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof SessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transfer': {
+      id: '/transfer'
+      path: '/transfer'
+      fullPath: '/transfer'
+      preLoaderRoute: typeof TransferRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -146,7 +122,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HostsRoute: HostsRoute,
-  KeysRoute: KeysRoute,
   SessionsRoute: SessionsRoute,
   SettingsRoute: SettingsRoute,
   TransferRoute: TransferRoute,

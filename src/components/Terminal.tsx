@@ -1,0 +1,650 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Terminal as XTerm } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import { listen } from '@tauri-apps/api/event';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { toast } from 'sonner';
+import { getDefaultStore, useAtomValue } from 'jotai';
+import '@xterm/xterm/css/xterm.css';
+import {
+  hasTermScheme,
+  terminalFontFamily,
+  termTheme,
+} from '../constants/terminal-schemes';
+import { useResolvedMode } from '../hooks/useResolvedMode';
+import {
+  bumpFontSizeAtom,
+  resetFontSizeAtom,
+  settingsAtom,
+} from '../store/settings';
+import { sshService } from '../services/ssh.service';
+import { IS_MAC } from '../lib/platform';
+import { readableOn } from '../lib/color';
+import { readClipboard, writeClipboard } from '../lib/clipboard';
+import { debugLog } from '../lib/debugLog';
+import {
+  Search,
+  ChevronUp,
+  ChevronDown,
+  X,
+  CaseSensitive,
+  Regex,
+} from 'lucide-react';
+
+interface TermOutputEvent {
+  sessionId: string;
+  data: number[];
+}
+
+interface TermClosedEvent {
+  sessionId: string;
+  error: string | null;
+}
+
+interface TerminalProps {
+  sessionId: string;
+  onClosed: (error: string | null) => void;
+  scheme?: string | null;
+}
+
+const FIND_ICON_BTN =
+  'flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--text-dim)] transition-colors hover:bg-foreground/10 hover:text-[var(--text)]';
+const findToggle = (on: boolean) =>
+  `flex h-6 w-6.5 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${
+    on
+      ? 'bg-[var(--brand)] text-[var(--brand-contrast)] shadow-[0_1px_4px_rgb(0_0_0_/_0.3)]'
+      : 'text-[var(--text-faint)] hover:bg-foreground/10 hover:text-[var(--text)]'
+  }`;
+
+const WHEEL_ZOOM_STEP = 40;
+const isLinkActivation = (e: MouseEvent) => e.ctrlKey || (IS_MAC && e.metaKey);
+
+function openTerminalLink(uri: string) {
+  if (!/^https?:\/\//i.test(uri)) return;
+  void openUrl(uri).catch((e) => debugLog(`could not open ${uri}: ${e}`));
+}
+
+const DROP_RING = ['outline-2', '-outline-offset-2', 'outline-primary'];
+
+function fileUriToPath(value: string): string {
+  if (!value.startsWith('file://')) return value;
+  try {
+    const path = decodeURIComponent(new URL(value).pathname);
+    return /^\/[a-z]:/i.test(path) ? path.slice(1) : path;
+  } catch {
+    return value;
+  }
+}
+
+function droppedPaths(dt: DataTransfer): string[] {
+  const raw = dt.getData('text/uri-list') || dt.getData('text/plain');
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith('#')) // uri-list comments
+    .map(fileUriToPath);
+}
+
+function quoteForShell(path: string): string {
+  if (/^[\w@%+=:,./-]+$/.test(path)) return path;
+  return `'${path.replace(/'/g, `'\\''`)}'`;
+}
+
+function handleZoomChord(e: KeyboardEvent): boolean {
+  if (e.altKey || !(e.ctrlKey || (IS_MAC && e.metaKey))) return false;
+  const store = getDefaultStore();
+
+  if (e.key === '+' || (e.key === '=' && !e.shiftKey)) {
+    store.set(bumpFontSizeAtom, 1);
+  } else if (e.key === '-' && !e.shiftKey) {
+    store.set(bumpFontSizeAtom, -1);
+  } else if (e.key === '0' && !e.shiftKey) {
+    store.set(resetFontSizeAtom);
+  } else {
+    return false;
+  }
+
+  e.preventDefault();
+  return true;
+}
+
+function isPasteChord(e: KeyboardEvent): boolean {
+  if (e.altKey) return false;
+  if (e.key === 'Insert' && e.shiftKey && !e.ctrlKey) return true;
+  return e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'v';
+}
+
+async function pasteIntoTerminal(term: XTerm): Promise<void> {
+  const text = await readClipboard();
+  if (text === null) {
+    toast.error('Couldn’t read the clipboard');
+    return;
+  }
+  if (text) term.paste(text);
+}
+
+function handleClipboardChord(term: XTerm, e: KeyboardEvent): boolean {
+  if (isPasteChord(e)) {
+    e.preventDefault();
+    void pasteIntoTerminal(term);
+    return true;
+  }
+
+  if (IS_MAC || !e.ctrlKey || e.altKey || e.metaKey) return false;
+  const key = e.key.toLowerCase();
+
+  if (key !== 'c') return false;
+  const selection = term.getSelection();
+  if (!selection && !e.shiftKey) return false;
+
+  e.preventDefault();
+  if (selection) {
+    void writeClipboard(selection);
+    term.clearSelection();
+  }
+  return true;
+}
+
+export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onClosedRef = useRef(onClosed);
+  onClosedRef.current = onClosed;
+  const termRef = useRef<XTerm | null>(null);
+  const fitRef = useRef<FitAddon | null>(null);
+  const matchesRef = useRef<{ row: number; col: number; length: number }[]>([]);
+  const highlightsRef = useRef<Array<{ dispose(): void }>>([]);
+  const findInputRef = useRef<HTMLInputElement | null>(null);
+  const [findOpen, setFindOpen] = useState(false);
+  const [findQuery, setFindQuery] = useState('');
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const [useRegex, setUseRegex] = useState(false);
+  const [matchCount, setMatchCount] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const settings = useAtomValue(settingsAtom);
+  const fontSize = settings.fontSize;
+  const scrollback = settings.scrollback;
+  const globalScheme = settings.termScheme;
+  const termScheme = hasTermScheme(scheme) ? scheme : globalScheme;
+  const mode = useResolvedMode();
+
+  useEffect(() => {
+    const term = new XTerm({
+      convertEol: true,
+      fontFamily: terminalFontFamily,
+      fontSize: getDefaultStore().get(settingsAtom).fontSize,
+      scrollback: getDefaultStore().get(settingsAtom).scrollback,
+      theme: termTheme(termScheme, mode),
+      allowProposedApi: true,
+      linkHandler: {
+        activate: (event, text) => {
+          if (isLinkActivation(event)) openTerminalLink(text);
+        },
+        allowNonHttpProtocols: false,
+      },
+    });
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.loadAddon(
+      new WebLinksAddon((event, uri) => {
+        if (isLinkActivation(event)) openTerminalLink(uri);
+      }),
+    );
+    termRef.current = term;
+    fitRef.current = fitAddon;
+
+    let recountTimer: ReturnType<typeof setTimeout> | undefined;
+    const writeParsedDisposable = term.onWriteParsed(() => {
+      if (!findOpenRef.current || !findQueryRef.current) return;
+      if (recountTimer) clearTimeout(recountTimer);
+      recountTimer = setTimeout(() => {
+        const matches = scanMatchesRef.current(findQueryRef.current);
+        matchesRef.current = matches;
+        setMatchCount(matches.length);
+        const clamped = matches.length
+          ? Math.min(activeIndexRef.current, matches.length - 1)
+          : 0;
+        setActiveIndex(clamped);
+        renderHighlightsRef.current(clamped);
+      }, 150);
+    });
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.type !== 'keydown') return true;
+
+      if (handleZoomChord(e)) return false;
+      if (handleClipboardChord(term, e)) return false;
+
+      const findCombo = IS_MAC
+        ? e.metaKey && !e.ctrlKey && !e.altKey
+        : e.ctrlKey && e.shiftKey;
+      if (findCombo && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault();
+        const sel = term.getSelection().trim();
+        if (sel && !sel.includes('\n')) setFindQuery(sel);
+        setFindOpen(true);
+        requestAnimationFrame(() => findInputRef.current?.select());
+        return false;
+      }
+      return true;
+    });
+
+    let rafId = 0;
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    const fitNow = () => {
+      if (!containerRef.current || containerRef.current.offsetWidth === 0)
+        return;
+      try {
+        fitAddon.fit();
+        term.refresh(0, term.rows - 1);
+      } catch {
+        /* container not ready */
+      }
+    };
+    const repaint = () => {
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          rafId = 0;
+          fitNow();
+        });
+      }
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(fitNow, 240);
+    };
+
+    if (containerRef.current) {
+      term.open(containerRef.current);
+      fitAddon.fit();
+      term.focus();
+      const helper = containerRef.current.querySelector<HTMLTextAreaElement>(
+        '.xterm-helper-textarea',
+      );
+      if (helper) {
+        helper.spellcheck = false;
+        helper.setAttribute('autocorrect', 'off');
+        helper.setAttribute('autocapitalize', 'off');
+      }
+    }
+
+    const outputUnlisten = listen<TermOutputEvent>('term://output', (event) => {
+      if (event.payload.sessionId !== sessionId) return;
+      term.write(new Uint8Array(event.payload.data));
+    });
+
+    const closedUnlisten = listen<TermClosedEvent>('term://closed', (event) => {
+      if (event.payload.sessionId !== sessionId) return;
+      onClosedRef.current(event.payload.error);
+    });
+
+    const dataDisposable = term.onData((data) => {
+      void sshService.sendInput(
+        sessionId,
+        Array.from(new TextEncoder().encode(data)),
+      );
+    });
+
+    const resizeDisposable = term.onResize(({ cols, rows }) => {
+      void sshService.resize(sessionId, cols, rows);
+    });
+
+    void sshService.resize(sessionId, term.cols, term.rows);
+
+    let wheelTravel = 0;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !(IS_MAC && e.metaKey)) return;
+      e.preventDefault(); // otherwise the webview zooms the whole window
+      e.stopPropagation(); // and xterm scrolls the buffer under the zoom
+      const px =
+        e.deltaMode === 1
+          ? e.deltaY * 16
+          : e.deltaMode === 2
+            ? e.deltaY * 400
+            : e.deltaY;
+      wheelTravel += px;
+      if (Math.abs(wheelTravel) < WHEEL_ZOOM_STEP) return;
+      const direction = wheelTravel > 0 ? -1 : 1; // scrolling down zooms out
+      wheelTravel = 0;
+      getDefaultStore().set(bumpFontSizeAtom, direction);
+    };
+    const paneEl = containerRef.current;
+    paneEl?.addEventListener('wheel', onWheel, {
+      passive: false,
+      capture: true,
+    });
+
+    const canAcceptDrop = (dt: DataTransfer | null): dt is DataTransfer =>
+      !!dt &&
+      Array.from(dt.types).some((t) => t === 'Files' || t === 'text/uri-list');
+    const onDragOver = (e: DragEvent) => {
+      if (!canAcceptDrop(e.dataTransfer)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      paneEl?.classList.add(...DROP_RING);
+    };
+    const onDragLeave = (e: DragEvent) => {
+      if (paneEl?.contains(e.relatedTarget as Node)) return;
+      paneEl?.classList.remove(...DROP_RING);
+    };
+    const onDrop = (e: DragEvent) => {
+      paneEl?.classList.remove(...DROP_RING);
+      if (!canAcceptDrop(e.dataTransfer)) return;
+      e.preventDefault();
+      const paths = droppedPaths(e.dataTransfer);
+      if (paths.length === 0) return;
+      term.paste(paths.map(quoteForShell).join(' '));
+      term.focus();
+    };
+    paneEl?.addEventListener('dragover', onDragOver);
+    paneEl?.addEventListener('dragleave', onDragLeave);
+    paneEl?.addEventListener('drop', onDrop);
+
+    const resizeObserver = new ResizeObserver(() => repaint());
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) repaint();
+      },
+      { threshold: 0.01 },
+    );
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+      intersectionObserver.observe(containerRef.current);
+    }
+    window.addEventListener('resize', repaint);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (settleTimer) clearTimeout(settleTimer);
+      window.removeEventListener('resize', repaint);
+      paneEl?.removeEventListener('wheel', onWheel, { capture: true });
+      paneEl?.removeEventListener('dragover', onDragOver);
+      paneEl?.removeEventListener('dragleave', onDragLeave);
+      paneEl?.removeEventListener('drop', onDrop);
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
+      dataDisposable.dispose();
+      resizeDisposable.dispose();
+      void outputUnlisten.then((unlisten) => unlisten());
+      void closedUnlisten.then((unlisten) => unlisten());
+      if (recountTimer) clearTimeout(recountTimer);
+      writeParsedDisposable.dispose();
+      for (const d of highlightsRef.current) d.dispose();
+      highlightsRef.current = [];
+      term.dispose();
+      termRef.current = null;
+      fitRef.current = null;
+      matchesRef.current = [];
+    };
+  }, [sessionId]);
+
+  useEffect(() => {
+    const term = termRef.current;
+    if (term) term.options.scrollback = scrollback;
+  }, [scrollback]);
+
+  // Live-update the font size from Settings without recreating the terminal.
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    term.options.fontSize = fontSize;
+    fitRef.current?.fit();
+  }, [fontSize]);
+
+  useEffect(() => {
+    const nextScheme = termTheme(termScheme, mode);
+    if (nextScheme.background) {
+      document.documentElement.style.setProperty(
+        '--term-bg',
+        nextScheme.background,
+      );
+    }
+    const term = termRef.current;
+    if (!term) return;
+    term.options.theme = nextScheme;
+    term.refresh(0, term.rows - 1);
+  }, [termScheme, mode]);
+
+  const scanMatches = useCallback(
+    (q: string): { row: number; col: number; length: number }[] => {
+      const term = termRef.current;
+      if (!term || !q) return [];
+      let matcher: RegExp;
+      try {
+        const pattern = useRegex ? q : q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        matcher = new RegExp(pattern, caseSensitive ? 'g' : 'gi');
+      } catch {
+        return []; // incomplete regex while typing
+      }
+      const buf = term.buffer.active;
+      const out: { row: number; col: number; length: number }[] = [];
+      for (let i = 0; i < buf.length; i++) {
+        const line = buf.getLine(i);
+        if (!line) continue;
+        const text = line.translateToString(true);
+        matcher.lastIndex = 0;
+        let m: RegExpExecArray | null;
+        while ((m = matcher.exec(text)) !== null) {
+          out.push({ row: i, col: m.index, length: m[0].length || 1 });
+          if (m[0].length === 0) matcher.lastIndex++; // guard zero-width regex loops
+        }
+      }
+      return out;
+    },
+    [useRegex, caseSensitive],
+  );
+
+  const goToMatch = useCallback((idx: number) => {
+    const term = termRef.current;
+    const matches = matchesRef.current;
+    if (!term || matches.length === 0) return;
+    const n = matches.length;
+    const m = matches[((idx % n) + n) % n];
+    term.select(m.col, m.row, m.length);
+    const vpTop = term.buffer.active.viewportY;
+    if (m.row < vpTop || m.row >= vpTop + term.rows) {
+      term.scrollLines(m.row - vpTop - Math.floor(term.rows / 2));
+    }
+  }, []);
+
+  const clearHighlights = useCallback(() => {
+    for (const d of highlightsRef.current) d.dispose();
+    highlightsRef.current = [];
+  }, []);
+
+  const renderHighlights = useCallback(
+    (activeIdx: number) => {
+      const term = termRef.current;
+      clearHighlights();
+      const matches = matchesRef.current;
+      if (!term || matches.length === 0) return;
+      const accent =
+        getComputedStyle(document.documentElement)
+          .getPropertyValue('--brand')
+          .trim() || '#d9795f';
+      const theme = termTheme(termScheme, mode);
+      const idle = theme.yellow ?? '#6b5a2e';
+      const inkOn = (bg: string) => readableOn(bg, '#0b0d10', '#ffffff');
+      const buf = term.buffer.active;
+      const cursorAbs = buf.baseY + buf.cursorY;
+      const n = matches.length;
+      const active = ((activeIdx % n) + n) % n;
+      const limit = Math.min(n, 1000); // cap decoration count on huge result sets
+      for (let k = 0; k < limit; k++) {
+        const m = matches[k];
+        const marker = term.registerMarker(m.row - cursorAbs);
+        if (!marker) continue;
+        const fill = k === active ? accent : idle;
+        const decoration = term.registerDecoration({
+          marker,
+          x: m.col,
+          width: m.length,
+          backgroundColor: fill,
+          foregroundColor: inkOn(fill),
+          layer: 'top',
+        });
+        highlightsRef.current.push(marker);
+        if (decoration) highlightsRef.current.push(decoration);
+      }
+    },
+    [clearHighlights, termScheme, mode],
+  );
+
+  const findOpenRef = useRef(findOpen);
+  findOpenRef.current = findOpen;
+  const findQueryRef = useRef(findQuery);
+  findQueryRef.current = findQuery;
+  const scanMatchesRef = useRef(scanMatches);
+  scanMatchesRef.current = scanMatches;
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
+  const renderHighlightsRef = useRef(renderHighlights);
+  renderHighlightsRef.current = renderHighlights;
+
+  useEffect(() => {
+    if (!findOpen) return;
+    if (!findQuery) {
+      matchesRef.current = [];
+      clearHighlights();
+      termRef.current?.clearSelection();
+      setMatchCount(0);
+      setActiveIndex(0);
+      return;
+    }
+    const matches = scanMatches(findQuery);
+    matchesRef.current = matches;
+    setMatchCount(matches.length);
+    setActiveIndex(0);
+    renderHighlights(0);
+    if (matches.length) goToMatch(0);
+  }, [
+    findQuery,
+    findOpen,
+    scanMatches,
+    goToMatch,
+    renderHighlights,
+    clearHighlights,
+  ]);
+
+  const findNext = useCallback(() => {
+    const n = matchesRef.current.length;
+    if (!n) return;
+    const next = (activeIndexRef.current + 1) % n;
+    setActiveIndex(next);
+    goToMatch(next);
+    renderHighlights(next);
+  }, [goToMatch, renderHighlights]);
+
+  const findPrev = useCallback(() => {
+    const n = matchesRef.current.length;
+    if (!n) return;
+    const next = (activeIndexRef.current - 1 + n) % n;
+    setActiveIndex(next);
+    goToMatch(next);
+    renderHighlights(next);
+  }, [goToMatch, renderHighlights]);
+
+  const closeFind = useCallback(() => {
+    setFindOpen(false);
+    clearHighlights();
+    termRef.current?.clearSelection();
+    termRef.current?.focus();
+  }, [clearHighlights]);
+
+  return (
+    <>
+      {findOpen && (
+        <div className="border-foreground/10 absolute top-2.5 right-3.5 z-30 flex items-center gap-1.5 rounded-xl border bg-(--bg-card) py-1.5 pr-1.75 pl-2.5 shadow-[0_10px_34px_rgb(0_0_0/0.5)]">
+          <Search
+            size={14}
+            strokeWidth={2.2}
+            className="shrink-0 text-(--text-faint)"
+          />
+          <input
+            ref={findInputRef}
+            value={findQuery}
+            onChange={(e) => setFindQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey) findPrev();
+                else findNext();
+              } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeFind();
+              }
+            }}
+            placeholder="Find in terminal"
+            type="text"
+            name="terctl-find"
+            spellCheck={false}
+            autoCorrect="off"
+            autoCapitalize="off"
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            className="w-39 bg-transparent text-xs text-(--text) no-underline outline-none [text-decoration:none] placeholder:text-[var(--text-faint)]"
+          />
+          <span
+            className={`min-w-11.5 shrink-0 text-right text-2xs tabular-nums ${
+              findQuery && matchCount === 0
+                ? 'text-(--red)'
+                : 'text-(--text-faint)'
+            }`}
+          >
+            {findQuery
+              ? matchCount === 0
+                ? '0/0'
+                : `${activeIndex + 1}/${matchCount}`
+              : ''}
+          </span>
+          <span className="bg-foreground/10 h-4.5 w-px shrink-0" />
+          <button
+            type="button"
+            title="Match case"
+            aria-pressed={caseSensitive}
+            onClick={() => setCaseSensitive((v) => !v)}
+            className={findToggle(caseSensitive)}
+          >
+            <CaseSensitive size={16} strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            title="Use regular expression"
+            aria-pressed={useRegex}
+            onClick={() => setUseRegex((v) => !v)}
+            className={findToggle(useRegex)}
+          >
+            <Regex size={14} strokeWidth={2} />
+          </button>
+          <span className="bg-foreground/10 h-4.5 w-px shrink-0" />
+          <button
+            type="button"
+            title="Previous match  (⇧⏎)"
+            onClick={findPrev}
+            className={FIND_ICON_BTN}
+          >
+            <ChevronUp size={16} strokeWidth={2.4} />
+          </button>
+          <button
+            type="button"
+            title="Next match  (⏎)"
+            onClick={findNext}
+            className={FIND_ICON_BTN}
+          >
+            <ChevronDown size={16} strokeWidth={2.4} />
+          </button>
+          <button
+            type="button"
+            title="Close  (Esc)"
+            onClick={closeFind}
+            className={FIND_ICON_BTN}
+          >
+            <X size={15} strokeWidth={2.4} />
+          </button>
+        </div>
+      )}
+      <div
+        ref={containerRef}
+        className="absolute top-1.5 right-1 bottom-1 left-2"
+      />
+    </>
+  );
+}
