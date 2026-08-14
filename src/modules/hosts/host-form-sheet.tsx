@@ -22,7 +22,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { TagInput } from '@/components/ui/tag-input';
-import { allTagsAtom, groupsAtom, refreshAllAtom } from '../../store/app';
+import {
+  allTagsAtom,
+  groupsAtom,
+  hostsAtom,
+  refreshAllAtom,
+} from '../../store/app';
 import { credentialsService } from '../../services/credentials.service';
 import { hostsService } from '../../services/hosts.service';
 import type { AuthKindType, HostType } from '@/types/host';
@@ -31,6 +36,7 @@ import TermSchemeSelect from './term-scheme-select';
 
 const UNGROUPED = '__ungrouped__';
 const NEW_GROUP = '__new_group__';
+const DIRECT = '__direct__';
 
 interface HostFormSheetProps {
   open: boolean;
@@ -70,6 +76,7 @@ interface HostFormBodyProps {
 function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
   const groups = useAtomValue(groupsAtom);
   const allTags = useAtomValue(allTagsAtom);
+  const hosts = useAtomValue(hostsAtom);
   const refreshAll = useSetAtom(refreshAllAtom);
 
   const [label, setLabel] = useState(host?.label ?? '');
@@ -89,9 +96,14 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
   const [termScheme, setTermScheme] = useState<string | null>(
     host?.termScheme ?? null,
   );
+  const [jumpHostId, setJumpHostId] = useState<string | null>(
+    host?.jumpHostId ?? null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+
+  const jumpCandidates = hosts.filter((h) => h.id !== host?.id);
 
   const handleCreateGroup = async (name: string) => {
     const group = await hostsService.addGroup(name);
@@ -115,6 +127,7 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
         tags,
         accent: null,
         termScheme,
+        jumpHostId,
       };
 
       let savedId: string;
@@ -283,6 +296,40 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
             suggestions={allTags}
             placeholder="prod, db…"
           />
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="host-jump">Connect via</Label>
+            <Select
+              value={jumpHostId ?? DIRECT}
+              onValueChange={(value: string | null) =>
+                setJumpHostId(!value || value === DIRECT ? null : value)
+              }
+              items={[
+                { value: DIRECT, label: 'Direct connection' },
+                ...jumpCandidates.map((h) => ({ value: h.id, label: h.label })),
+              ]}
+            >
+              <SelectTrigger
+                id="host-jump"
+                className="w-full data-[size=default]:h-9"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={DIRECT}>Direct connection</SelectItem>
+                {jumpCandidates.length > 0 && <SelectSeparator />}
+                {jumpCandidates.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>
+                    {h.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground text-xs">
+              Reach this host through a bastion, the way <code>ssh -J</code>
+              {' '}does. Each hop authenticates on its own.
+            </p>
+          </div>
 
           <TermSchemeSelect value={termScheme} onChange={setTermScheme} />
 

@@ -1,6 +1,5 @@
-use crate::ssh::{connect_host, ClientHandler};
+use crate::ssh::{connect_host, SshConnection};
 use crate::store::Store;
-use russh::client::Handle;
 use russh_sftp::client::error::Error as SftpError;
 use russh_sftp::client::rawsession::Limits;
 use russh_sftp::client::{Config as SftpConfig, RawSftpSession};
@@ -77,7 +76,7 @@ impl From<SftpError> for OpError {
 }
 
 struct SftpConn {
-    _handle: Handle<ClientHandler>,
+    _handle: SshConnection,
     sftp: Arc<RawSftpSession>,
     max_read: usize,
     max_write: usize,
@@ -232,7 +231,6 @@ impl Progress {
             last_done: 0,
             rate: 0.0,
         };
-        // Announce the real size straight away so the bar is never a mystery.
         p.send();
         p
     }

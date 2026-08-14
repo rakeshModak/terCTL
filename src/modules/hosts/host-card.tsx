@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  CornerDownRight,
   KeyRound,
   Lock,
   MoreHorizontal,
@@ -27,6 +28,7 @@ interface HostCardProps {
   onConnect: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  jumpLabel?: string | null;
 }
 
 export default function HostCard({
@@ -35,6 +37,7 @@ export default function HostCard({
   onConnect,
   onEdit,
   onDelete,
+  jumpLabel,
 }: HostCardProps) {
   const AuthIcon = host.authKind === 'key' ? KeyRound : Lock;
   const initial = (host.label.trim()[0] ?? '?').toUpperCase();
@@ -117,6 +120,12 @@ export default function HostCard({
         <p className="text-muted-foreground mt-0.5 truncate font-mono text-2xs">
           {host.username}@{host.hostname}:{host.port}
         </p>
+        {jumpLabel && (
+          <p className="text-muted-foreground mt-0.5 flex items-center gap-1 truncate font-mono text-2xs">
+            <CornerDownRight className="size-2.5 shrink-0" />
+            <span className="truncate">via {jumpLabel}</span>
+          </p>
+        )}
       </div>
 
       {host.tags.length > 0 && (

@@ -146,6 +146,8 @@ struct BackupHost {
     term_scheme: Option<String>,
     host_key_fingerprint: Option<String>,
     #[serde(default)]
+    jump_host_id: Option<String>,
+    #[serde(default)]
     password: Option<String>,
     #[serde(default)]
     passphrase: Option<String>,
@@ -462,6 +464,7 @@ fn export_blocking(
             accent: host.accent,
             term_scheme: host.term_scheme,
             host_key_fingerprint: record.host_key_fingerprint,
+            jump_host_id: host.jump_host_id,
             password,
             passphrase: passphrase_secret,
             private_key,
@@ -868,6 +871,7 @@ fn plan_import(
                 accent: host.accent.clone(),
                 term_scheme: host.term_scheme.clone(),
                 os: None,
+                jump_host_id: host.jump_host_id.clone(),
             },
             host.host_key_fingerprint.clone(),
         ));
@@ -925,6 +929,7 @@ mod tests {
                 password: Some("hunter2".into()),
                 passphrase: None,
                 private_key: None,
+                jump_host_id: None,
             }],
             groups: vec![],
         }
@@ -1067,6 +1072,7 @@ mod tests {
                 accent: None,
                 term_scheme: None,
                 os: None,
+                jump_host_id: None,
             },
             host_key_fingerprint: Some("SHA256:different".into()),
         }];

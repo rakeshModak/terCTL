@@ -1,6 +1,5 @@
-use crate::ssh::{connect_host, ClientHandler};
+use crate::ssh::{connect_host, SshConnection};
 use crate::store::Store;
-use russh::client::Handle;
 use russh::ChannelMsg;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -37,11 +36,11 @@ pub struct Metrics {
 /// cheap exec channel rather than re-authenticating.
 #[derive(Default)]
 pub struct MetricsManager {
-    conns: AsyncMutex<HashMap<String, Arc<Handle<ClientHandler>>>>,
+    conns: AsyncMutex<HashMap<String, Arc<SshConnection>>>,
 }
 
 impl MetricsManager {
-    async fn get(&self, store: &Store, host_id: &str) -> Result<Arc<Handle<ClientHandler>>, String> {
+    async fn get(&self, store: &Store, host_id: &str) -> Result<Arc<SshConnection>, String> {
         if let Some(h) = self.conns.lock().await.get(host_id) {
             return Ok(h.clone());
         }
