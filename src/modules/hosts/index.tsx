@@ -66,6 +66,11 @@ export default function HostsPage() {
 
   const view = useHostsBrowser({ hosts, groups, path, query, tagFilter });
 
+  const hostLabelById = useMemo(
+    () => new Map(hosts.map((h) => [h.id, h.label])),
+    [hosts],
+  );
+
   const sessionByHostId = useMemo(() => {
     const map = new Map<string, string>();
     for (const s of sessions) if (!map.has(s.hostId)) map.set(s.hostId, s.id);
@@ -204,6 +209,11 @@ export default function HostsPage() {
                   onConnect={() => openHost(host)}
                   onEdit={() => openEditHost(host)}
                   onDelete={() => askDelete({ kind: 'host', host })}
+                  jumpLabel={
+                    host.jumpHostId
+                      ? (hostLabelById.get(host.jumpHostId) ?? 'unknown host')
+                      : null
+                  }
                 />
               ))}
             </div>

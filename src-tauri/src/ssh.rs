@@ -90,50 +90,196 @@ async fn authenticate(session: &mut Handle<ClientHandler>, host: &Host) -> Resul
     Ok(())
 }
 
-pub(crate) async fn connect_host(
-    store: &Store,
-    host_id: &str,
-) -> Result<Handle<ClientHandler>, String> {
-    let host = store
-        .list_hosts()
-        .map_err(|e| e.to_string())?
-        .into_iter()
-        .find(|h| h.id == host_id)
-        .ok_or_else(|| "host not found".to_string())?;
+/// How many bastions deep a chain may go before we call it a mistake. OpenSSH
+/// imposes no limit, but each hop is a live session and a misconfigured chain
+/// is far more likely than a genuinely deep one.
+const MAX_JUMPS: usize = 8;
 
-    let expected_fingerprint = store.get_known_host_key(host_id).map_err(|e| e.to_string())?;
-    let observed_fingerprint = Arc::new(StdMutex::new(None));
+/// A connected session, plus the bastion sessions it rides on.
+///
+/// The jump sessions are never used directly — they are held only so they
+/// outlive the session tunnelled through them. Dropping a `Handle` tears its
+/// session down, which would collapse the `direct-tcpip` channel underneath
+/// everything above it, so the whole chain has to stay owned together.
+///
+/// Derefs to the innermost session, so callers use it exactly as they used the
+/// bare `Handle` before.
+pub(crate) struct SshConnection {
+    session: Handle<ClientHandler>,
+    _jumps: Vec<Handle<ClientHandler>>,
+}
 
-    let handler = ClientHandler {
-        expected_fingerprint: expected_fingerprint.clone(),
-        observed_fingerprint: observed_fingerprint.clone(),
-    };
+impl std::ops::Deref for SshConnection {
+    type Target = Handle<ClientHandler>;
 
-    let config = Arc::new(client::Config {
+    fn deref(&self) -> &Self::Target {
+        &self.session
+    }
+}
+
+pub(crate) async fn connect_host(store: &Store, host_id: &str) -> Result<SshConnection, String> {
+    let hosts = store.list_hosts().map_err(|e| e.to_string())?;
+
+    // Walk the jump chain outward from the target so the bastions can then be
+    // dialled in order. `seen` catches a host that routes through itself,
+    // directly or round a longer loop — without it that recurses forever.
+    let mut chain: Vec<Host> = Vec::new();
+    let mut seen: Vec<String> = Vec::new();
+    let mut cursor = host_id.to_string();
+    loop {
+        if seen.contains(&cursor) {
+            return Err(format!(
+                "jump chain loops back to '{}' — a host cannot be reached through itself",
+                hosts
+                    .iter()
+                    .find(|h| h.id == cursor)
+                    .map(|h| h.label.as_str())
+                    .unwrap_or(&cursor)
+            ));
+        }
+        seen.push(cursor.clone());
+
+        let host = hosts
+            .iter()
+            .find(|h| h.id == cursor)
+            .cloned()
+            .ok_or_else(|| {
+                if chain.is_empty() {
+                    "host not found".to_string()
+                } else {
+                    "jump host not found — it may have been deleted".to_string()
+                }
+            })?;
+
+        let next = host.jump_host_id.clone();
+        chain.push(host);
+        match next {
+            Some(id) if !id.is_empty() => cursor = id,
+            _ => break,
+        }
+        if chain.len() > MAX_JUMPS {
+            return Err(format!("jump chain is deeper than {MAX_JUMPS} hosts"));
+        }
+    }
+
+    // `chain` runs target-first; dial from the outermost bastion inward.
+    chain.reverse();
+    let mut jumps: Vec<Handle<ClientHandler>> = Vec::new();
+    let mut session: Option<Handle<ClientHandler>> = None;
+
+    for host in chain {
+        let next = match session.take() {
+            // First hop: a plain TCP connection to the bastion.
+            None => open_direct(store, &host).await?,
+            // Every hop after opens a channel through the previous session and
+            // speaks SSH over it, which is what `ssh -J` does.
+            Some(previous) => {
+                let tunnel = previous
+                    .channel_open_direct_tcpip(
+                        host.hostname.clone(),
+                        host.port as u32,
+                        "127.0.0.1",
+                        0,
+                    )
+                    .await
+                    .map_err(|e| {
+                        format!("could not open a tunnel to {}: {e}", host.label)
+                    })?;
+                jumps.push(previous);
+                open_over(store, &host, tunnel.into_stream()).await?
+            }
+        };
+        session = Some(next);
+    }
+
+    Ok(SshConnection {
+        session: session.ok_or_else(|| "host not found".to_string())?,
+        _jumps: jumps,
+    })
+}
+
+fn client_config() -> Arc<client::Config> {
+    Arc::new(client::Config {
         keepalive_interval: Some(std::time::Duration::from_secs(20)),
         keepalive_max: 3,
         window_size: 8 * 1024 * 1024,
         ..Default::default()
-    });
-    let mut session = client::connect(config, (host.hostname.as_str(), host.port), handler)
-        .await
-        .map_err(|e| match e {
-            russh::Error::UnknownKey => {
-                "host key mismatch — the server's identity may have changed. Refusing to connect."
-                    .to_string()
-            }
-            other => other.to_string(),
-        })?;
+    })
+}
 
-    if expected_fingerprint.is_none() {
-        if let Some(fp) = observed_fingerprint.lock().unwrap().clone() {
+/// Host key state for one hop. Every hop is verified against its own pinned
+/// fingerprint — tunnelling through a bastion does not make the next server's
+/// identity anyone else's problem.
+fn handler_for(
+    store: &Store,
+    host: &Host,
+) -> Result<(ClientHandler, Option<String>, Arc<StdMutex<Option<String>>>), String> {
+    let expected = store.get_known_host_key(&host.id).map_err(|e| e.to_string())?;
+    let observed = Arc::new(StdMutex::new(None));
+    Ok((
+        ClientHandler {
+            expected_fingerprint: expected.clone(),
+            observed_fingerprint: observed.clone(),
+        },
+        expected,
+        observed,
+    ))
+}
+
+fn pin_on_first_sight(
+    store: &Store,
+    host: &Host,
+    expected: Option<String>,
+    observed: &Arc<StdMutex<Option<String>>>,
+) -> Result<(), String> {
+    if expected.is_none() {
+        if let Some(fp) = observed.lock().unwrap().clone() {
             store
-                .set_known_host_key(host_id, &fp)
+                .set_known_host_key(&host.id, &fp)
                 .map_err(|e| e.to_string())?;
         }
     }
+    Ok(())
+}
 
-    authenticate(&mut session, &host).await?;
+fn connect_err(host: &Host, e: russh::Error) -> String {
+    match e {
+        russh::Error::UnknownKey => format!(
+            "host key mismatch for {} — the server's identity may have changed. Refusing to connect.",
+            host.label
+        ),
+        other => other.to_string(),
+    }
+}
+
+async fn open_direct(store: &Store, host: &Host) -> Result<Handle<ClientHandler>, String> {
+    let (handler, expected, observed) = handler_for(store, host)?;
+    let mut session = client::connect(
+        client_config(),
+        (host.hostname.as_str(), host.port),
+        handler,
+    )
+    .await
+    .map_err(|e| connect_err(host, e))?;
+
+    pin_on_first_sight(store, host, expected, &observed)?;
+    authenticate(&mut session, host).await?;
+    Ok(session)
+}
+
+/// Same as `open_direct`, but speaking SSH over an already-open stream — the
+/// channel a bastion gave us — instead of dialling TCP ourselves.
+async fn open_over<S>(store: &Store, host: &Host, stream: S) -> Result<Handle<ClientHandler>, String>
+where
+    S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
+{
+    let (handler, expected, observed) = handler_for(store, host)?;
+    let mut session = client::connect_stream(client_config(), stream, handler)
+        .await
+        .map_err(|e| connect_err(host, e))?;
+
+    pin_on_first_sight(store, host, expected, &observed)?;
+    authenticate(&mut session, host).await?;
     Ok(session)
 }
 
@@ -181,7 +327,7 @@ pub async fn ssh_connect(
     manager: State<'_, SessionManager>,
     host_id: String,
 ) -> Result<String, String> {
-    let mut session = connect_host(&store, &host_id).await?;
+    let session = connect_host(&store, &host_id).await?;
     record_os_on_first_connect(&app, &store, &host_id, &session).await;
 
     let mut channel = session
@@ -258,6 +404,127 @@ pub async fn ssh_connect(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::NewHost;
+    use rusqlite::Connection;
+    use std::sync::Mutex;
+
+    fn test_store() -> Store {
+        let conn = Connection::open_in_memory().unwrap();
+        Store::init_schema(&conn).unwrap();
+        Store(Mutex::new(conn))
+    }
+
+    fn host_named(store: &Store, label: &str) -> String {
+        store
+            .add_host(NewHost {
+                label: label.into(),
+                hostname: format!("{label}.internal"),
+                port: 22,
+                username: "deploy".into(),
+                auth_kind: AuthKind::Key,
+                key_ref: Some("k".into()),
+                group_id: None,
+                tags: vec![],
+                accent: None,
+                term_scheme: None,
+                jump_host_id: None,
+            })
+            .unwrap()
+            .id
+    }
+
+    /// `unwrap_err` would need `SshConnection: Debug`, and `Handle` is not —
+    /// deriving it just for tests is not worth it.
+    async fn expect_rejected(store: &Store, host_id: &str) -> String {
+        match connect_host(store, host_id).await {
+            Ok(_) => panic!("expected the chain to be rejected before dialling"),
+            Err(e) => e,
+        }
+    }
+
+    fn route_via(store: &Store, host_id: &str, jump_id: Option<&str>) {
+        let mut host = store
+            .list_hosts()
+            .unwrap()
+            .into_iter()
+            .find(|h| h.id == host_id)
+            .unwrap();
+        host.jump_host_id = jump_id.map(str::to_string);
+        store.update_host(host).unwrap();
+    }
+
+    /// A host routed through itself must be rejected while the chain is being
+    /// walked. Getting this wrong loops forever rather than failing, so it
+    /// never reaches the network — which is exactly why it is testable here.
+    #[tokio::test]
+    async fn rejects_a_host_that_jumps_through_itself() {
+        let store = test_store();
+        let a = host_named(&store, "a");
+        route_via(&store, &a, Some(&a));
+
+        let err = expect_rejected(&store, &a).await;
+        assert!(err.contains("loops back"), "unexpected error: {err}");
+    }
+
+    #[tokio::test]
+    async fn rejects_a_longer_jump_loop() {
+        let store = test_store();
+        let a = host_named(&store, "a");
+        let b = host_named(&store, "b");
+        let c = host_named(&store, "c");
+        // a → b → c → a
+        route_via(&store, &a, Some(&b));
+        route_via(&store, &b, Some(&c));
+        route_via(&store, &c, Some(&a));
+
+        let err = expect_rejected(&store, &a).await;
+        assert!(err.contains("loops back"), "unexpected error: {err}");
+    }
+
+    #[tokio::test]
+    async fn rejects_a_chain_deeper_than_the_limit() {
+        let store = test_store();
+        let ids: Vec<String> = (0..MAX_JUMPS + 3)
+            .map(|i| host_named(&store, &format!("h{i}")))
+            .collect();
+        // Each host routes through the next, ending in a direct connection.
+        for pair in ids.windows(2) {
+            route_via(&store, &pair[0], Some(&pair[1]));
+        }
+
+        let err = expect_rejected(&store, &ids[0]).await;
+        assert!(err.contains("deeper than"), "unexpected error: {err}");
+    }
+
+    /// A bastion that was deleted leaves the reference dangling. Deleting
+    /// through the store detaches it, but an import can still carry one.
+    #[tokio::test]
+    async fn reports_a_missing_jump_host() {
+        let store = test_store();
+        let a = host_named(&store, "a");
+        route_via(&store, &a, Some("does-not-exist"));
+
+        let err = expect_rejected(&store, &a).await;
+        assert!(err.contains("jump host not found"), "unexpected error: {err}");
+    }
+
+    #[tokio::test]
+    async fn deleting_a_bastion_detaches_the_hosts_behind_it() {
+        let store = test_store();
+        let bastion = host_named(&store, "bastion");
+        let target = host_named(&store, "target");
+        route_via(&store, &target, Some(&bastion));
+
+        store.delete_host(&bastion).unwrap();
+
+        let host = store
+            .list_hosts()
+            .unwrap()
+            .into_iter()
+            .find(|h| h.id == target)
+            .unwrap();
+        assert_eq!(host.jump_host_id, None);
+    }
 
     /// Opt-in integration test against a real SSH server — there is no way
     /// to exercise PTY streaming without one. Run explicitly with:
@@ -283,6 +550,7 @@ mod tests {
             accent: None,
             term_scheme: None,
             os: None,
+            jump_host_id: None,
         };
 
         let handler = ClientHandler {

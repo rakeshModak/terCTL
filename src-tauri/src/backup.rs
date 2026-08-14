@@ -145,6 +145,9 @@ struct BackupHost {
     accent: Option<String>,
     term_scheme: Option<String>,
     host_key_fingerprint: Option<String>,
+    /// `default` so backups written before jump hosts existed still import.
+    #[serde(default)]
+    jump_host_id: Option<String>,
     #[serde(default)]
     password: Option<String>,
     #[serde(default)]
@@ -462,6 +465,7 @@ fn export_blocking(
             accent: host.accent,
             term_scheme: host.term_scheme,
             host_key_fingerprint: record.host_key_fingerprint,
+            jump_host_id: host.jump_host_id,
             password,
             passphrase: passphrase_secret,
             private_key,
@@ -868,6 +872,10 @@ fn plan_import(
                 accent: host.accent.clone(),
                 term_scheme: host.term_scheme.clone(),
                 os: None,
+                // Host ids survive an import, so this still points at the
+                // right bastion — unless that host collided and was skipped,
+                // which `connect_host` reports rather than crashing.
+                jump_host_id: host.jump_host_id.clone(),
             },
             host.host_key_fingerprint.clone(),
         ));
@@ -925,6 +933,7 @@ mod tests {
                 password: Some("hunter2".into()),
                 passphrase: None,
                 private_key: None,
+                jump_host_id: None,
             }],
             groups: vec![],
         }
@@ -1067,6 +1076,7 @@ mod tests {
                 accent: None,
                 term_scheme: None,
                 os: None,
+                jump_host_id: None,
             },
             host_key_fingerprint: Some("SHA256:different".into()),
         }];

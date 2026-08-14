@@ -45,6 +45,10 @@ pub struct Host {
     pub term_scheme: Option<String>,
     #[serde(default)]
     pub os: Option<String>,
+    /// Reach this host through another saved host, the way OpenSSH's
+    /// `ProxyJump` does. `None` connects directly.
+    #[serde(default)]
+    pub jump_host_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -60,6 +64,8 @@ pub struct NewHost {
     pub tags: Vec<String>,
     pub accent: Option<String>,
     pub term_scheme: Option<String>,
+    #[serde(default)]
+    pub jump_host_id: Option<String>,
 }
 
 /// A folder for organizing hosts. Groups can nest via `parent_id` (a root

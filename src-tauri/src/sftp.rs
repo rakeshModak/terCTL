@@ -1,6 +1,5 @@
-use crate::ssh::{connect_host, ClientHandler};
+use crate::ssh::{connect_host, SshConnection};
 use crate::store::Store;
-use russh::client::Handle;
 use russh_sftp::client::error::Error as SftpError;
 use russh_sftp::client::rawsession::Limits;
 use russh_sftp::client::{Config as SftpConfig, RawSftpSession};
@@ -77,7 +76,9 @@ impl From<SftpError> for OpError {
 }
 
 struct SftpConn {
-    _handle: Handle<ClientHandler>,
+    /// Holds the session — and any bastions it tunnels through — open for as
+    /// long as this connection lives.
+    _handle: SshConnection,
     sftp: Arc<RawSftpSession>,
     max_read: usize,
     max_write: usize,
