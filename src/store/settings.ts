@@ -6,6 +6,8 @@ import { THEME_MODES, type ThemeMode } from '../lib/theme';
 
 export interface Settings {
   fontSize: number;
+  /** Rows of terminal history retained above the viewport. */
+  scrollback: number;
   accent: string;
   theme: string;
   termScheme: string;
@@ -16,6 +18,10 @@ const STORAGE_KEY = 'terctl-settings';
 
 const DEFAULTS: Settings = {
   fontSize: 13,
+  // xterm's own default is 1000 rows, which drops history within a single
+  // build log. 10k matches what GNOME Terminal ships and costs roughly 10 MB
+  // per pane at worst — see SCROLLBACK_OPTIONS for the trade-off at the top end.
+  scrollback: 10_000,
   accent: DEFAULT_ACCENT,
   theme: DEFAULT_THEME,
   termScheme: 'Mono',
@@ -33,6 +39,10 @@ export function normalizeSettings(raw: unknown): Settings {
   const v = (src && typeof src === 'object' ? src : {}) as Partial<Settings>;
   return {
     fontSize: typeof v.fontSize === 'number' ? v.fontSize : DEFAULTS.fontSize,
+    scrollback:
+      typeof v.scrollback === 'number' && v.scrollback > 0
+        ? v.scrollback
+        : DEFAULTS.scrollback,
     accent:
       typeof v.accent === 'string' && ACCENTS[v.accent]
         ? v.accent
@@ -92,6 +102,15 @@ export const bumpFontSizeAtom = atom(null, (get, set, delta: number) => {
 
 export const resetFontSizeAtom = atom(null, (get, set) => {
   set(settingsAtom, { ...get(settingsAtom), fontSize: FONT_SIZE_DEFAULT });
+});
+
+export const SCROLLBACK_OPTIONS = [1_000, 10_000, 50_000, 100_000] as const;
+
+export const setScrollbackAtom = atom(null, (get, set, rows: number) => {
+  set(settingsAtom, {
+    ...get(settingsAtom),
+    scrollback: clamp(Math.round(rows), 500, 500_000),
+  });
 });
 
 export const setAccentAtom = atom(null, (get, set, accent: string) => {

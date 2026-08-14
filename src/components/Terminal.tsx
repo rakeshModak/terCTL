@@ -163,6 +163,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const settings = useAtomValue(settingsAtom);
   const fontSize = settings.fontSize;
+  const scrollback = settings.scrollback;
   const globalScheme = settings.termScheme;
   const termScheme = hasTermScheme(scheme) ? scheme : globalScheme;
   const mode = useResolvedMode();
@@ -172,6 +173,7 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       convertEol: true,
       fontFamily: terminalFontFamily,
       fontSize: getDefaultStore().get(settingsAtom).fontSize,
+      scrollback: getDefaultStore().get(settingsAtom).scrollback,
       theme: termTheme(termScheme, mode),
       allowProposedApi: true,
       linkHandler: {
@@ -372,6 +374,11 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       matchesRef.current = [];
     };
   }, [sessionId]);
+
+  useEffect(() => {
+    const term = termRef.current;
+    if (term) term.options.scrollback = scrollback;
+  }, [scrollback]);
 
   // Live-update the font size from Settings without recreating the terminal.
   useEffect(() => {
