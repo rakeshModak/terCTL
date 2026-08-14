@@ -78,11 +78,19 @@ jobs:
           releaseBody: 'Download the installer for your OS below. AppImage (Linux) runs directly — chmod +x and launch.'
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} --verbose
 
-  # Publish only after ALL three OS builds have uploaded their installers +
-  # signatures + latest.json to the draft — so the release never goes public
-  # half-uploaded, and a failed build never publishes.
+
+      - name: Upload WiX sources on failure
+        if: failure() && matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wix-debug
+          path: src-tauri/target/release/wix/**
+          if-no-files-found: warn
+          retention-days: 7
+
+
   publish:
     needs: release
     runs-on: ubuntu-latest
