@@ -26,8 +26,6 @@ impl AuthKind {
     }
 }
 
-/// A saved server connection. Holds no secrets — passwords, passphrases, and
-/// private keys live in the OS keychain (see `vault.rs`), keyed by `id`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Host {
@@ -40,11 +38,12 @@ pub struct Host {
     pub key_ref: Option<String>,
     pub group_id: Option<String>,
     pub tags: Vec<String>,
-    /// Optional per-host appearance overrides. `None` = use the global setting.
     pub accent: Option<String>,
     pub term_scheme: Option<String>,
     #[serde(default)]
     pub os: Option<String>,
+    #[serde(default)]
+    pub jump_host_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -60,12 +59,10 @@ pub struct NewHost {
     pub tags: Vec<String>,
     pub accent: Option<String>,
     pub term_scheme: Option<String>,
+    #[serde(default)]
+    pub jump_host_id: Option<String>,
 }
 
-/// A folder for organizing hosts. Groups can nest via `parent_id` (a root
-/// group has `parent_id = None`). A host belongs to at most one group;
-/// deleting a group ungroups its hosts and reparents its subgroups rather
-/// than deleting them.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Group {

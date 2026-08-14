@@ -13,6 +13,7 @@ export interface HostType {
   accent: string | null;
   termScheme: string | null;
   os: string | null;
+  jumpHostId: string | null;
 }
 
 export interface NewHostType {
@@ -26,6 +27,7 @@ export interface NewHostType {
   tags: string[];
   accent: string | null;
   termScheme: string | null;
+  jumpHostId: string | null;
 }
 
 export interface GroupType {

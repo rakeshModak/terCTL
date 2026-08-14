@@ -19,7 +19,7 @@ impl Store {
         Ok(Store(Mutex::new(conn)))
     }
 
-    fn init_schema(conn: &Connection) -> rusqlite::Result<()> {
+    pub(crate) fn init_schema(conn: &Connection) -> rusqlite::Result<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS hosts (
                 id TEXT PRIMARY KEY,
@@ -45,6 +45,10 @@ impl Store {
         Self::add_column_if_missing(conn, "hosts", "accent", "TEXT")?;
         Self::add_column_if_missing(conn, "hosts", "term_scheme", "TEXT")?;
         Self::add_column_if_missing(conn, "hosts", "os", "TEXT")?;
+        // Bastion to reach this host through, as another host's id. No foreign
+        // key: `delete_host` clears dangling references instead, matching how
+        // group deletion already detaches its members.
+        Self::add_column_if_missing(conn, "hosts", "jump_host_id", "TEXT")?;
         Self::add_column_if_missing(conn, "groups", "parent_id", "TEXT")?;
         Ok(())
     }
@@ -101,7 +105,7 @@ impl Store {
     pub fn list_hosts(&self) -> rusqlite::Result<Vec<Host>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, os
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, os, jump_host_id
              FROM hosts ORDER BY label",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -118,6 +122,7 @@ impl Store {
                 accent: row.get(9)?,
                 term_scheme: row.get(10)?,
                 os: row.get(11)?,
+                jump_host_id: row.get(12)?,
             })
         })?;
         rows.collect()
@@ -126,7 +131,7 @@ impl Store {
     pub fn list_host_records(&self) -> rusqlite::Result<Vec<HostRecord>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id
              FROM hosts ORDER BY label",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -144,6 +149,7 @@ impl Store {
                     accent: row.get(9)?,
                     term_scheme: row.get(10)?,
                     os: row.get(12)?,
+                    jump_host_id: row.get(13)?,
                 },
                 host_key_fingerprint: row.get(11)?,
             })
@@ -170,8 +176,8 @@ impl Store {
         }
         for (host, fingerprint) in hosts {
             tx.execute(
-                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
                 params![
                     host.id,
                     host.label,
@@ -186,6 +192,7 @@ impl Store {
                     host.term_scheme,
                     fingerprint,
                     host.os,
+                    host.jump_host_id,
                 ],
             )?;
         }
@@ -206,8 +213,8 @@ impl Store {
         let id = Uuid::new_v4().to_string();
         let conn = self.0.lock().unwrap();
         conn.execute(
-            "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, jump_host_id)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![
                 id,
                 new_host.label,
@@ -220,6 +227,7 @@ impl Store {
                 Self::encode_tags(&new_host.tags),
                 new_host.accent,
                 new_host.term_scheme,
+                new_host.jump_host_id,
             ],
         )?;
         Ok(Host {
@@ -236,6 +244,7 @@ impl Store {
             term_scheme: new_host.term_scheme,
             // Unknown until the host is connected to for the first time.
             os: None,
+            jump_host_id: new_host.jump_host_id,
         })
     }
 
@@ -244,7 +253,8 @@ impl Store {
         conn.execute(
             "UPDATE hosts
              SET label = ?2, hostname = ?3, port = ?4, username = ?5, auth_kind = ?6,
-                 key_ref = ?7, group_id = ?8, tags = ?9, accent = ?10, term_scheme = ?11
+                 key_ref = ?7, group_id = ?8, tags = ?9, accent = ?10, term_scheme = ?11,
+                 jump_host_id = ?12
              WHERE id = ?1",
             params![
                 host.id,
@@ -258,6 +268,7 @@ impl Store {
                 Self::encode_tags(&host.tags),
                 host.accent,
                 host.term_scheme,
+                host.jump_host_id,
             ],
         )?;
         Ok(())
@@ -283,6 +294,12 @@ impl Store {
 
     pub fn delete_host(&self, id: &str) -> rusqlite::Result<()> {
         let conn = self.0.lock().unwrap();
+        // Anything routed through this bastion falls back to a direct connect
+        // rather than pointing at a host that no longer exists.
+        conn.execute(
+            "UPDATE hosts SET jump_host_id = NULL WHERE jump_host_id = ?1",
+            params![id],
+        )?;
         conn.execute("DELETE FROM hosts WHERE id = ?1", params![id])?;
         Ok(())
     }
@@ -390,6 +407,7 @@ mod tests {
             tags: vec![],
             accent: None,
             term_scheme: None,
+            jump_host_id: None,
         }
     }
 
