@@ -11,6 +11,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { openLocalTerminalAtom, setNewTabPickerAtom } from '../../store/app';
+import { ThemeArt } from '@/components/chrome/ThemeArt';
 
 /** Shown over the terminal area when no tabs are open. */
 export default function EmptyWorkspace() {
@@ -19,7 +20,8 @@ export default function EmptyWorkspace() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-background absolute inset-0 z-[4] flex items-center justify-center">
+    <div className="bg-background absolute inset-0 z-[4] isolate flex items-center justify-center">
+      <ThemeArt slot="workspace" />
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">

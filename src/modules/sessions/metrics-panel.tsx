@@ -260,6 +260,13 @@ export default function MetricsPanel({
       {m.procs.length > 0 && (
         <Section index={5} name="proc">
           <div className="flex flex-col gap-1">
+            {/* The two columns are otherwise identical — same width, same
+                colour — so which is CPU and which is memory is a guess. */}
+            <div className="text-muted-foreground/70 flex items-baseline gap-2 font-mono text-2xs">
+              <span className="min-w-0 flex-1 truncate">process</span>
+              <span className="w-10 shrink-0 text-right">cpu</span>
+              <span className="w-10 shrink-0 text-right">mem</span>
+            </div>
             {m.procs.map((p, i) => (
               <div
                 key={`${p.name}-${i}`}
@@ -268,10 +275,16 @@ export default function MetricsPanel({
                 <span className="text-foreground min-w-0 flex-1 truncate">
                   {p.name}
                 </span>
-                <span className="text-muted-foreground w-10 shrink-0 text-right tabular-nums">
+                <span
+                  title={`CPU ${p.cpu.toFixed(1)}% (of one core)`}
+                  className="text-muted-foreground w-10 shrink-0 text-right tabular-nums"
+                >
                   {p.cpu.toFixed(1)}%
                 </span>
-                <span className="text-muted-foreground w-10 shrink-0 text-right tabular-nums">
+                <span
+                  title={`Memory ${p.mem.toFixed(1)}% of total RAM`}
+                  className="text-muted-foreground w-10 shrink-0 text-right tabular-nums"
+                >
                   {p.mem.toFixed(1)}%
                 </span>
               </div>

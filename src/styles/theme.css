@@ -256,6 +256,29 @@ select {
     opacity: 1;
   }
 }
+@keyframes menuPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* A pane joining a Deck. The neighbouring pane is already animating its inset
+   to make room, so the newcomer only fades and settles in from its split edge —
+   scaling the whole pane would blur the terminal glyphs mid-flight. */
+@keyframes paneEnter {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 @keyframes stepPulse {
   0%,
   100% {

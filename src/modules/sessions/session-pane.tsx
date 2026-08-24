@@ -6,6 +6,7 @@ import type { Edge, Rect } from '../../lib/layout';
 import type { SessionType } from '../../store/app';
 import PaneDropZones from './pane-drop-zones';
 import { Terminal } from '@/components/Terminal';
+import { TerctlLogo } from '@/components/chrome/TerctlLogo';
 
 interface SessionPaneProps {
   session: SessionType;
@@ -63,6 +64,9 @@ export default function SessionPane({
         transition: resizing
           ? 'none'
           : 'inset 0.18s cubic-bezier(0.22,1,0.36,1)',
+        // Sessions are never restored on boot, so a pane only ever mounts when
+        // one is genuinely new — the mount itself is the cue to animate on.
+        animation: 'paneEnter 0.24s cubic-bezier(0.22,1,0.36,1)',
       }}
       onMouseDown={() => !active && onActivate()}
     >
@@ -130,14 +134,32 @@ export default function SessionPane({
             resizing && 'pointer-events-none',
           )}
         >
-          <Terminal
-            sessionId={session.id}
-            scheme={termScheme}
-            onClosed={onClosed}
-            onDuplicate={onDuplicate}
-            onDuplicateSplit={onDuplicateSplit}
-            onCloseSession={onClose}
-          />
+          {/* A placeholder pane: the split has already happened visually, but
+              the backend session doesn't exist yet. Mounting Terminal here
+              would subscribe to a session id nothing will ever emit for. */}
+          {session.status === 'connecting' ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+              {/* The static mark, not TerctlLoader: the loader slides its six
+                  pieces out and back each cycle, and at pane size those
+                  incomplete frames read as a broken logo rather than motion.
+                  A breathing pulse keeps it alive while staying whole. */}
+              <span className="animate-[bootBreathe_1.6s_ease-in-out_infinite] text-(--text)">
+                <TerctlLogo size={54} />
+              </span>
+              <span className="font-mono text-xs text-(--text-dim)">
+                Connecting to {session.label}…
+              </span>
+            </div>
+          ) : (
+            <Terminal
+              sessionId={session.id}
+              scheme={termScheme}
+              onClosed={onClosed}
+              onDuplicate={onDuplicate}
+              onDuplicateSplit={onDuplicateSplit}
+              onCloseSession={onClose}
+            />
+          )}
         </div>
       </div>
 

@@ -272,9 +272,19 @@ export const openLocalTerminalAtom = atom(null, async (get, set) => {
   }
 });
 
+let pendingPaneCounter = 0;
+const PENDING_PANE_PREFIX = 'pending-';
+/** True for a placeholder pane's client-side id, which no backend knows about. */
+const isPendingPaneId = (id: string) => id.startsWith(PENDING_PANE_PREFIX);
+
 // Opens a second session against the same host and drops it straight into the
-// current tab's Deck beside `targetSessionId`, rather than as a new tab. Shares
-// the connect path with `connectAtom` but lands the result via `addPaneToTab`.
+// current tab's Deck beside `targetSessionId`, rather than as a new tab.
+//
+// The pane is inserted *before* the connection is attempted, as a placeholder
+// with a client-side id and a 'connecting' status. That keeps the source
+// terminal visible — the alternative, the full-bleed connecting overlay, hides
+// the very pane being duplicated. Once the backend session exists, the
+// placeholder id is swapped for the real one exactly as `reconnectAtom` does.
 export const duplicateIntoSplitAtom = atom(
   null,
   async (get, set, targetSessionId: string, edge: Edge) => {
@@ -289,24 +299,40 @@ export const duplicateIntoSplitAtom = atom(
     if (!isLocal && !host) return;
 
     const label = host ? host.label : 'Local';
+    const pendingId = `${PENDING_PANE_PREFIX}${++pendingPaneCounter}`;
     set(newTabPickerAtom, false);
-    set(connectingAtom, { hostId: session.hostId, label });
     set(connectErrorAtom, null);
+    addPaneToTab(
+      get,
+      set,
+      { id: pendingId, hostId: session.hostId, label, status: 'connecting' },
+      tab.id,
+      targetSessionId,
+      edge,
+    );
+
     try {
       const sessionId = isLocal
         ? await sshService.localConnect()
         : await sshService.connect(session.hostId);
-      addPaneToTab(
-        get,
-        set,
-        { id: sessionId, hostId: session.hostId, label, status: 'connected' },
-        tab.id,
-        targetSessionId,
-        edge,
+      set(
+        sessionsAtom,
+        get(sessionsAtom).map((s) =>
+          s.id === pendingId ? { ...s, id: sessionId, status: 'connected' } : s,
+        ),
       );
-      set(connectingAtom, null);
+      set(
+        tabsAtom,
+        get(tabsAtom).map((t) =>
+          hasSession(t.layout, pendingId)
+            ? { ...t, layout: replaceLeaf(t.layout, pendingId, sessionId) }
+            : t,
+        ),
+      );
+      if (get(activeSessionIdAtom) === pendingId)
+        set(activeSessionIdAtom, sessionId);
     } catch (e) {
-      set(connectingAtom, null);
+      dropPane(get, set, pendingId);
       set(connectErrorAtom, { label, message: String(e) });
     }
   },
@@ -315,7 +341,8 @@ export const duplicateIntoSplitAtom = atom(
 // Explicit close of a single session (disconnected-banner "Close tab"): tears
 // down the backend session and removes its pane; drops the tab if empty.
 export const closeSessionAtom = atom(null, (get, set, sessionId: string) => {
-  void sshService.disconnect(sessionId);
+  // A placeholder pane has no backend session behind its id yet.
+  if (!isPendingPaneId(sessionId)) void sshService.disconnect(sessionId);
   set(
     sessionsAtom,
     get(sessionsAtom).filter((s) => s.id !== sessionId),
@@ -335,7 +362,9 @@ export const closeTabAtom = atom(null, (get, set, tabId: string) => {
   const tab = get(tabsAtom).find((t) => t.id === tabId);
   if (!tab) return;
   const ids = paneSessionIds(tab.layout);
-  ids.forEach((id) => void sshService.disconnect(id));
+  ids.forEach((id) => {
+    if (!isPendingPaneId(id)) void sshService.disconnect(id);
+  });
   set(
     sessionsAtom,
     get(sessionsAtom).filter((s) => !ids.includes(s.id)),
@@ -497,6 +526,23 @@ function addPaneToTab(
   );
   set(activeTabIdAtom, tab.id);
   set(activeSessionIdAtom, session.id);
+}
+
+// Pull a pane back out of its tab without touching the backend. Used when a
+// placeholder's connection fails, so there is nothing to disconnect.
+function dropPane(get: Getter, set: Setter, sessionId: string): void {
+  set(
+    sessionsAtom,
+    get(sessionsAtom).filter((s) => s.id !== sessionId),
+  );
+  const tabs = get(tabsAtom)
+    .map((t) => {
+      if (!hasSession(t.layout, sessionId)) return t;
+      const layout = removeLeaf(t.layout, sessionId);
+      return layout ? { ...t, layout } : null;
+    })
+    .filter((t): t is TabType => t !== null);
+  resolveActive(get, set, tabs, sessionId);
 }
 
 // After removing sessions/tabs, pick a valid active tab + session and commit

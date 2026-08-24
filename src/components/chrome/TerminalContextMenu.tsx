@@ -44,9 +44,10 @@ export function TerminalContextMenu({
   useLayoutEffect(() => {
     const el = menuRef.current;
     if (!el) return;
-    const { width, height } = el.getBoundingClientRect();
-    const maxLeft = window.innerWidth - width - EDGE_GAP;
-    const maxTop = window.innerHeight - height - EDGE_GAP;
+    // offsetWidth/Height report the untransformed layout box, so the clamp is
+    // unaffected by the open animation; getBoundingClientRect would not be.
+    const maxLeft = window.innerWidth - el.offsetWidth - EDGE_GAP;
+    const maxTop = window.innerHeight - el.offsetHeight - EDGE_GAP;
     setPos({
       left: Math.max(EDGE_GAP, Math.min(x, maxLeft)),
       top: Math.max(EDGE_GAP, Math.min(y, maxTop)),
@@ -107,8 +108,12 @@ export function TerminalContextMenu({
         }
       }}
       onContextMenu={(e) => e.preventDefault()}
-      className="border-foreground/10 fixed z-50 min-w-52 rounded-lg border bg-(--bg-card) py-1 shadow-[0_10px_34px_rgb(0_0_0/0.5)] outline-none"
-      style={{ left: pos.left, top: pos.top }}
+      className="border-foreground/10 fixed z-50 min-w-52 origin-top-left rounded-lg border bg-(--bg-card) py-1 shadow-[0_10px_34px_rgb(0_0_0/0.5)] outline-none"
+      style={{
+        left: pos.left,
+        top: pos.top,
+        animation: 'menuPop 0.12s cubic-bezier(0.22,1,0.36,1)',
+      }}
     >
       {items.map((item, i) => (
         <div key={item.label}>

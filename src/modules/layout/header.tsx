@@ -5,6 +5,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { Columns2, Minus, PanelRight, Square, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TerctlLogo } from '../../components/chrome/TerctlLogo';
+import { ThemeArt } from '../../components/chrome/ThemeArt';
 import NewSessionMenu from '../sessions/new-session-menu';
 import {
   activeTabIdAtom,
@@ -81,10 +82,11 @@ function Header() {
     <div
       onMouseDown={onMouseDown}
       className={cn(
-        'border-border bg-background flex h-[46px] shrink-0 items-center gap-3.5 border-b',
+        'border-border bg-background relative isolate flex h-[46px] shrink-0 items-center gap-3.5 border-b',
         IS_MAC ? 'pr-3.5 pl-[86px]' : 'pr-0 pl-3.5',
       )}
     >
+      <ThemeArt slot="header" />
       <div className="text-foreground flex shrink-0 items-center gap-2.5">
         <TerctlLogo size={20} />
         <span className="text-foreground text-sm font-semibold tracking-wide">

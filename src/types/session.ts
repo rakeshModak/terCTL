@@ -4,7 +4,8 @@ export interface SessionType {
   id: string;
   hostId: string;
   label: string;
-  status: 'connected' | 'disconnected' | 'reconnecting';
+  /** 'connecting' is a placeholder pane: no backend session exists for `id` yet. */
+  status: 'connected' | 'disconnected' | 'reconnecting' | 'connecting';
 }
 
 export interface TabType {
