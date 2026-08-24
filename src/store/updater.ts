@@ -17,10 +17,16 @@ export const lastCheckedAtom = atom<number | null>(null);
 /**
  * `check()` has no timeout of its own, so a stalled request hangs forever —
  * and the Settings button is disabled while checking, leaving no way to retry
- * short of restarting the app. The release endpoint redirects to GitHub's
- * asset CDN and can be slow, so this is a real stall, not a hypothetical one.
+ * short of restarting the app.
+ *
+ * The value has to clear the endpoint's real worst case, not a tidy round
+ * number. Timing the release URL from a healthy connection (github.com itself
+ * answers in 135ms) gave 22.6s, 22.6s, then 0.4s — the redirect to GitHub's
+ * asset CDN intermittently stalls in the TLS handshake for ~22s before
+ * recovering. A 20s timeout sat just underneath that and aborted requests
+ * that were about to succeed, turning a slow check into a hard failure.
  */
-const CHECK_TIMEOUT_MS = 20_000;
+const CHECK_TIMEOUT_MS = 60_000;
 
 /**
  * Client-side backstop, deliberately longer than the plugin's own timeout so
@@ -28,7 +34,7 @@ const CHECK_TIMEOUT_MS = 20_000;
  * `check()` never settles at all — which is the state that used to leave the
  * Settings button disabled and spinning until the app was restarted.
  */
-const WATCHDOG_MS = CHECK_TIMEOUT_MS + 5_000;
+const WATCHDOG_MS = CHECK_TIMEOUT_MS + 10_000;
 
 function withWatchdog<T>(work: Promise<T>): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;

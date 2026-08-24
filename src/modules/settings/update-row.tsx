@@ -32,7 +32,9 @@ export default function UpdateRow() {
     : null;
 
   let label: string;
-  if (checking) label = 'Checking for updates…';
+  // The timeout is 60s because the release endpoint can stall ~22s in the TLS
+  // handshake; say so rather than leaving a silent spinner for that long.
+  if (checking) label = 'Checking for updates… this can take a moment.';
   else if (updateStatus === 'uptodate')
     label = checkedAt
       ? `You're on the latest version — checked at ${checkedAt}.`
