@@ -272,6 +272,46 @@ export const openLocalTerminalAtom = atom(null, async (get, set) => {
   }
 });
 
+// Opens a second session against the same host and drops it straight into the
+// current tab's Deck beside `targetSessionId`, rather than as a new tab. Shares
+// the connect path with `connectAtom` but lands the result via `addPaneToTab`.
+export const duplicateIntoSplitAtom = atom(
+  null,
+  async (get, set, targetSessionId: string, edge: Edge) => {
+    const session = get(sessionsAtom).find((s) => s.id === targetSessionId);
+    const tab = get(tabsAtom).find((t) => hasSession(t.layout, targetSessionId));
+    if (!session || !tab) return;
+
+    const isLocal = session.hostId === LOCAL_HOST_ID;
+    const host = isLocal
+      ? null
+      : (get(hostsAtom).find((h) => h.id === session.hostId) ?? null);
+    if (!isLocal && !host) return;
+
+    const label = host ? host.label : 'Local';
+    set(newTabPickerAtom, false);
+    set(connectingAtom, { hostId: session.hostId, label });
+    set(connectErrorAtom, null);
+    try {
+      const sessionId = isLocal
+        ? await sshService.localConnect()
+        : await sshService.connect(session.hostId);
+      addPaneToTab(
+        get,
+        set,
+        { id: sessionId, hostId: session.hostId, label, status: 'connected' },
+        tab.id,
+        targetSessionId,
+        edge,
+      );
+      set(connectingAtom, null);
+    } catch (e) {
+      set(connectingAtom, null);
+      set(connectErrorAtom, { label, message: String(e) });
+    }
+  },
+);
+
 // Explicit close of a single session (disconnected-banner "Close tab"): tears
 // down the backend session and removes its pane; drops the tab if empty.
 export const closeSessionAtom = atom(null, (get, set, sessionId: string) => {
@@ -411,6 +451,50 @@ function addTab(get: Getter, set: Setter, session: SessionType): void {
   const tab: TabType = { id: newTabId(), label, layout: leaf(session.id) };
   set(sessionsAtom, [...get(sessionsAtom), { ...session, label }]);
   set(tabsAtom, [...tabs, tab]);
+  set(activeTabIdAtom, tab.id);
+  set(activeSessionIdAtom, session.id);
+}
+
+// Add a freshly-opened session as another pane inside an existing tab, beside
+// `targetSessionId`. A tab that was a lone host becomes a Deck, so it picks up
+// a workspace label the same way a tab-drop split does.
+function addPaneToTab(
+  get: Getter,
+  set: Setter,
+  session: SessionType,
+  tabId: string,
+  targetSessionId: string,
+  edge: Edge,
+): void {
+  const tabs = get(tabsAtom);
+  const tab = tabs.find((t) => t.id === tabId);
+  if (!tab) return;
+
+  const label = uniqueLabel(
+    session.label,
+    get(sessionsAtom).map((s) => s.label),
+  );
+  const wasWorkspace = paneSessionIds(tab.layout).length > 1;
+  const layout = splitTreeAt(
+    tab.layout,
+    targetSessionId,
+    leaf(session.id),
+    edge,
+  );
+
+  set(sessionsAtom, [...get(sessionsAtom), { ...session, label }]);
+  set(
+    tabsAtom,
+    tabs.map((t) =>
+      t.id === tab.id
+        ? {
+            ...t,
+            layout,
+            label: wasWorkspace ? t.label : nextWorkspaceLabel(tabs),
+          }
+        : t,
+    ),
+  );
   set(activeTabIdAtom, tab.id);
   set(activeSessionIdAtom, session.id);
 }

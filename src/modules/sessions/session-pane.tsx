@@ -21,6 +21,8 @@ interface SessionPaneProps {
   onActivate: () => void;
   onClose: () => void;
   onClosed: () => void;
+  onDuplicate: () => void;
+  onDuplicateSplit: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onSplit: (edge: Edge) => void;
@@ -38,6 +40,8 @@ export default function SessionPane({
   onActivate,
   onClose,
   onClosed,
+  onDuplicate,
+  onDuplicateSplit,
   onDragStart,
   onDragEnd,
   onSplit,
@@ -130,6 +134,9 @@ export default function SessionPane({
             sessionId={session.id}
             scheme={termScheme}
             onClosed={onClosed}
+            onDuplicate={onDuplicate}
+            onDuplicateSplit={onDuplicateSplit}
+            onCloseSession={onClose}
           />
         </div>
       </div>
