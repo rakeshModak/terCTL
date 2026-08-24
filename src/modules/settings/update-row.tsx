@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   availableUpdateAtom,
   checkForUpdateAtom,
+  lastCheckedAtom,
   updateErrorAtom,
   updateStatusAtom,
 } from '@/store/updater';
@@ -16,13 +17,26 @@ export default function UpdateRow() {
   const availableUpdate = useAtomValue(availableUpdateAtom);
   const updateError = useAtomValue(updateErrorAtom);
   const appVersion = useAtomValue(appVersionAtom);
+  const lastChecked = useAtomValue(lastCheckedAtom);
   const checkForUpdate = useSetAtom(checkForUpdateAtom);
 
   const checking = updateStatus === 'checking';
 
+  // Without this the row reads identically before and after a successful
+  // check, so "already up to date" was indistinguishable from a dead button.
+  const checkedAt = lastChecked
+    ? new Date(lastChecked).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
   let label: string;
   if (checking) label = 'Checking for updates…';
-  else if (updateStatus === 'uptodate') label = "You're on the latest version.";
+  else if (updateStatus === 'uptodate')
+    label = checkedAt
+      ? `You're on the latest version — checked at ${checkedAt}.`
+      : "You're on the latest version.";
   else if (updateStatus === 'available')
     label = `Version ${availableUpdate?.version} is available — see the banner to install.`;
   else if (updateStatus === 'error')

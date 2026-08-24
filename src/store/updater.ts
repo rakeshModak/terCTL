@@ -11,6 +11,35 @@ export const updateProgressAtom = atom(0); // 0..100
 export const updateErrorAtom = atom<string | null>(null);
 // Set when the user hits "Later" — hides the banner until the next check/restart.
 export const updateDismissedAtom = atom(false);
+/** Epoch ms of the last completed check, so a no-op result is still visible. */
+export const lastCheckedAtom = atom<number | null>(null);
+
+/**
+ * `check()` has no timeout of its own, so a stalled request hangs forever —
+ * and the Settings button is disabled while checking, leaving no way to retry
+ * short of restarting the app. The release endpoint redirects to GitHub's
+ * asset CDN and can be slow, so this is a real stall, not a hypothetical one.
+ */
+const CHECK_TIMEOUT_MS = 20_000;
+
+/**
+ * Client-side backstop, deliberately longer than the plugin's own timeout so
+ * the plugin's more specific error wins in the normal case. This only fires if
+ * `check()` never settles at all — which is the state that used to leave the
+ * Settings button disabled and spinning until the app was restarted.
+ */
+const WATCHDOG_MS = CHECK_TIMEOUT_MS + 5_000;
+
+function withWatchdog<T>(work: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const guard = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error('Timed out reaching the update server.')),
+      WATCHDOG_MS,
+    );
+  });
+  return Promise.race([work, guard]).finally(() => clearTimeout(timer));
+}
 
 // Check GitHub for a newer signed release. Silent: only surfaces the banner when
 // one is found. Used both on startup and by the Settings button.
@@ -18,7 +47,8 @@ export const checkForUpdateAtom = atom(null, async (_get, set) => {
   set(updateStatusAtom, 'checking');
   set(updateErrorAtom, null);
   try {
-    const update = await check();
+    const update = await withWatchdog(check({ timeout: CHECK_TIMEOUT_MS }));
+    set(lastCheckedAtom, Date.now());
     if (update) {
       set(availableUpdateAtom, update);
       set(updateDismissedAtom, false);
@@ -28,6 +58,7 @@ export const checkForUpdateAtom = atom(null, async (_get, set) => {
       set(updateStatusAtom, 'uptodate');
     }
   } catch (e) {
+    set(lastCheckedAtom, Date.now());
     set(updateErrorAtom, String(e));
     set(updateStatusAtom, 'error');
   }
