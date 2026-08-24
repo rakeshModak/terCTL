@@ -551,6 +551,7 @@ mod tests {
             term_scheme: None,
             os: None,
             jump_host_id: None,
+            starred: false,
         };
 
         let handler = ClientHandler {

@@ -215,6 +215,31 @@ export const refreshTagsAtom = atom(null, async (_get, set) => {
   set(allTagsAtom, await hostsService.listTags());
 });
 
+/**
+ * Flip a host's star. Applied to the list first so the card responds on the
+ * click, then persisted; a failed write rolls the list back rather than
+ * leaving the UI claiming something the database does not agree with.
+ */
+export const toggleHostStarAtom = atom(
+  null,
+  async (get, set, hostId: string) => {
+    const host = get(hostsAtom).find((h) => h.id === hostId);
+    if (!host) return;
+    const next = !host.starred;
+    const apply = (starred: boolean) =>
+      set(
+        hostsAtom,
+        get(hostsAtom).map((h) => (h.id === hostId ? { ...h, starred } : h)),
+      );
+    apply(next);
+    try {
+      await hostsService.setStarred(hostId, next);
+    } catch {
+      apply(!next);
+    }
+  },
+);
+
 export const setHostOsAtom = atom(
   null,
   (get, set, hostId: string, os: string) => {

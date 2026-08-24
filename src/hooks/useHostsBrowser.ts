@@ -21,6 +21,7 @@ export interface HostsBrowserView {
   searching: boolean;
   subgroups: GroupType[];
   visibleHosts: HostType[];
+  starredHosts: HostType[];
   breadcrumb: BreadcrumbEntry[];
   rootGroupCount: number;
   isEmpty: boolean;
@@ -76,6 +77,16 @@ export function useHostsBrowser({
       .filter(matchesQuery);
   }, [hosts, q, searching, currentGroupId, tagFilter]);
 
+  // Root only, and never while a search or tag filter is active: a pinned
+  // section that ignores the filter the user just applied reads as a bug.
+  const starredHosts = useMemo(
+    () =>
+      searching || tagFilter || currentGroupId !== null
+        ? []
+        : hosts.filter((h) => h.starred),
+    [searching, tagFilter, currentGroupId, hosts],
+  );
+
   const subgroups = useMemo(
     () =>
       searching ? [] : groups.filter((g) => g.parentId === currentGroupId),
@@ -100,6 +111,7 @@ export function useHostsBrowser({
     searching,
     subgroups,
     visibleHosts,
+    starredHosts,
     breadcrumb,
     rootGroupCount: groups.filter((g) => g.parentId === null).length,
     isEmpty: !searching && hosts.length === 0 && groups.length === 0,

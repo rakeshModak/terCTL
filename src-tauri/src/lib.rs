@@ -43,6 +43,7 @@ pub fn run() {
             commands::add_host,
             commands::update_host,
             commands::delete_host,
+            commands::set_host_starred,
             commands::list_tags,
             commands::list_groups,
             commands::add_group,
