@@ -49,6 +49,7 @@ impl Store {
         // key: `delete_host` clears dangling references instead, matching how
         // group deletion already detaches its members.
         Self::add_column_if_missing(conn, "hosts", "jump_host_id", "TEXT")?;
+        Self::add_column_if_missing(conn, "hosts", "starred", "INTEGER NOT NULL DEFAULT 0")?;
         Self::add_column_if_missing(conn, "groups", "parent_id", "TEXT")?;
         Ok(())
     }
@@ -105,7 +106,7 @@ impl Store {
     pub fn list_hosts(&self) -> rusqlite::Result<Vec<Host>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, os, jump_host_id
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, os, jump_host_id, starred
              FROM hosts ORDER BY label",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -123,6 +124,7 @@ impl Store {
                 term_scheme: row.get(10)?,
                 os: row.get(11)?,
                 jump_host_id: row.get(12)?,
+                starred: row.get::<_, i64>(13)? != 0,
             })
         })?;
         rows.collect()
@@ -131,7 +133,7 @@ impl Store {
     pub fn list_host_records(&self) -> rusqlite::Result<Vec<HostRecord>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id, starred
              FROM hosts ORDER BY label",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -150,6 +152,7 @@ impl Store {
                     term_scheme: row.get(10)?,
                     os: row.get(12)?,
                     jump_host_id: row.get(13)?,
+                    starred: row.get::<_, i64>(14)? != 0,
                 },
                 host_key_fingerprint: row.get(11)?,
             })
@@ -176,8 +179,8 @@ impl Store {
         }
         for (host, fingerprint) in hosts {
             tx.execute(
-                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id, starred)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
                 params![
                     host.id,
                     host.label,
@@ -193,6 +196,7 @@ impl Store {
                     fingerprint,
                     host.os,
                     host.jump_host_id,
+                    host.starred as i64,
                 ],
             )?;
         }
@@ -245,12 +249,26 @@ impl Store {
             // Unknown until the host is connected to for the first time.
             os: None,
             jump_host_id: new_host.jump_host_id,
+            starred: false,
         })
+    }
+
+    /// The only writer of `starred`; see the note on `update_host`'s SQL.
+    pub fn set_host_starred(&self, id: &str, starred: bool) -> rusqlite::Result<()> {
+        let conn = self.0.lock().unwrap();
+        conn.execute(
+            "UPDATE hosts SET starred = ?2 WHERE id = ?1",
+            params![id, starred as i64],
+        )?;
+        Ok(())
     }
 
     pub fn update_host(&self, host: Host) -> rusqlite::Result<()> {
         let conn = self.0.lock().unwrap();
         conn.execute(
+            // `starred` is deliberately absent: it is owned by set_host_starred.
+            // Listing it here would let any caller that rebuilds a Host without
+            // carrying the flag silently clear it.
             "UPDATE hosts
              SET label = ?2, hostname = ?3, port = ?4, username = ?5, auth_kind = ?6,
                  key_ref = ?7, group_id = ?8, tags = ?9, accent = ?10, term_scheme = ?11,

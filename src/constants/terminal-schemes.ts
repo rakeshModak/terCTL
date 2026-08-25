@@ -168,6 +168,28 @@ const SCHEME_SPECS: Record<string, Record<ResolvedMode, SchemeSpec>> = {
     dark: spec('#0d0d0d', '#a8a8a8', '#c4c4c4', '#262626'),
     light: spec('#fafafa', '#333333', '#5a5a5a', '#dcdcdc'),
   },
+  // Canvases matched to the illustrated themes in constants/themes.ts, so the
+  // terminal doesn't fight the artwork framing it.
+  Bloom: {
+    dark: spec('#141018', '#cfb6c4', '#c98aa6', '#2f2130'),
+    light: spec('#fdf6f9', '#4d2a38', '#a34468', '#f2dae5'),
+  },
+  Cosmos: {
+    dark: spec('#0b0b1a', '#b7bce0', '#8f7bff', '#1f1f42'),
+    light: spec('#f5f6fd', '#2b2f5c', '#5546c8', '#dcdff4'),
+  },
+  Altitude: {
+    dark: spec('#0c141d', '#a9b9c6', '#ff9d5c', '#1c2c3a'),
+    light: spec('#fdf7f3', '#282521', '#b5651d', '#f0dccd'),
+  },
+  Summit: {
+    dark: spec('#0c1116', '#b4c1cf', '#6fa8dc', '#1e2a38'),
+    light: spec('#f5f8fb', '#26313d', '#2f6ea8', '#d3dfeb'),
+  },
+  Doodle: {
+    dark: spec('#1c2523', '#c3d2c9', '#e8b04a', '#2f3d38'),
+    light: spec('#fffcf2', '#3b3524', '#b07a12', '#f1e3c4'),
+  },
 };
 
 export const TERM_SCHEME_NAMES = Object.keys(SCHEME_SPECS);

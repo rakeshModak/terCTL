@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { Star } from 'lucide-react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
   allTagsAtom,
@@ -8,6 +9,7 @@ import {
   hostsAtom,
   refreshAllAtom,
   sessionsAtom,
+  toggleHostStarAtom,
   setActiveSessionAtom,
   setTagFilterAtom,
   tagFilterAtom,
@@ -37,6 +39,9 @@ type DeleteTarget =
 
 const GRID = 'grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(204px,1fr))]';
 
+const GRID_COMPACT =
+  'grid gap-4 grid-cols-[repeat(auto-fill,minmax(158px,220px))]';
+
 export default function HostsPage() {
   const hosts = useAtomValue(hostsAtom);
   const groups = useAtomValue(groupsAtom);
@@ -44,6 +49,7 @@ export default function HostsPage() {
   const tagFilter = useAtomValue(tagFilterAtom);
   const sessions = useAtomValue(sessionsAtom);
   const connect = useSetAtom(connectAtom);
+  const toggleStar = useSetAtom(toggleHostStarAtom);
   const refreshAll = useSetAtom(refreshAllAtom);
   const setActiveSession = useSetAtom(setActiveSessionAtom);
   const setTagFilter = useSetAtom(setTagFilterAtom);
@@ -145,7 +151,7 @@ export default function HostsPage() {
     sessions.length > 0 && !view.insideGroup && !view.searching;
 
   return (
-    <div className="bg-background flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto">
       <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-6 pt-6 pb-10">
         <HostsHeader
           hostCount={hosts.length}
@@ -193,6 +199,31 @@ export default function HostsPage() {
           </section>
         )}
 
+        {view.starredHosts.length > 0 && (
+          <section className="mb-8">
+            <SectionHeading trailing={`${view.starredHosts.length} starred`}>
+              <span className="flex items-center gap-1.5">
+                <Star className="text-chart-5 size-3.5 fill-current" />
+                Starred
+              </span>
+            </SectionHeading>
+            <div className={GRID_COMPACT}>
+              {view.starredHosts.map((host) => (
+                <HostCard
+                  key={`starred-${host.id}`}
+                  host={host}
+                  connected={sessionByHostId.has(host.id)}
+                  onConnect={() => openHost(host)}
+                  onEdit={() => openEditHost(host)}
+                  onDelete={() => askDelete({ kind: 'host', host })}
+                  onToggleStar={() => void toggleStar(host.id)}
+                  compact
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         {view.isEmpty ? (
           <HostsEmptyState
             onNewHost={() => openCreateHost(null)}
@@ -209,6 +240,7 @@ export default function HostsPage() {
                   onConnect={() => openHost(host)}
                   onEdit={() => openEditHost(host)}
                   onDelete={() => askDelete({ kind: 'host', host })}
+                  onToggleStar={() => void toggleStar(host.id)}
                   jumpLabel={
                     host.jumpHostId
                       ? (hostLabelById.get(host.jumpHostId) ?? 'unknown host')

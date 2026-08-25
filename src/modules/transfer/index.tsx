@@ -34,12 +34,7 @@ export default function TransferView() {
   );
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col bg-background">
-      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2">
-        <h1 className="font-heading text-lg font-bold tracking-tight">Transfer</h1>
-        <div className="flex-1" />
-      </header>
-
+    <div className="bg-background flex min-w-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1">
         <FilePane
           title={LOCAL_MACHINE_LABEL}
@@ -53,7 +48,11 @@ export default function TransferView() {
           title={selectedHost?.label ?? 'Remote'}
           side="remote"
           pane={remote}
-          placeholder={hostId ? undefined : 'Choose a server to browse its files over SFTP.'}
+          placeholder={
+            hostId
+              ? undefined
+              : 'Choose a server to browse its files over SFTP.'
+          }
           headerAction={chooseServerButton}
           placeholderAction={chooseServerButton}
           action={{ label: 'Download', enabled: !!hostId, run: download }}

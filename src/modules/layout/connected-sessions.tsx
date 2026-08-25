@@ -17,6 +17,7 @@ import {
 
 const STATUS: Record<SessionType['status'], { tone: string; label: string }> = {
   connected: { tone: 'bg-chart-4', label: 'Connected' },
+  connecting: { tone: 'bg-chart-5', label: 'Connecting…' },
   disconnected: { tone: 'bg-destructive', label: 'Disconnected' },
   reconnecting: { tone: 'bg-chart-5', label: 'Reconnecting…' },
 };

@@ -17,6 +17,7 @@ import {
   markDisconnectedAtom,
   openLocalTerminalAtom,
   newTabPickerAtom,
+  duplicateIntoSplitAtom,
   reconnectAtom,
   repositionPaneAtom,
   sessionsAtom,
@@ -56,6 +57,7 @@ export default function SessionsView() {
   const markDisconnected = useSetAtom(markDisconnectedAtom);
   const reconnect = useSetAtom(reconnectAtom);
   const connect = useSetAtom(connectAtom);
+  const duplicateIntoSplit = useSetAtom(duplicateIntoSplitAtom);
   const openLocalTerminal = useSetAtom(openLocalTerminalAtom);
   const dismissConnectError = useSetAtom(dismissConnectErrorAtom);
   const toggleInspector = useSetAtom(toggleInspectorAtom);
@@ -132,6 +134,15 @@ export default function SessionsView() {
               onActivate={() => setActiveSession(session.id)}
               onClose={() => closeSession(session.id)}
               onClosed={() => markDisconnected(session.id)}
+              onDuplicate={() => {
+                // Deliberately not routed through openHost — that reuses an
+                // existing session for the host, which would be a no-op here.
+                const host = hosts.find((h) => h.id === session.hostId);
+                void (host ? connect(host) : openLocalTerminal());
+              }}
+              onDuplicateSplit={() =>
+                void duplicateIntoSplit(session.id, 'right')
+              }
               onDragStart={() => setDraggingPane(session.id)}
               onDragEnd={() => setDraggingPane(null)}
               onSplit={(edge) =>

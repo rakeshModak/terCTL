@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { transferSummaryAtom } from '@/store/transfer';
 import ConnectedSessions from './connected-sessions';
 import TerminalZoom from './terminal-zoom';
+import { ThemeArt } from '../../components/chrome/ThemeArt';
 
 interface NavItem {
   to: string;
@@ -37,7 +38,8 @@ export default function Sidebar() {
   const transfer = useAtomValue(transferSummaryAtom);
 
   return (
-    <nav className="border-border bg-sidebar flex w-15 shrink-0 flex-col items-center gap-1.5 border-r py-3">
+    <nav className="border-border bg-sidebar relative isolate flex w-15 shrink-0 flex-col items-center gap-1.5 border-r py-3">
+      <ThemeArt slot="sidebar" className="top-auto h-40" />
       {NAV.map(({ to, label, Icon }) => {
         const active = pathname === to;
         const busy = to === '/transfer' && transfer.running > 0;

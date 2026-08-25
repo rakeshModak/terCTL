@@ -14,6 +14,8 @@ export interface HostType {
   termScheme: string | null;
   os: string | null;
   jumpHostId: string | null;
+  /** Pinned to the Starred section. Not on NewHostType: new hosts start off. */
+  starred: boolean;
 }
 
 export interface NewHostType {
