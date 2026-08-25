@@ -1,3 +1,5 @@
+import { uuid } from '@/utils/uuid';
+
 export function TerctlLogo({ size = 30 }: { size?: number; glow?: boolean }) {
   return (
     <svg
@@ -22,12 +24,12 @@ export function TerctlLogo({ size = 30 }: { size?: number; glow?: boolean }) {
 }
 
 const LOADER_PIECES = [
-  { x: 0, y: 0, w: 64, h: 14, anim: 'slideTop' },
-  { x: 0, y: 50, w: 64, h: 14, anim: 'slideBottom' },
-  { x: 54, y: 14, w: 10, h: 11, anim: 'slideRight' },
-  { x: 54, y: 39, w: 10, h: 11, anim: 'slideRight' },
-  { x: 0, y: 39, w: 10, h: 11, anim: 'slideLeft' },
-  { x: 0, y: 14, w: 10, h: 11, anim: 'slideLeft' },
+  { id: uuid(), x: 0, y: 0, w: 64, h: 14, anim: 'slideTop' },
+  { id: uuid(), x: 0, y: 50, w: 64, h: 14, anim: 'slideBottom' },
+  { id: uuid(), x: 54, y: 14, w: 10, h: 11, anim: 'slideRight' },
+  { id: uuid(), x: 54, y: 39, w: 10, h: 11, anim: 'slideRight' },
+  { id: uuid(), x: 0, y: 39, w: 10, h: 11, anim: 'slideLeft' },
+  { id: uuid(), x: 0, y: 14, w: 10, h: 11, anim: 'slideLeft' },
 ];
 
 export function TerctlLoader({
@@ -49,9 +51,9 @@ export function TerctlLoader({
       }}
       aria-label="Loading"
     >
-      {LOADER_PIECES.map((p, i) => (
+      {LOADER_PIECES.map((p) => (
         <rect
-          key={i}
+          key={p.id}
           x={p.x}
           y={p.y}
           width={p.w}

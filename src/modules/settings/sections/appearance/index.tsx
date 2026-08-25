@@ -50,7 +50,12 @@ export default function AppearanceSection({
       </SettingsGroup>
 
       <SettingsGroup label="Theme">
-        <ThemePicker value={theme} onChange={setTheme} mode={resolvedMode} />
+        <ThemePicker
+          value={theme}
+          onChange={setTheme}
+          accent={accent}
+          mode={resolvedMode}
+        />
       </SettingsGroup>
 
       <SettingsGroup label="Accent color">

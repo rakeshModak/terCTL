@@ -14,6 +14,7 @@ import { sftpService } from '../services/sftp.service';
 import { checkForUpdateAtom } from '../store/updater';
 import { loadAppVersionAtom } from '../store/version';
 import { BootSplash } from '../components/chrome/BootSplash';
+import { ThemeArt } from '../components/chrome/ThemeArt';
 import Header from '../modules/layout/header';
 import Sidebar from '../modules/layout/sidebar';
 import { Dialogs } from '../components/Dialogs';
@@ -74,7 +75,8 @@ function RootLayout() {
   }, [accent, theme, mode]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-(--bg) text-(--text)">
+    <div className="relative isolate flex h-screen flex-col overflow-hidden bg-(--bg) text-(--text)">
+      <ThemeArt slot="page" />
       <BootSplash />
       <Header />
       <div className="flex min-h-0 flex-1">

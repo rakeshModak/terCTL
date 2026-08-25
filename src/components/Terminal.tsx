@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
@@ -24,6 +30,10 @@ import { readableOn } from '../lib/color';
 import { readClipboard, writeClipboard } from '../lib/clipboard';
 import { debugLog } from '../lib/debugLog';
 import {
+  TerminalContextMenu,
+  type ContextMenuItem,
+} from './chrome/TerminalContextMenu';
+import {
   Search,
   ChevronUp,
   ChevronDown,
@@ -46,6 +56,12 @@ interface TerminalProps {
   sessionId: string;
   onClosed: (error: string | null) => void;
   scheme?: string | null;
+  /** Opens a second session against the same host. Omitted = item hidden. */
+  onDuplicate?: () => void;
+  /** Same, but lands the new session as a split pane beside this one. */
+  onDuplicateSplit?: () => void;
+  /** Disconnects and removes this session. Omitted = item hidden. */
+  onCloseSession?: () => void;
 }
 
 const FIND_ICON_BTN =
@@ -146,7 +162,14 @@ function handleClipboardChord(term: XTerm, e: KeyboardEvent): boolean {
   return true;
 }
 
-export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
+export function Terminal({
+  sessionId,
+  onClosed,
+  scheme,
+  onDuplicate,
+  onDuplicateSplit,
+  onCloseSession,
+}: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onClosedRef = useRef(onClosed);
   onClosedRef.current = onClosed;
@@ -161,6 +184,14 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
   const [useRegex, setUseRegex] = useState(false);
   const [matchCount, setMatchCount] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
+  // Selection is captured when the menu opens, not when Copy is clicked: the
+  // menu takes focus, and anything that clears the selection in between would
+  // otherwise leave Copy enabled but empty.
+  const [menu, setMenu] = useState<{
+    x: number;
+    y: number;
+    items: ContextMenuItem[];
+  } | null>(null);
   const settings = useAtomValue(settingsAtom);
   const fontSize = settings.fontSize;
   const scrollback = settings.scrollback;
@@ -541,6 +572,70 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
     renderHighlights(next);
   }, [goToMatch, renderHighlights]);
 
+  const openContextMenu = useCallback(
+    (e: ReactMouseEvent) => {
+      const term = termRef.current;
+      if (!term) return;
+      e.preventDefault();
+
+      // The whole menu is assembled here rather than during render: the actions
+      // close over `term`, and the selection has to be read at open time. A
+      // right click doesn't clear an existing selection, so Copy still has the
+      // text the user highlighted.
+      const selection = term.hasSelection() ? term.getSelection() : '';
+      const items: ContextMenuItem[] = [
+        {
+          label: 'Copy',
+          shortcut: IS_MAC ? '\u2318C' : 'Ctrl+Shift+C',
+          // Disabled rather than omitted so the menu keeps a stable height.
+          disabled: !selection,
+          onSelect: () => void writeClipboard(selection),
+        },
+        {
+          label: 'Paste',
+          shortcut: IS_MAC ? '\u2318V' : 'Ctrl+Shift+V',
+          onSelect: () => void pasteIntoTerminal(term),
+        },
+        { label: 'Select All', onSelect: () => term.selectAll() },
+        {
+          label: 'Clear Terminal',
+          separatorBefore: true,
+          onSelect: () => term.clear(),
+        },
+      ];
+
+      if (onDuplicate) {
+        items.push({
+          label: 'Duplicate Session',
+          separatorBefore: true,
+          onSelect: onDuplicate,
+        });
+      }
+      if (onDuplicateSplit) {
+        items.push({
+          label: 'Duplicate and Split',
+          separatorBefore: !onDuplicate,
+          onSelect: onDuplicateSplit,
+        });
+      }
+      if (onCloseSession) {
+        items.push({
+          label: 'Close Session',
+          separatorBefore: !onDuplicate && !onDuplicateSplit,
+          onSelect: onCloseSession,
+        });
+      }
+
+      setMenu({ x: e.clientX, y: e.clientY, items });
+    },
+    [onDuplicate, onDuplicateSplit, onCloseSession],
+  );
+
+  const closeContextMenu = useCallback(() => {
+    setMenu(null);
+    termRef.current?.focus();
+  }, []);
+
   const closeFind = useCallback(() => {
     setFindOpen(false);
     clearHighlights();
@@ -643,8 +738,17 @@ export function Terminal({ sessionId, onClosed, scheme }: TerminalProps) {
       )}
       <div
         ref={containerRef}
+        onContextMenu={openContextMenu}
         className="absolute top-1.5 right-1 bottom-1 left-2"
       />
+      {menu && (
+        <TerminalContextMenu
+          x={menu.x}
+          y={menu.y}
+          items={menu.items}
+          onClose={closeContextMenu}
+        />
+      )}
     </>
   );
 }

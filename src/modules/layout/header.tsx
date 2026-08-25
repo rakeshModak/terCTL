@@ -1,10 +1,11 @@
-import { useRef, type MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useRouterState } from '@tanstack/react-router';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Columns2, Minus, PanelRight, Square, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TerctlLogo } from '../../components/chrome/TerctlLogo';
+import { ThemeArt } from '../../components/chrome/ThemeArt';
 import NewSessionMenu from '../sessions/new-session-menu';
 import {
   activeTabIdAtom,
@@ -41,20 +42,13 @@ function Header() {
   const setDraggingTab = useSetAtom(setDraggingTabAtom);
   const splitActiveTab = useSetAtom(splitActiveTabAtom);
 
-  const lastDownRef = useRef(0);
   const onMouseDown = (e: MouseEvent) => {
     if (e.button !== 0) return;
     if (!e.currentTarget.contains(e.target as Node)) return;
 
     if ((e.target as HTMLElement).closest('[data-no-drag]')) return;
 
-    const now = Date.now();
-    if (now - lastDownRef.current < 400) {
-      lastDownRef.current = 0;
-      void getCurrentWindow().toggleMaximize();
-      return;
-    }
-    lastDownRef.current = now;
+    if (e.detail > 1) return;
 
     const startX = e.clientX;
     const startY = e.clientY;
@@ -75,16 +69,24 @@ function Header() {
     window.addEventListener('mouseup', cleanup);
   };
 
+  const onDoubleClick = (e: MouseEvent) => {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('[data-no-drag]')) return;
+    void getCurrentWindow().toggleMaximize();
+  };
+
   const showTabs = onSessions && tabs.length > 0;
 
   return (
     <div
       onMouseDown={onMouseDown}
+      onDoubleClick={onDoubleClick}
       className={cn(
-        'border-border bg-background flex h-[46px] shrink-0 items-center gap-3.5 border-b',
+        'border-border bg-background relative isolate flex h-[46px] shrink-0 items-center gap-3.5 border-b',
         IS_MAC ? 'pr-3.5 pl-[86px]' : 'pr-0 pl-3.5',
       )}
     >
+      <ThemeArt slot="header" />
       <div className="text-foreground flex shrink-0 items-center gap-2.5">
         <TerctlLogo size={20} />
         <span className="text-foreground text-sm font-semibold tracking-wide">
@@ -108,7 +110,7 @@ function Header() {
               <div
                 key={tab.id}
                 className={cn(
-                  'flex max-w-[190px] cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs whitespace-nowrap transition-colors',
+                  'flex max-w-47.5 cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs whitespace-nowrap transition-colors',
                   active
                     ? 'border-primary/35 bg-primary/12 text-foreground'
                     : 'bg-foreground/3 text-muted-foreground hover:bg-foreground/6 border-transparent',
@@ -168,7 +170,6 @@ function Header() {
               </div>
             );
           })}
-          {/* Owned by the sessions module — it decides what a new session is. */}
           <NewSessionMenu />
         </div>
       ) : (
@@ -177,7 +178,7 @@ function Header() {
         </span>
       )}
 
-      <div data-tauri-drag-region className="min-w-5 flex-1 self-stretch" />
+      <div className="min-w-5 flex-1 self-stretch" />
 
       {onSessions && tabs.length > 0 && (
         <button

@@ -27,7 +27,7 @@ export default function SettingsView() {
   const resolvedMode = useResolvedMode();
 
   return (
-    <div className="bg-background flex min-w-0 flex-1">
+    <div className="flex min-w-0 flex-1">
       <SettingsNav
         categories={CATEGORIES}
         value={category}

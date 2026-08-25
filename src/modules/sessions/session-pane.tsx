@@ -6,13 +6,12 @@ import type { Edge, Rect } from '../../lib/layout';
 import type { SessionType } from '../../store/app';
 import PaneDropZones from './pane-drop-zones';
 import { Terminal } from '@/components/Terminal';
+import { TerctlLogo } from '@/components/chrome/TerctlLogo';
 
 interface SessionPaneProps {
   session: SessionType;
-  /** Percentage rect within the split tree; undefined = not in the active tab. */
   rect: Rect | undefined;
   active: boolean;
-  /** True when the active tab holds more than one pane. */
   isSplit: boolean;
   resizing: boolean;
   showZones: boolean;
@@ -21,6 +20,8 @@ interface SessionPaneProps {
   onActivate: () => void;
   onClose: () => void;
   onClosed: () => void;
+  onDuplicate: () => void;
+  onDuplicateSplit: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onSplit: (edge: Edge) => void;
@@ -38,6 +39,8 @@ export default function SessionPane({
   onActivate,
   onClose,
   onClosed,
+  onDuplicate,
+  onDuplicateSplit,
   onDragStart,
   onDragEnd,
   onSplit,
@@ -59,13 +62,10 @@ export default function SessionPane({
         transition: resizing
           ? 'none'
           : 'inset 0.18s cubic-bezier(0.22,1,0.36,1)',
+        animation: 'paneEnter 0.24s cubic-bezier(0.22,1,0.36,1)',
       }}
       onMouseDown={() => !active && onActivate()}
     >
-      {/* Uniform structure (box -> bar + term) for every pane so the Terminal
-          never changes tree position — the bar is merely hidden when the pane
-          isn't part of a split. No remount means no lost scrollback when
-          splitting or unsplitting. */}
       <div
         className={cn(
           'absolute flex flex-col overflow-hidden transition-all duration-150',
@@ -126,11 +126,25 @@ export default function SessionPane({
             resizing && 'pointer-events-none',
           )}
         >
-          <Terminal
-            sessionId={session.id}
-            scheme={termScheme}
-            onClosed={onClosed}
-          />
+          {session.status === 'connecting' ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+              <span className="animate-[bootBreathe_1.6s_ease-in-out_infinite] text-(--text)">
+                <TerctlLogo size={54} />
+              </span>
+              <span className="font-mono text-xs text-(--text-dim)">
+                Connecting to {session.label}…
+              </span>
+            </div>
+          ) : (
+            <Terminal
+              sessionId={session.id}
+              scheme={termScheme}
+              onClosed={onClosed}
+              onDuplicate={onDuplicate}
+              onDuplicateSplit={onDuplicateSplit}
+              onCloseSession={onClose}
+            />
+          )}
         </div>
       </div>
 
