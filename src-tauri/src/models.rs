@@ -44,6 +44,10 @@ pub struct Host {
     pub os: Option<String>,
     #[serde(default)]
     pub jump_host_id: Option<String>,
+    /// Pinned to the Starred section on the Hosts page. Defaulted so rows
+    /// written before the column existed still deserialize.
+    #[serde(default)]
+    pub starred: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]

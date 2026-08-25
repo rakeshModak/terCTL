@@ -14,6 +14,8 @@ export const hostsService = {
   add: (newHost: NewHostType) => call<HostType>('add_host', { newHost }),
   update: (host: HostType) => call<void>('update_host', { host }),
   remove: (id: string) => call<void>('delete_host', { id }),
+  setStarred: (id: string, starred: boolean) =>
+    call<void>('set_host_starred', { id, starred }),
 
   listGroups: () => call<GroupType[]>('list_groups'),
   addGroup: (name: string, parentId: string | null = null) =>

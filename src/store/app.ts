@@ -210,6 +210,26 @@ export const refreshTagsAtom = atom(null, async (_get, set) => {
   set(allTagsAtom, await hostsService.listTags());
 });
 
+export const toggleHostStarAtom = atom(
+  null,
+  async (get, set, hostId: string) => {
+    const host = get(hostsAtom).find((h) => h.id === hostId);
+    if (!host) return;
+    const next = !host.starred;
+    const apply = (starred: boolean) =>
+      set(
+        hostsAtom,
+        get(hostsAtom).map((h) => (h.id === hostId ? { ...h, starred } : h)),
+      );
+    apply(next);
+    try {
+      await hostsService.setStarred(hostId, next);
+    } catch {
+      apply(!next);
+    }
+  },
+);
+
 export const setHostOsAtom = atom(
   null,
   (get, set, hostId: string, os: string) => {
