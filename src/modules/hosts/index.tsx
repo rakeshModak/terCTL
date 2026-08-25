@@ -153,7 +153,7 @@ export default function HostsPage() {
     sessions.length > 0 && !view.insideGroup && !view.searching;
 
   return (
-    <div className="bg-background flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto">
       <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col px-6 pt-6 pb-10">
         <HostsHeader
           hostCount={hosts.length}

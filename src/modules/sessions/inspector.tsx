@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import {
+  Check,
   Copy,
+  CopyPlus,
   FolderSymlink,
   Network,
   PanelRightClose,
@@ -10,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { writeClipboard } from '@/lib/clipboard';
 import type { HostType } from '@/types/host';
 import type { SessionType } from '../../store/app';
 import MetricsPanel from './metrics-panel';
@@ -26,24 +30,62 @@ interface InspectorProps {
 
 const STATUS_LABEL: Record<SessionType['status'], string> = {
   connected: 'CONNECTED',
+  connecting: 'CONNECTING',
   disconnected: 'DISCONNECTED',
   reconnecting: 'RECONNECTING',
 };
 
-/** label / value line in the detail grid. */
+/** How long the tick stays up after a successful copy. */
+const COPIED_MS = 1200;
+
+/** label / value line in the detail grid. `copyable` adds a clipboard button. */
 function Detail({
   label,
   value,
   tone,
+  copyable,
 }: {
   label: string;
   value: string;
   tone?: string;
+  copyable?: boolean;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!copyable) {
+    return (
+      <>
+        <dt className="text-muted-foreground">{label}</dt>
+        <dd className={cn('truncate', tone)}>{value}</dd>
+      </>
+    );
+  }
+
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className={cn('truncate', tone)}>{value}</dd>
+      <dd className={cn('flex min-w-0 items-center gap-1', tone)}>
+        <span className="truncate">{value}</span>
+        <button
+          type="button"
+          title={copied ? 'Copied' : `Copy ${label}`}
+          aria-label={`Copy ${label}`}
+          onClick={() => {
+            void writeClipboard(value).then((ok) => {
+              if (!ok) return;
+              setCopied(true);
+              setTimeout(() => setCopied(false), COPIED_MS);
+            });
+          }}
+          className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer transition-colors"
+        >
+          {copied ? (
+            <Check className="text-chart-4 size-3" />
+          ) : (
+            <Copy className="size-3" />
+          )}
+        </button>
+      </dd>
     </>
   );
 }
@@ -101,7 +143,7 @@ export default function Inspector({
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-2xs">
           {host ? (
             <>
-              <Detail label="host" value={host.hostname} />
+              <Detail label="host" value={host.hostname} copyable />
               <Detail label="user" value={host.username} />
               <Detail label="port" value={String(host.port)} />
               <Detail
@@ -143,7 +185,7 @@ export default function Inspector({
           </>
         )}
         <Button variant="outline" size="sm" onClick={onDuplicate}>
-          {isLocal ? <SquareTerminal /> : <Copy />}
+          {isLocal ? <SquareTerminal /> : <CopyPlus />}
           {isLocal ? 'New shell' : 'Duplicate'}
         </Button>
         <Button variant="destructive" size="sm" onClick={onDisconnect}>

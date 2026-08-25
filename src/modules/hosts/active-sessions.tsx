@@ -12,12 +12,14 @@ interface ActiveSessionsProps {
 
 const DOT: Record<SessionType['status'], string> = {
   connected: 'bg-primary',
+  connecting: 'bg-chart-5',
   reconnecting: 'bg-chart-5',
   disconnected: 'bg-muted-foreground/40',
 };
 
 const STATUS_LABEL: Record<SessionType['status'], string> = {
   connected: 'Connected',
+  connecting: 'Connecting…',
   reconnecting: 'Reconnecting…',
   disconnected: 'Disconnected',
 };

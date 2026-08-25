@@ -1,23 +1,44 @@
+import type { CSSProperties } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { THEMES } from '@/constants/themes';
-import { themeSwatch, type ResolvedMode } from '@/lib/theme';
+import { themeArtScene } from '@/constants/theme-art';
+import { themeSwatch, themeTokens, type ResolvedMode } from '@/lib/theme';
 
 interface ThemePickerProps {
   value: string;
   onChange: (theme: string) => void;
+  accent: string;
   mode: ResolvedMode;
+}
+
+const ART_TOKENS = [
+  '--brand',
+  '--brand-2',
+  '--background',
+  '--sidebar',
+  '--text-bright',
+  '--text-faintest',
+] as const;
+
+function artStyle(theme: string, accent: string, mode: ResolvedMode) {
+  const tokens = themeTokens({ accent, theme, mode });
+  const style: Record<string, string> = {};
+  for (const token of ART_TOKENS) style[token] = tokens[token];
+  return style as CSSProperties;
 }
 
 export default function ThemePicker({
   value,
   onChange,
+  accent,
   mode,
 }: ThemePickerProps) {
   return (
     <div className="flex flex-wrap gap-3">
       {Object.keys(THEMES).map((name) => {
         const active = name === value;
+        const Scene = themeArtScene(name, 'workspace');
         return (
           <button
             key={name}
@@ -30,9 +51,18 @@ export default function ThemePicker({
             )}
           >
             <span
-              className="block h-16 w-full"
-              style={{ background: themeSwatch(name, mode) }}
-            />
+              className="relative block h-16 w-full overflow-hidden"
+              style={{
+                background: themeSwatch(name, mode),
+                ...(Scene ? artStyle(name, accent, mode) : {}),
+              }}
+            >
+              {Scene && (
+                <span className="absolute inset-0 opacity-90 [&>svg]:size-full">
+                  <Scene />
+                </span>
+              )}
+            </span>
             <span className="flex items-center gap-2 px-3 py-2">
               <span
                 className={cn(
