@@ -1,4 +1,4 @@
-import { useRef, type MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useRouterState } from '@tanstack/react-router';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -42,20 +42,13 @@ function Header() {
   const setDraggingTab = useSetAtom(setDraggingTabAtom);
   const splitActiveTab = useSetAtom(splitActiveTabAtom);
 
-  const lastDownRef = useRef(0);
   const onMouseDown = (e: MouseEvent) => {
     if (e.button !== 0) return;
     if (!e.currentTarget.contains(e.target as Node)) return;
 
     if ((e.target as HTMLElement).closest('[data-no-drag]')) return;
 
-    const now = Date.now();
-    if (now - lastDownRef.current < 400) {
-      lastDownRef.current = 0;
-      void getCurrentWindow().toggleMaximize();
-      return;
-    }
-    lastDownRef.current = now;
+    if (e.detail > 1) return;
 
     const startX = e.clientX;
     const startY = e.clientY;
@@ -76,11 +69,18 @@ function Header() {
     window.addEventListener('mouseup', cleanup);
   };
 
+  const onDoubleClick = (e: MouseEvent) => {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('[data-no-drag]')) return;
+    void getCurrentWindow().toggleMaximize();
+  };
+
   const showTabs = onSessions && tabs.length > 0;
 
   return (
     <div
       onMouseDown={onMouseDown}
+      onDoubleClick={onDoubleClick}
       className={cn(
         'border-border bg-background relative isolate flex h-[46px] shrink-0 items-center gap-3.5 border-b',
         IS_MAC ? 'pr-3.5 pl-[86px]' : 'pr-0 pl-3.5',
@@ -179,7 +179,14 @@ function Header() {
         </span>
       )}
 
-      <div data-tauri-drag-region className="min-w-5 flex-1 self-stretch" />
+      {/*
+       * Deliberately NOT a `data-tauri-drag-region`. Tauri's injected drag.js
+       * binds its own document-level mousedown and invokes internal_toggle_maximize
+       * on `e.detail === 2` — on top of the handlers above, that fired maximize
+       * twice per double-click, so the window snapped back the instant it grew.
+       * Dragging and maximizing are both wired by hand on the header root.
+       */}
+      <div className="min-w-5 flex-1 self-stretch" />
 
       {onSessions && tabs.length > 0 && (
         <button
