@@ -38,9 +38,7 @@ type DeleteTarget =
   { kind: 'group'; group: GroupType } | { kind: 'host'; host: HostType };
 
 const GRID = 'grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(204px,1fr))]';
-// The Starred row is a shortcut, not the catalogue: smaller cards, and capped
-// rather than 1fr so they stay small instead of stretching across the page —
-// the row simply ends where the cards end.
+
 const GRID_COMPACT =
   'grid gap-4 grid-cols-[repeat(auto-fill,minmax(158px,220px))]';
 
