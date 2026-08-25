@@ -9,16 +9,30 @@ export const updateStatusAtom = atom<UpdateStatus>('idle');
 export const availableUpdateAtom = atom<Update | null>(null);
 export const updateProgressAtom = atom(0); // 0..100
 export const updateErrorAtom = atom<string | null>(null);
-// Set when the user hits "Later" — hides the banner until the next check/restart.
 export const updateDismissedAtom = atom(false);
+export const lastCheckedAtom = atom<number | null>(null);
 
-// Check GitHub for a newer signed release. Silent: only surfaces the banner when
-// one is found. Used both on startup and by the Settings button.
+const CHECK_TIMEOUT_MS = 60_000;
+
+const WATCHDOG_MS = CHECK_TIMEOUT_MS + 10_000;
+
+function withWatchdog<T>(work: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const guard = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error('Timed out reaching the update server.')),
+      WATCHDOG_MS,
+    );
+  });
+  return Promise.race([work, guard]).finally(() => clearTimeout(timer));
+}
+
 export const checkForUpdateAtom = atom(null, async (_get, set) => {
   set(updateStatusAtom, 'checking');
   set(updateErrorAtom, null);
   try {
-    const update = await check();
+    const update = await withWatchdog(check({ timeout: CHECK_TIMEOUT_MS }));
+    set(lastCheckedAtom, Date.now());
     if (update) {
       set(availableUpdateAtom, update);
       set(updateDismissedAtom, false);
@@ -28,6 +42,7 @@ export const checkForUpdateAtom = atom(null, async (_get, set) => {
       set(updateStatusAtom, 'uptodate');
     }
   } catch (e) {
+    set(lastCheckedAtom, Date.now());
     set(updateErrorAtom, String(e));
     set(updateStatusAtom, 'error');
   }
