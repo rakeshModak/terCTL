@@ -10,10 +10,8 @@ import { TerctlLogo } from '@/components/chrome/TerctlLogo';
 
 interface SessionPaneProps {
   session: SessionType;
-  /** Percentage rect within the split tree; undefined = not in the active tab. */
   rect: Rect | undefined;
   active: boolean;
-  /** True when the active tab holds more than one pane. */
   isSplit: boolean;
   resizing: boolean;
   showZones: boolean;
@@ -64,16 +62,10 @@ export default function SessionPane({
         transition: resizing
           ? 'none'
           : 'inset 0.18s cubic-bezier(0.22,1,0.36,1)',
-        // Sessions are never restored on boot, so a pane only ever mounts when
-        // one is genuinely new — the mount itself is the cue to animate on.
         animation: 'paneEnter 0.24s cubic-bezier(0.22,1,0.36,1)',
       }}
       onMouseDown={() => !active && onActivate()}
     >
-      {/* Uniform structure (box -> bar + term) for every pane so the Terminal
-          never changes tree position — the bar is merely hidden when the pane
-          isn't part of a split. No remount means no lost scrollback when
-          splitting or unsplitting. */}
       <div
         className={cn(
           'absolute flex flex-col overflow-hidden transition-all duration-150',
@@ -134,15 +126,8 @@ export default function SessionPane({
             resizing && 'pointer-events-none',
           )}
         >
-          {/* A placeholder pane: the split has already happened visually, but
-              the backend session doesn't exist yet. Mounting Terminal here
-              would subscribe to a session id nothing will ever emit for. */}
           {session.status === 'connecting' ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              {/* The static mark, not TerctlLoader: the loader slides its six
-                  pieces out and back each cycle, and at pane size those
-                  incomplete frames read as a broken logo rather than motion.
-                  A breathing pulse keeps it alive while staying whole. */}
               <span className="animate-[bootBreathe_1.6s_ease-in-out_infinite] text-(--text)">
                 <TerctlLogo size={54} />
               </span>

@@ -33,13 +33,8 @@ export const tagFilterAtom = atom<string | null>(null);
 export const sessionsAtom = atom<SessionType[]>([]);
 export const tabsAtom = atom<TabType[]>([]);
 export const activeTabIdAtom = atom<string | null>(null);
-// The session focused within the active tab (drives the inspector/metrics).
 export const activeSessionIdAtom = atom<string | null>(null);
-
-// The tab currently being dragged (for split drop zones).
 export const draggingTabIdAtom = atom<string | null>(null);
-// The pane (session) being dragged by its header to reposition it WITHIN the
-// active tab's Deck.
 export const draggingPaneSessionIdAtom = atom<string | null>(null);
 
 export const connectingAtom = atom<{ hostId: string; label: string } | null>(
@@ -274,22 +269,16 @@ export const openLocalTerminalAtom = atom(null, async (get, set) => {
 
 let pendingPaneCounter = 0;
 const PENDING_PANE_PREFIX = 'pending-';
-/** True for a placeholder pane's client-side id, which no backend knows about. */
+
 const isPendingPaneId = (id: string) => id.startsWith(PENDING_PANE_PREFIX);
 
-// Opens a second session against the same host and drops it straight into the
-// current tab's Deck beside `targetSessionId`, rather than as a new tab.
-//
-// The pane is inserted *before* the connection is attempted, as a placeholder
-// with a client-side id and a 'connecting' status. That keeps the source
-// terminal visible — the alternative, the full-bleed connecting overlay, hides
-// the very pane being duplicated. Once the backend session exists, the
-// placeholder id is swapped for the real one exactly as `reconnectAtom` does.
 export const duplicateIntoSplitAtom = atom(
   null,
   async (get, set, targetSessionId: string, edge: Edge) => {
     const session = get(sessionsAtom).find((s) => s.id === targetSessionId);
-    const tab = get(tabsAtom).find((t) => hasSession(t.layout, targetSessionId));
+    const tab = get(tabsAtom).find((t) =>
+      hasSession(t.layout, targetSessionId),
+    );
     if (!session || !tab) return;
 
     const isLocal = session.hostId === LOCAL_HOST_ID;
@@ -338,10 +327,7 @@ export const duplicateIntoSplitAtom = atom(
   },
 );
 
-// Explicit close of a single session (disconnected-banner "Close tab"): tears
-// down the backend session and removes its pane; drops the tab if empty.
 export const closeSessionAtom = atom(null, (get, set, sessionId: string) => {
-  // A placeholder pane has no backend session behind its id yet.
   if (!isPendingPaneId(sessionId)) void sshService.disconnect(sessionId);
   set(
     sessionsAtom,
@@ -447,10 +433,6 @@ export const setActiveSessionAtom = atom(
   },
 );
 
-// ---- helpers ----
-
-// Returns a label unique among `existing`, appending " (n)" on collision
-// (Termius-style): "test" → "test (1)" → "test (2)".
 function uniqueLabel(base: string, existing: string[]): string {
   if (!existing.includes(base)) return base;
   let n = 1;
@@ -484,9 +466,6 @@ function addTab(get: Getter, set: Setter, session: SessionType): void {
   set(activeSessionIdAtom, session.id);
 }
 
-// Add a freshly-opened session as another pane inside an existing tab, beside
-// `targetSessionId`. A tab that was a lone host becomes a Deck, so it picks up
-// a workspace label the same way a tab-drop split does.
 function addPaneToTab(
   get: Getter,
   set: Setter,
@@ -528,8 +507,6 @@ function addPaneToTab(
   set(activeSessionIdAtom, session.id);
 }
 
-// Pull a pane back out of its tab without touching the backend. Used when a
-// placeholder's connection fails, so there is nothing to disconnect.
 function dropPane(get: Getter, set: Setter, sessionId: string): void {
   set(
     sessionsAtom,
@@ -545,8 +522,6 @@ function dropPane(get: Getter, set: Setter, sessionId: string): void {
   resolveActive(get, set, tabs, sessionId);
 }
 
-// After removing sessions/tabs, pick a valid active tab + session and commit
-// the new tab list.
 function resolveActive(
   get: Getter,
   set: Setter,

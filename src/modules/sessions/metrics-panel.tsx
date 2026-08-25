@@ -2,18 +2,18 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { metricsService } from '../../services/metrics.service';
 import type { MetricsType } from '@/types/metrics';
 import { TerctlLoader } from '../../components/chrome/TerctlLogo';
+import { uuid } from '@/utils/uuid';
 
-/** Samples kept for the history graphs (~1 minute at the 3s poll interval). */
 const HIST = 34;
-/** Segments in a meter bar. */
 const BLOCKS = 20;
+
+const BLOCK_IDS = Array.from({ length: BLOCKS }, () => uuid());
+const HIST_IDS = Array.from({ length: HIST }, () => uuid());
 
 interface Sample {
   cpu: number;
   net: number;
 }
-
-// --- formatting ----------------------------------------------------------
 
 function fmtRate(bps: number): string {
   if (bps < 1024) return `${bps} B/s`;
@@ -56,7 +56,7 @@ function Section({
 }) {
   return (
     <fieldset className="border-border rounded-md border px-2 pt-0 pb-2">
-      <legend className="px-1 font-mono text-3xs tracking-wide">
+      <legend className="text-3xs px-1 font-mono tracking-wide">
         <span className="text-primary">{index}</span>
         <span className="text-muted-foreground">{name}</span>
       </legend>
@@ -69,9 +69,9 @@ function Meter({ pct }: { pct: number }) {
   const filled = Math.round((clampPct(pct) / 100) * BLOCKS);
   return (
     <div className="flex h-2.5 flex-1 items-stretch gap-px" aria-hidden="true">
-      {Array.from({ length: BLOCKS }, (_, i) => (
+      {BLOCK_IDS.map((id, i) => (
         <span
-          key={i}
+          key={id}
           className="flex-1 rounded-[1px]"
           style={{
             background: i < filled ? fillColor(i / BLOCKS) : EMPTY_FILL,
@@ -91,10 +91,10 @@ function History({
   max: number;
   height?: number;
 }) {
-  const slots = Array.from(
-    { length: HIST },
-    (_, i) => data[i - (HIST - data.length)] ?? null,
-  );
+  const slots = HIST_IDS.map((id, i) => ({
+    id,
+    value: data[i - (HIST - data.length)] ?? null,
+  }));
   const ceiling = Math.max(max, 1);
   return (
     <div
@@ -102,15 +102,16 @@ function History({
       style={{ height }}
       aria-hidden="true"
     >
-      {slots.map((v, i) => {
-        const ratio = v === null ? 0 : clampPct((v / ceiling) * 100) / 100;
+      {slots.map(({ id, value }) => {
+        const ratio =
+          value === null ? 0 : clampPct((value / ceiling) * 100) / 100;
         return (
           <span
-            key={i}
+            key={id}
             className="flex-1 rounded-[1px]"
             style={{
-              height: v === null ? 0 : `${Math.max(ratio * 100, 4)}%`,
-              background: v === null ? 'transparent' : fillColor(ratio),
+              height: value === null ? 0 : `${Math.max(ratio * 100, 4)}%`,
+              background: value === null ? 'transparent' : fillColor(ratio),
             }}
           />
         );
@@ -129,7 +130,7 @@ function Row({
   muted?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-2 font-mono text-2xs">
+    <div className="text-2xs flex items-baseline justify-between gap-2 font-mono">
       <span className="text-muted-foreground">{label}</span>
       <span
         className={
@@ -146,7 +147,7 @@ function MeterRow({ pct }: { pct: number }) {
   return (
     <div className="mt-0.5 flex items-center gap-2">
       <Meter pct={pct} />
-      <span className="w-8 shrink-0 text-right font-mono text-2xs font-semibold tabular-nums">
+      <span className="text-2xs w-8 shrink-0 text-right font-mono font-semibold tabular-nums">
         {Math.round(clampPct(pct))}%
       </span>
     </div>
@@ -228,7 +229,7 @@ export default function MetricsPanel({
         <div className="mt-1">
           <History data={hist.map((s) => s.cpu)} max={100} />
         </div>
-        <div className="text-muted-foreground mt-1 font-mono text-2xs">
+        <div className="text-muted-foreground text-2xs mt-1 font-mono">
           load avg: {load[0] ?? '—'} {load[1] ?? '—'} {load[2] ?? '—'}
         </div>
       </Section>
@@ -262,7 +263,7 @@ export default function MetricsPanel({
           <div className="flex flex-col gap-1">
             {/* The two columns are otherwise identical — same width, same
                 colour — so which is CPU and which is memory is a guess. */}
-            <div className="text-muted-foreground/70 flex items-baseline gap-2 font-mono text-2xs">
+            <div className="text-muted-foreground/70 text-2xs flex items-baseline gap-2 font-mono">
               <span className="min-w-0 flex-1 truncate">process</span>
               <span className="w-10 shrink-0 text-right">cpu</span>
               <span className="w-10 shrink-0 text-right">mem</span>
@@ -270,7 +271,7 @@ export default function MetricsPanel({
             {m.procs.map((p, i) => (
               <div
                 key={`${p.name}-${i}`}
-                className="flex items-baseline gap-2 font-mono text-2xs"
+                className="text-2xs flex items-baseline gap-2 font-mono"
               >
                 <span className="text-foreground min-w-0 flex-1 truncate">
                   {p.name}

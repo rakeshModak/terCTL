@@ -266,9 +266,7 @@ select {
     transform: none;
   }
 }
-/* A pane joining a Deck. The neighbouring pane is already animating its inset
-   to make room, so the newcomer only fades and settles in from its split edge —
-   scaling the whole pane would blur the terminal glyphs mid-flight. */
+
 @keyframes paneEnter {
   from {
     opacity: 0;

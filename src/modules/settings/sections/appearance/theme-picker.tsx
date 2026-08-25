@@ -8,17 +8,10 @@ import { themeSwatch, themeTokens, type ResolvedMode } from '@/lib/theme';
 interface ThemePickerProps {
   value: string;
   onChange: (theme: string) => void;
-  /** The live accent, so a preview shows the artwork the user would get. */
   accent: string;
   mode: ResolvedMode;
 }
 
-/**
- * The tokens the scenes paint in. A preview has to override these locally:
- * the artwork reads CSS custom properties, which otherwise resolve to whatever
- * theme is currently applied — so every card would show its scene in the
- * active theme's colours instead of its own.
- */
 const ART_TOKENS = [
   '--brand',
   '--brand-2',
@@ -64,8 +57,6 @@ export default function ThemePicker({
                 ...(Scene ? artStyle(name, accent, mode) : {}),
               }}
             >
-              {/* An illustrated theme needs no badge or heading to mark it —
-                  its own scene in the swatch says it plainly. */}
               {Scene && (
                 <span className="absolute inset-0 opacity-90 [&>svg]:size-full">
                   <Scene />
