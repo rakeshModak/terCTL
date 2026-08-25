@@ -9,31 +9,11 @@ export const updateStatusAtom = atom<UpdateStatus>('idle');
 export const availableUpdateAtom = atom<Update | null>(null);
 export const updateProgressAtom = atom(0); // 0..100
 export const updateErrorAtom = atom<string | null>(null);
-// Set when the user hits "Later" — hides the banner until the next check/restart.
 export const updateDismissedAtom = atom(false);
-/** Epoch ms of the last completed check, so a no-op result is still visible. */
 export const lastCheckedAtom = atom<number | null>(null);
 
-/**
- * `check()` has no timeout of its own, so a stalled request hangs forever —
- * and the Settings button is disabled while checking, leaving no way to retry
- * short of restarting the app.
- *
- * The value has to clear the endpoint's real worst case, not a tidy round
- * number. Timing the release URL from a healthy connection (github.com itself
- * answers in 135ms) gave 22.6s, 22.6s, then 0.4s — the redirect to GitHub's
- * asset CDN intermittently stalls in the TLS handshake for ~22s before
- * recovering. A 20s timeout sat just underneath that and aborted requests
- * that were about to succeed, turning a slow check into a hard failure.
- */
 const CHECK_TIMEOUT_MS = 60_000;
 
-/**
- * Client-side backstop, deliberately longer than the plugin's own timeout so
- * the plugin's more specific error wins in the normal case. This only fires if
- * `check()` never settles at all — which is the state that used to leave the
- * Settings button disabled and spinning until the app was restarted.
- */
 const WATCHDOG_MS = CHECK_TIMEOUT_MS + 10_000;
 
 function withWatchdog<T>(work: Promise<T>): Promise<T> {
@@ -47,8 +27,6 @@ function withWatchdog<T>(work: Promise<T>): Promise<T> {
   return Promise.race([work, guard]).finally(() => clearTimeout(timer));
 }
 
-// Check GitHub for a newer signed release. Silent: only surfaces the banner when
-// one is found. Used both on startup and by the Settings button.
 export const checkForUpdateAtom = atom(null, async (_get, set) => {
   set(updateStatusAtom, 'checking');
   set(updateErrorAtom, null);

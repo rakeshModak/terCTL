@@ -22,8 +22,6 @@ export default function UpdateRow() {
 
   const checking = updateStatus === 'checking';
 
-  // Without this the row reads identically before and after a successful
-  // check, so "already up to date" was indistinguishable from a dead button.
   const checkedAt = lastChecked
     ? new Date(lastChecked).toLocaleTimeString([], {
         hour: '2-digit',
@@ -32,8 +30,7 @@ export default function UpdateRow() {
     : null;
 
   let label: string;
-  // The timeout is 60s because the release endpoint can stall ~22s in the TLS
-  // handshake; say so rather than leaving a silent spinner for that long.
+
   if (checking) label = 'Checking for updates… this can take a moment.';
   else if (updateStatus === 'uptodate')
     label = checkedAt
