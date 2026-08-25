@@ -1,4 +1,3 @@
-
 export interface ThemeSurfaces {
   background: string;
   card: string;
@@ -247,11 +246,7 @@ export const THEMES: Record<string, ThemePalette> = {
       deep: '#ebf4ee',
     },
   },
-  // ---- illustrated themes ----
-  // These three carry decorative artwork (see constants/theme-art.tsx), keyed
-  // off the `slug` that applyTheme writes to data-theme. Their surfaces are
-  // tinted a little further from neutral than the plain themes so the art reads
-  // as part of the palette rather than pasted on top.
+
   Bloom: {
     slug: 'bloom',
     dark: {

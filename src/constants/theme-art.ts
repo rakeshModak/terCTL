@@ -28,10 +28,6 @@ const SLOT_OPACITY: Record<ArtSlot, number> = {
   workspace: 0.6,
   page: 0.34,
   sidebar: 0.28,
-  // The header is a 46px strip carrying the wordmark, tab pills and caption
-  // buttons, so it takes the lightest touch of any slot. `--brand` follows the
-  // *accent*, not the theme, and the near-white accents drove art at 0.35 to
-  // roughly the same luminance as the title text next to it.
   header: 0.2,
 };
 

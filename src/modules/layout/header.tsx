@@ -110,7 +110,7 @@ function Header() {
               <div
                 key={tab.id}
                 className={cn(
-                  'flex max-w-[190px] cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs whitespace-nowrap transition-colors',
+                  'flex max-w-47.5 cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs whitespace-nowrap transition-colors',
                   active
                     ? 'border-primary/35 bg-primary/12 text-foreground'
                     : 'bg-foreground/3 text-muted-foreground hover:bg-foreground/6 border-transparent',
@@ -170,7 +170,6 @@ function Header() {
               </div>
             );
           })}
-          {/* Owned by the sessions module — it decides what a new session is. */}
           <NewSessionMenu />
         </div>
       ) : (
@@ -179,13 +178,6 @@ function Header() {
         </span>
       )}
 
-      {/*
-       * Deliberately NOT a `data-tauri-drag-region`. Tauri's injected drag.js
-       * binds its own document-level mousedown and invokes internal_toggle_maximize
-       * on `e.detail === 2` — on top of the handlers above, that fired maximize
-       * twice per double-click, so the window snapped back the instant it grew.
-       * Dragging and maximizing are both wired by hand on the header root.
-       */}
       <div className="min-w-5 flex-1 self-stretch" />
 
       {onSessions && tabs.length > 0 && (

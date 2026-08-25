@@ -76,9 +76,6 @@ function RootLayout() {
 
   return (
     <div className="relative isolate flex h-screen flex-col overflow-hidden bg-(--bg) text-(--text)">
-      {/* Page-wide artwork for the illustrated themes. `isolate` on the root
-          keeps ThemeArt's -z-10 above the root background and below all
-          content, so any page with a transparent body reveals it. */}
       <ThemeArt slot="page" />
       <BootSplash />
       <Header />

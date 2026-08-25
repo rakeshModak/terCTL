@@ -11,24 +11,14 @@ export interface ContextMenuItem {
 }
 
 interface TerminalContextMenuProps {
-  /** Viewport coordinates of the click that opened the menu. */
   x: number;
   y: number;
   items: ContextMenuItem[];
   onClose: () => void;
 }
 
-/** Keeps the menu off the viewport edge when it opens near a panel corner. */
 const EDGE_GAP = 6;
 
-/**
- * A pointer-positioned menu for the terminal's right click. Built by hand
- * rather than on the Base UI dropdown because that one anchors to a trigger
- * element, and here the anchor is a pair of mouse coordinates.
- *
- * Items are disabled rather than removed so the menu keeps the same height and
- * items stay in the same place between invocations.
- */
 export function TerminalContextMenu({
   x,
   y,
@@ -39,13 +29,10 @@ export function TerminalContextMenu({
   const [pos, setPos] = useState({ left: x, top: y });
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  // Measure once mounted: the menu's size isn't known until it has rendered,
-  // and only then can we tell whether it would overflow the viewport.
   useLayoutEffect(() => {
     const el = menuRef.current;
     if (!el) return;
-    // offsetWidth/Height report the untransformed layout box, so the clamp is
-    // unaffected by the open animation; getBoundingClientRect would not be.
+
     const maxLeft = window.innerWidth - el.offsetWidth - EDGE_GAP;
     const maxTop = window.innerHeight - el.offsetHeight - EDGE_GAP;
     setPos({
@@ -55,8 +42,6 @@ export function TerminalContextMenu({
     el.focus({ preventScroll: true });
   }, [x, y]);
 
-  // Any press outside the menu dismisses it. Listening on pointerdown (rather
-  // than click) means a press that starts elsewhere closes before it lands.
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) onClose();
@@ -136,7 +121,7 @@ export function TerminalContextMenu({
           >
             <span className="flex-1 whitespace-nowrap">{item.label}</span>
             {item.shortcut && (
-              <span className="shrink-0 font-mono text-2xs text-(--text-faint)">
+              <span className="text-2xs shrink-0 font-mono text-(--text-faint)">
                 {item.shortcut}
               </span>
             )}
