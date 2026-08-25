@@ -33,13 +33,8 @@ export const tagFilterAtom = atom<string | null>(null);
 export const sessionsAtom = atom<SessionType[]>([]);
 export const tabsAtom = atom<TabType[]>([]);
 export const activeTabIdAtom = atom<string | null>(null);
-// The session focused within the active tab (drives the inspector/metrics).
 export const activeSessionIdAtom = atom<string | null>(null);
-
-// The tab currently being dragged (for split drop zones).
 export const draggingTabIdAtom = atom<string | null>(null);
-// The pane (session) being dragged by its header to reposition it WITHIN the
-// active tab's Deck.
 export const draggingPaneSessionIdAtom = atom<string | null>(null);
 
 export const connectingAtom = atom<{ hostId: string; label: string } | null>(
@@ -215,6 +210,26 @@ export const refreshTagsAtom = atom(null, async (_get, set) => {
   set(allTagsAtom, await hostsService.listTags());
 });
 
+export const toggleHostStarAtom = atom(
+  null,
+  async (get, set, hostId: string) => {
+    const host = get(hostsAtom).find((h) => h.id === hostId);
+    if (!host) return;
+    const next = !host.starred;
+    const apply = (starred: boolean) =>
+      set(
+        hostsAtom,
+        get(hostsAtom).map((h) => (h.id === hostId ? { ...h, starred } : h)),
+      );
+    apply(next);
+    try {
+      await hostsService.setStarred(hostId, next);
+    } catch {
+      apply(!next);
+    }
+  },
+);
+
 export const setHostOsAtom = atom(
   null,
   (get, set, hostId: string, os: string) => {
@@ -272,10 +287,68 @@ export const openLocalTerminalAtom = atom(null, async (get, set) => {
   }
 });
 
-// Explicit close of a single session (disconnected-banner "Close tab"): tears
-// down the backend session and removes its pane; drops the tab if empty.
+let pendingPaneCounter = 0;
+const PENDING_PANE_PREFIX = 'pending-';
+
+const isPendingPaneId = (id: string) => id.startsWith(PENDING_PANE_PREFIX);
+
+export const duplicateIntoSplitAtom = atom(
+  null,
+  async (get, set, targetSessionId: string, edge: Edge) => {
+    const session = get(sessionsAtom).find((s) => s.id === targetSessionId);
+    const tab = get(tabsAtom).find((t) =>
+      hasSession(t.layout, targetSessionId),
+    );
+    if (!session || !tab) return;
+
+    const isLocal = session.hostId === LOCAL_HOST_ID;
+    const host = isLocal
+      ? null
+      : (get(hostsAtom).find((h) => h.id === session.hostId) ?? null);
+    if (!isLocal && !host) return;
+
+    const label = host ? host.label : 'Local';
+    const pendingId = `${PENDING_PANE_PREFIX}${++pendingPaneCounter}`;
+    set(newTabPickerAtom, false);
+    set(connectErrorAtom, null);
+    addPaneToTab(
+      get,
+      set,
+      { id: pendingId, hostId: session.hostId, label, status: 'connecting' },
+      tab.id,
+      targetSessionId,
+      edge,
+    );
+
+    try {
+      const sessionId = isLocal
+        ? await sshService.localConnect()
+        : await sshService.connect(session.hostId);
+      set(
+        sessionsAtom,
+        get(sessionsAtom).map((s) =>
+          s.id === pendingId ? { ...s, id: sessionId, status: 'connected' } : s,
+        ),
+      );
+      set(
+        tabsAtom,
+        get(tabsAtom).map((t) =>
+          hasSession(t.layout, pendingId)
+            ? { ...t, layout: replaceLeaf(t.layout, pendingId, sessionId) }
+            : t,
+        ),
+      );
+      if (get(activeSessionIdAtom) === pendingId)
+        set(activeSessionIdAtom, sessionId);
+    } catch (e) {
+      dropPane(get, set, pendingId);
+      set(connectErrorAtom, { label, message: String(e) });
+    }
+  },
+);
+
 export const closeSessionAtom = atom(null, (get, set, sessionId: string) => {
-  void sshService.disconnect(sessionId);
+  if (!isPendingPaneId(sessionId)) void sshService.disconnect(sessionId);
   set(
     sessionsAtom,
     get(sessionsAtom).filter((s) => s.id !== sessionId),
@@ -295,7 +368,9 @@ export const closeTabAtom = atom(null, (get, set, tabId: string) => {
   const tab = get(tabsAtom).find((t) => t.id === tabId);
   if (!tab) return;
   const ids = paneSessionIds(tab.layout);
-  ids.forEach((id) => void sshService.disconnect(id));
+  ids.forEach((id) => {
+    if (!isPendingPaneId(id)) void sshService.disconnect(id);
+  });
   set(
     sessionsAtom,
     get(sessionsAtom).filter((s) => !ids.includes(s.id)),
@@ -378,10 +453,6 @@ export const setActiveSessionAtom = atom(
   },
 );
 
-// ---- helpers ----
-
-// Returns a label unique among `existing`, appending " (n)" on collision
-// (Termius-style): "test" → "test (1)" → "test (2)".
 function uniqueLabel(base: string, existing: string[]): string {
   if (!existing.includes(base)) return base;
   let n = 1;
@@ -415,8 +486,62 @@ function addTab(get: Getter, set: Setter, session: SessionType): void {
   set(activeSessionIdAtom, session.id);
 }
 
-// After removing sessions/tabs, pick a valid active tab + session and commit
-// the new tab list.
+function addPaneToTab(
+  get: Getter,
+  set: Setter,
+  session: SessionType,
+  tabId: string,
+  targetSessionId: string,
+  edge: Edge,
+): void {
+  const tabs = get(tabsAtom);
+  const tab = tabs.find((t) => t.id === tabId);
+  if (!tab) return;
+
+  const label = uniqueLabel(
+    session.label,
+    get(sessionsAtom).map((s) => s.label),
+  );
+  const wasWorkspace = paneSessionIds(tab.layout).length > 1;
+  const layout = splitTreeAt(
+    tab.layout,
+    targetSessionId,
+    leaf(session.id),
+    edge,
+  );
+
+  set(sessionsAtom, [...get(sessionsAtom), { ...session, label }]);
+  set(
+    tabsAtom,
+    tabs.map((t) =>
+      t.id === tab.id
+        ? {
+            ...t,
+            layout,
+            label: wasWorkspace ? t.label : nextWorkspaceLabel(tabs),
+          }
+        : t,
+    ),
+  );
+  set(activeTabIdAtom, tab.id);
+  set(activeSessionIdAtom, session.id);
+}
+
+function dropPane(get: Getter, set: Setter, sessionId: string): void {
+  set(
+    sessionsAtom,
+    get(sessionsAtom).filter((s) => s.id !== sessionId),
+  );
+  const tabs = get(tabsAtom)
+    .map((t) => {
+      if (!hasSession(t.layout, sessionId)) return t;
+      const layout = removeLeaf(t.layout, sessionId);
+      return layout ? { ...t, layout } : null;
+    })
+    .filter((t): t is TabType => t !== null);
+  resolveActive(get, set, tabs, sessionId);
+}
+
 function resolveActive(
   get: Getter,
   set: Setter,

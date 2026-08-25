@@ -72,7 +72,7 @@ load=$(cut -d" " -f1-3 /proc/loadavg)
 mem=$(awk '/^MemTotal/{t=$2}/^MemAvailable/{a=$2}END{printf "%d %d",t-a,t}' /proc/meminfo)
 disk=$(df -Pk / | awk 'NR==2{printf "%d %d",$3,$2}')
 up=$(cut -d" " -f1 /proc/uptime)
-procs=$(ps -eo comm=,pcpu=,pmem= --sort=-pcpu 2>/dev/null | head -5 | awk '{printf "%s{\"name\":\"%s\",\"cpu\":%s,\"mem\":%s}",(NR>1?",":""),$1,$2+0,$3+0}')
+procs=$(ps -eo comm=,pcpu=,pmem= --sort=-pcpu 2>/dev/null | awk '$1!="ps" && $1!="awk" && $1!="head" && n<5 {printf "%s{\"name\":\"%s\",\"cpu\":%s,\"mem\":%s}",(n++?",":""),$1,$2+0,$3+0}')
 set -- $net; nrx=$1; ntx=$2
 set -- $mem; mu=$1; mt=$2
 set -- $disk; du=$1; dt=$2
