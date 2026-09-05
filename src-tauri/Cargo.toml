@@ -45,7 +45,8 @@ rand = "0.9"
 zeroize = { version = "1", features = ["derive"] }
 russh = "0.62.1"
 tokio = { version = "1.52.3", features = ["rt-multi-thread", "io-util", "sync", "macros", "time", "fs"] }
-portable-pty = "0.9.0"
+# 0.9.0 regresses ConPTY reads on Windows, which leaves local shells blank.
+# 0.8.1 retains the working Windows implementation.
+portable-pty = "0.8.1"
 russh-sftp = "2.3.0"
 tauri-plugin-clipboard-manager = "2.3.2"
-
