@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EditorRouteImport } from './routes/editor'
 import { Route as HostsRouteImport } from './routes/hosts'
 import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -18,6 +19,11 @@ import { Route as TransferRouteImport } from './routes/transfer'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditorRoute = EditorRouteImport.update({
+  id: '/editor',
+  path: '/editor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HostsRoute = HostsRouteImport.update({
@@ -43,6 +49,7 @@ const TransferRoute = TransferRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/editor': typeof EditorRoute
   '/hosts': typeof HostsRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/editor': typeof EditorRoute
   '/hosts': typeof HostsRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/editor': typeof EditorRoute
   '/hosts': typeof HostsRoute
   '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
@@ -65,14 +74,23 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
+  fullPaths:
+    '/' | '/editor' | '/hosts' | '/sessions' | '/settings' | '/transfer'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
-  id: '__root__' | '/' | '/hosts' | '/sessions' | '/settings' | '/transfer'
+  to: '/' | '/editor' | '/hosts' | '/sessions' | '/settings' | '/transfer'
+  id:
+    | '__root__'
+    | '/'
+    | '/editor'
+    | '/hosts'
+    | '/sessions'
+    | '/settings'
+    | '/transfer'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EditorRoute: typeof EditorRoute
   HostsRoute: typeof HostsRoute
   SessionsRoute: typeof SessionsRoute
   SettingsRoute: typeof SettingsRoute
@@ -86,6 +104,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editor': {
+      id: '/editor'
+      path: '/editor'
+      fullPath: '/editor'
+      preLoaderRoute: typeof EditorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hosts': {
@@ -121,6 +146,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EditorRoute: EditorRoute,
   HostsRoute: HostsRoute,
   SessionsRoute: SessionsRoute,
   SettingsRoute: SettingsRoute,

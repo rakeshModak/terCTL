@@ -46,6 +46,8 @@ export const sftpService = {
     call<void>('sftp_rename', { hostId, from, to }),
   remove: (hostId: string, path: string, isDir: boolean) =>
     call<void>('sftp_remove', { hostId, path, isDir }),
+  copy: (hostId: string, from: string, to: string) =>
+    call<void>('sftp_copy', { hostId, from, to }),
   disconnect: (hostId: string) => call<void>('sftp_disconnect', { hostId }),
 
   // Local filesystem

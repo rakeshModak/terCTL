@@ -36,6 +36,7 @@
     "clsx": "^2.1.1",
     "jotai": "^2.20.1",
     "lucide-react": "^1.24.0",
+    "monaco-editor": "^0.55.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-icons": "^5.7.0",
