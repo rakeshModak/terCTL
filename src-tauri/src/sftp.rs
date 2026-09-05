@@ -52,13 +52,13 @@ const WRITE_OVERHEAD: usize = 21;
 const REQUEST_TIMEOUT_SECS: u64 = 60;
 const PROGRESS_INTERVAL: Duration = Duration::from_millis(120);
 
-struct OpError {
-    message: String,
-    fatal: bool,
+pub(crate) struct OpError {
+    pub(crate) message: String,
+    pub(crate) fatal: bool,
 }
 
 impl OpError {
-    fn local(e: impl std::fmt::Display) -> Self {
+    pub(crate) fn local(e: impl std::fmt::Display) -> Self {
         Self {
             message: e.to_string(),
             fatal: false,
@@ -75,18 +75,22 @@ impl From<SftpError> for OpError {
     }
 }
 
-struct SftpConn {
+pub(crate) struct SftpConn {
     _handle: SshConnection,
-    sftp: Arc<RawSftpSession>,
-    max_read: usize,
+    pub(crate) sftp: Arc<RawSftpSession>,
+    pub(crate) max_read: usize,
     max_write: usize,
     max_packet: usize,
+    pub(crate) posix_rename: bool,
 }
 
 impl SftpConn {
-    fn write_chunk(&self, handle: &str) -> usize {
+    pub(crate) fn write_chunk(&self, handle: &str) -> usize {
         self.max_write
-            .min(self.max_packet.saturating_sub(WRITE_OVERHEAD + handle.len()))
+            .min(
+                self.max_packet
+                    .saturating_sub(WRITE_OVERHEAD + handle.len()),
+            )
             .max(FALLBACK_CHUNK.min(self.max_write))
     }
 }
@@ -121,7 +125,12 @@ impl SftpManager {
         self.conns.lock().await.remove(host_id);
     }
 
-    async fn with_conn<T, F, Fut>(&self, store: &Store, host_id: &str, op: F) -> Result<T, String>
+    pub(crate) async fn with_conn<T, F, Fut>(
+        &self,
+        store: &Store,
+        host_id: &str,
+        op: F,
+    ) -> Result<T, String>
     where
         F: FnOnce(Arc<SftpConn>) -> Fut,
         Fut: Future<Output = Result<T, OpError>>,
@@ -173,6 +182,7 @@ async fn open_conn(store: &Store, host_id: &str) -> Result<SftpConn, String> {
     );
 
     let version = session.init().await.map_err(|e| e.to_string())?;
+    let posix_rename = version.extensions.contains_key(crate::editor::POSIX_RENAME);
 
     let mut max_packet = MAX_PACKET_LEN as usize;
     let mut max_read = FALLBACK_CHUNK;
@@ -207,6 +217,7 @@ async fn open_conn(store: &Store, host_id: &str) -> Result<SftpConn, String> {
         max_read,
         max_write,
         max_packet,
+        posix_rename,
     })
 }
 
@@ -302,7 +313,7 @@ async fn read_dir_raw(
     result
 }
 
-fn failed_fatally<T>(result: &Result<T, OpError>) -> bool {
+pub(crate) fn failed_fatally<T>(result: &Result<T, OpError>) -> bool {
     result.as_ref().err().is_some_and(|e| e.fatal)
 }
 
@@ -316,7 +327,9 @@ pub async fn sftp_home(
         let name = conn.sftp.realpath(".").await?;
         match name.files.first() {
             Some(f) => Ok(f.filename.clone()),
-            None => Err(OpError::local("server returned no path for the home folder")),
+            None => Err(OpError::local(
+                "server returned no path for the home folder",
+            )),
         }
     })
     .await
@@ -348,7 +361,7 @@ pub async fn sftp_list(
     .await
 }
 
-async fn read_chunk(
+pub(crate) async fn read_chunk(
     sftp: &RawSftpSession,
     handle: &str,
     offset: u64,
@@ -450,7 +463,10 @@ async fn read_local_chunk(file: &mut tokio::fs::File, len: usize) -> Result<Vec<
     let mut buf = vec![0u8; len];
     let mut filled = 0;
     while filled < len {
-        let n = file.read(&mut buf[filled..]).await.map_err(OpError::local)?;
+        let n = file
+            .read(&mut buf[filled..])
+            .await
+            .map_err(OpError::local)?;
         if n == 0 {
             break;
         }
@@ -535,7 +551,11 @@ pub async fn sftp_download(
         .with_conn(&store, &host_id, move |conn| async move {
             let handle = conn
                 .sftp
-                .open(remote_path.as_str(), OpenFlags::READ, FileAttributes::empty())
+                .open(
+                    remote_path.as_str(),
+                    OpenFlags::READ,
+                    FileAttributes::empty(),
+                )
                 .await?
                 .handle;
             let total = conn
@@ -680,6 +700,94 @@ pub async fn sftp_remove(
         }
     })
     .await
+}
+
+// SFTP has no server-side copy, so the bytes round-trip through this client.
+#[tauri::command]
+pub async fn sftp_copy(
+    store: State<'_, Store>,
+    sftp: State<'_, SftpManager>,
+    host_id: String,
+    from: String,
+    to: String,
+) -> Result<(), String> {
+    sftp.with_conn(&store, &host_id, move |conn| async move {
+        copy_path(&conn, &from, &to).await
+    })
+    .await
+}
+
+async fn copy_path(conn: &SftpConn, from: &str, to: &str) -> Result<(), OpError> {
+    let attrs = conn.sftp.stat(from).await?.attrs;
+    let mode = FileAttributes {
+        permissions: attrs.permissions.map(|p| p & 0o7777),
+        ..FileAttributes::empty()
+    };
+
+    if !attrs.is_dir() {
+        return copy_file(conn, from, to, mode).await;
+    }
+
+    conn.sftp.mkdir(to, mode).await?;
+    for (name, _) in read_dir_raw(&conn.sftp, from).await? {
+        Box::pin(copy_path(
+            conn,
+            &join_remote(from, &name),
+            &join_remote(to, &name),
+        ))
+        .await?;
+    }
+    Ok(())
+}
+
+async fn copy_file(
+    conn: &SftpConn,
+    from: &str,
+    to: &str,
+    mode: FileAttributes,
+) -> Result<(), OpError> {
+    let src = conn
+        .sftp
+        .open(from, OpenFlags::READ, FileAttributes::empty())
+        .await?
+        .handle;
+    let dst = conn
+        .sftp
+        .open(
+            to,
+            OpenFlags::CREATE | OpenFlags::WRITE | OpenFlags::TRUNCATE | OpenFlags::EXCLUDE,
+            mode,
+        )
+        .await?
+        .handle;
+
+    let result = stream_copy(conn, &src, &dst).await;
+    if !failed_fatally(&result) {
+        let _ = conn.sftp.close(src).await;
+        let _ = conn.sftp.close(dst).await;
+        if result.is_err() {
+            let _ = conn.sftp.remove(to).await;
+        }
+    }
+    result
+}
+
+async fn stream_copy(conn: &SftpConn, src: &str, dst: &str) -> Result<(), OpError> {
+    let chunk = conn.max_read.min(conn.write_chunk(dst));
+    let mut offset = 0u64;
+    loop {
+        let data = read_chunk(&conn.sftp, src, offset, chunk).await?;
+        if data.is_empty() {
+            break;
+        }
+        let len = data.len();
+        conn.sftp.write(dst, offset, data).await?;
+        offset += len as u64;
+        if len < chunk {
+            break;
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]
