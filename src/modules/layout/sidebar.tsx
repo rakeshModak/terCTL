@@ -2,6 +2,7 @@ import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useAtomValue } from 'jotai';
 import {
   ArrowLeftRight,
+  FileCode2,
   Server,
   Settings,
   SquareTerminal,
@@ -28,6 +29,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: '/hosts', label: 'Hosts', Icon: Server },
   { to: '/sessions', label: 'Terminal', Icon: SquareTerminal },
+  { to: '/editor', label: 'Editor', Icon: FileCode2 },
   { to: '/transfer', label: 'Transfer', Icon: ArrowLeftRight },
   { to: '/settings', label: 'Settings', Icon: Settings },
 ];
@@ -69,7 +71,7 @@ export default function Sidebar() {
               />
               <Icon className="size-5" />
               {busy && (
-                <span className="bg-primary text-primary-foreground absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full text-3xs font-semibold tabular-nums">
+                <span className="bg-primary text-primary-foreground text-3xs absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full font-semibold tabular-nums">
                   {transfer.running}
                 </span>
               )}

@@ -1,5 +1,7 @@
 mod backup;
 mod commands;
+mod editor;
+mod langserver;
 mod local_term;
 mod metrics;
 mod models;
@@ -10,6 +12,7 @@ mod ssh;
 mod store;
 mod vault;
 
+use langserver::LangServerManager;
 use metrics::MetricsManager;
 use session::SessionManager;
 use sftp::SftpManager;
@@ -36,6 +39,7 @@ pub fn run() {
             app.manage(SessionManager::default());
             app.manage(SftpManager::default());
             app.manage(MetricsManager::default());
+            app.manage(LangServerManager::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -69,6 +73,7 @@ pub fn run() {
             sftp::sftp_mkdir,
             sftp::sftp_rename,
             sftp::sftp_remove,
+            sftp::sftp_copy,
             sftp::sftp_cancel_transfer,
             sftp::sftp_disconnect,
             sftp::local_home,
@@ -76,6 +81,12 @@ pub fn run() {
             sftp::local_mkdir,
             sftp::local_rename,
             sftp::local_remove,
+            editor::editor_read_file,
+            editor::editor_write_file,
+            langserver::lsp_list,
+            langserver::lsp_install,
+            langserver::lsp_uninstall,
+            langserver::lsp_disconnect,
             metrics::ssh_metrics,
             metrics::metrics_disconnect,
         ])

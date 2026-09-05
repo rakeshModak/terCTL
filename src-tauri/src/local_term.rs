@@ -6,12 +6,37 @@ use tokio::sync::mpsc;
 use uuid::Uuid;
 
 #[cfg(windows)]
-fn default_shell() -> String {
-    std::env::var("COMSPEC").unwrap_or_else(|_| "powershell.exe".to_string())
+fn shell_candidates() -> Vec<String> {
+    // COMSPEC almost always points at cmd.exe, so using it as the default made
+    // Windows behave differently from the intended PowerShell-first experience.
+    // Keep it as the fallback because it is the system's authoritative cmd path.
+    let mut candidates = vec!["powershell.exe".to_string()];
+    if let Ok(comspec) = std::env::var("COMSPEC") {
+        if !comspec.is_empty() {
+            candidates.push(comspec);
+        }
+    }
+    candidates.push("cmd.exe".to_string());
+    candidates.dedup();
+    candidates
 }
+
 #[cfg(not(windows))]
-fn default_shell() -> String {
-    std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string())
+fn shell_candidates() -> Vec<String> {
+    vec![std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string())]
+}
+
+fn shell_command(shell: String) -> CommandBuilder {
+    let mut cmd = CommandBuilder::new(shell);
+    #[cfg(windows)]
+    // A profile can run arbitrary startup work (including prompts), which
+    // blocks a non-visible ConPTY before the terminal has a chance to render.
+    cmd.args(["-NoLogo", "-NoProfile"]);
+    cmd.env("TERM", "xterm-256color");
+    if let Ok(home) = std::env::var("HOME") {
+        cmd.cwd(home);
+    }
+    cmd
 }
 
 /// Opens a local system shell in a PTY and streams it through the same
@@ -32,13 +57,24 @@ pub async fn local_connect(
         })
         .map_err(|e| e.to_string())?;
 
-    let mut cmd = CommandBuilder::new(default_shell());
-    cmd.env("TERM", "xterm-256color");
-    if let Ok(home) = std::env::var("HOME") {
-        cmd.cwd(home);
-    }
-
-    let child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
+    let mut launch_errors = Vec::new();
+    let child = shell_candidates()
+        .into_iter()
+        .find_map(
+            |shell| match pair.slave.spawn_command(shell_command(shell.clone())) {
+                Ok(child) => Some(child),
+                Err(error) => {
+                    launch_errors.push(format!("{shell}: {error}"));
+                    None
+                }
+            },
+        )
+        .ok_or_else(|| {
+            format!(
+                "Unable to start a local shell. {}",
+                launch_errors.join("; ")
+            )
+        })?;
     drop(pair.slave);
 
     let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;

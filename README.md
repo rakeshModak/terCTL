@@ -7,7 +7,8 @@
 ### Your servers, one keystroke away.
 
 A keyboard-first **SSH client and terminal manager** for macOS, Windows, and Linux.<br/>
-Terminals, split-pane Decks, SFTP, and live host metrics in one native app.
+Terminals, split-pane Decks, remote file editing, SFTP, and live host metrics
+in one native app.
 
 <br/>
 
@@ -26,8 +27,8 @@ Terminals, split-pane Decks, SFTP, and live host metrics in one native app.
 <br/>
 
 TerCTL keeps a fleet of machines within reach: organize hosts into groups, open
-secure terminals, split them into workspaces, move files over SFTP, and watch a
-server's vitals — without reaching for the mouse.
+secure terminals, split them into workspaces, edit files in place, move files over
+SFTP, and watch a server's vitals — without reaching for the mouse.
 
 It's a real desktop app, not a browser wrapper. SSH, PTYs, SFTP, and keychain
 access all run in Rust; the UI is React on top of Tauri.
@@ -44,6 +45,8 @@ access all run in Rust; the UI is React on top of Tauri.
 | ------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | 🖥️ **SSH terminals**      | Real PTY sessions over `russh`, rendered with [xterm.js](https://xtermjs.org), with per-host color schemes. |
 | 🪟 **Decks**              | Split a tab into panes. Drag a pane to re-split, drag a divider to resize — every session stays live.       |
+| 📝 **Remote editing**     | Open a server directory in an editor: file tree, tabs, syntax highlighting for 30+ languages, and an integrated shell. Nothing is installed on the host. |
+| 💾 **Safe saves**         | Writes go through a temp file and an atomic rename, keep the original file mode, and refuse to clobber a file that changed since you opened it.               |
 | 🔍 **In-terminal search** | Find across scrollback with case and regex toggles, and jump between matches.                               |
 | 🗂️ **Host management**    | Nested groups, tags, and search across labels, hostnames, users, and tags.                                  |
 | 📁 **SFTP transfer**      | Dual-pane local ⇄ remote browser: upload, download, rename, new folder, hidden-file toggle.                 |
@@ -70,6 +73,7 @@ access all run in Rust; the UI is React on top of Tauri.
 ![Jotai](https://img.shields.io/badge/Jotai-000000)
 ![Tailwind](https://img.shields.io/badge/Tailwind_v4-06B6D4?logo=tailwindcss&logoColor=white)
 ![xterm.js](https://img.shields.io/badge/xterm.js-3A3A3A)
+![Monaco](https://img.shields.io/badge/Monaco_Editor-0078D4?logo=visualstudiocode&logoColor=white)
 
 </td>
 <td valign="top" width="50%">
@@ -134,8 +138,8 @@ Rust. The React side never opens a socket.
 
 ```
 src/
-├── routes/       # file-based routes ( / · hosts · sessions · transfer · settings )
-├── modules/      # one folder per feature (hosts · sessions · transfer · settings · layout)
+├── routes/       # file-based routes ( / · hosts · sessions · editor · transfer · settings )
+├── modules/      # one folder per feature (hosts · sessions · editor · transfer · settings · layout)
 ├── store/        # Jotai atoms (app · settings · dialog · updater · version)
 ├── services/     # typed Tauri IPC clients — the only place invoke() is called
 ├── types/        # shared domain types
@@ -151,6 +155,8 @@ src-tauri/src/
 ├── local_term.rs # local shell sessions
 ├── session.rs    # PTY input, resize, teardown
 ├── sftp.rs       # remote and local file operations
+├── editor.rs     # remote file read/write for the editor (atomic saves)
+├── langserver.rs # optional language-server install/removal on a host
 ├── metrics.rs    # live host stats
 ├── backup.rs     # encrypted config export/import
 ├── store.rs      # SQLite (hosts, groups, known-host keys)
@@ -184,16 +190,6 @@ npm run release          # patch — also try release:minor / release:major
 The script builds first, bumps the version, tags, and pushes. CI takes it from
 there: three OS runners upload into a draft release, and it only goes public once
 all three finish.
-
----
-
-## Roadmap
-
-- [ ] **Port forwarding** — local and remote tunnels
-- [ ] **Command palette** (`⌘K` / `Ctrl K`)
-- [ ] **SSH key management** — generate, import, and manage the agent
-- [ ] Native window controls on Windows and Linux
-- [ ] Screenshots and a proper landing page
 
 ---
 
