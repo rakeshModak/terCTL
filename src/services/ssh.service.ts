@@ -2,7 +2,9 @@ import { call } from './config/tauri-api';
 
 // Terminal session lifecycle + I/O (SSH and local PTY share this plumbing).
 export const sshService = {
-  connect: (hostId: string) => call<string>('ssh_connect', { hostId }),
+  /** `cwd` lands the shell in that directory instead of the account's home. */
+  connect: (hostId: string, cwd?: string | null) =>
+    call<string>('ssh_connect', { hostId, cwd: cwd ?? null }),
   localConnect: () => call<string>('local_connect'),
   disconnect: (sessionId: string) =>
     call<void>('term_disconnect', { sessionId }),
