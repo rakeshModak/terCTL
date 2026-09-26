@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useSetAtom } from 'jotai';
+import { contextMenuOpenAtom } from '../../store/app';
 
 export interface ContextMenuItem {
   label: string;
@@ -28,6 +30,14 @@ export function TerminalContextMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x, top: y });
   const [activeIndex, setActiveIndex] = useState(-1);
+  const setMenuOpen = useSetAtom(contextMenuOpenAtom);
+
+  // A browser pane's webview is native and would paint straight over this
+  // menu, so it is asked to stand down for as long as the menu is up.
+  useEffect(() => {
+    setMenuOpen(true);
+    return () => setMenuOpen(false);
+  }, [setMenuOpen]);
 
   useLayoutEffect(() => {
     const el = menuRef.current;

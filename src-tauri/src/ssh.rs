@@ -320,12 +320,22 @@ async fn record_os_on_first_connect(
     );
 }
 
+/// Wrap a path so a POSIX shell reads it as one literal word.
+///
+/// Single quotes protect everything except a single quote itself, which has to
+/// leave the quoted run, be escaped, and start a new one — the usual
+/// `'\''` dance.
+pub(crate) fn shell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', r"'\''"))
+}
+
 #[tauri::command]
 pub async fn ssh_connect(
     app: AppHandle,
     store: State<'_, Store>,
     manager: State<'_, SessionManager>,
     host_id: String,
+    cwd: Option<String>,
 ) -> Result<String, String> {
     let session = connect_host(&store, &host_id).await?;
     record_os_on_first_connect(&app, &store, &host_id, &session).await;
@@ -342,6 +352,18 @@ pub async fn ssh_connect(
         .request_shell(false)
         .await
         .map_err(|e| e.to_string())?;
+
+    // Land the shell where the caller asked for. SSH has no way to request a
+    // working directory, so `cd` typed into the shell is the portable answer —
+    // and it degrades the right way: a directory that has since been removed
+    // leaves an ordinary shell at home with a visible error, rather than no
+    // shell at all.
+    if let Some(dir) = cwd.as_deref().map(str::trim).filter(|d| !d.is_empty()) {
+        channel
+            .data_bytes(format!("cd {}\n", shell_quote(dir)).into_bytes())
+            .await
+            .map_err(|e| e.to_string())?;
+    }
 
     let session_id = Uuid::new_v4().to_string();
     let (cmd_tx, mut cmd_rx) = mpsc::unbounded_channel::<SessionCommand>();
@@ -451,6 +473,18 @@ mod tests {
             .unwrap();
         host.jump_host_id = jump_id.map(str::to_string);
         store.update_host(host).unwrap();
+    }
+
+    /// Paths reach the shell as typed text, so anything a filename may legally
+    /// contain — spaces, quotes, `$`, `;` — has to survive as a literal.
+    #[test]
+    fn quotes_paths_for_the_shell() {
+        assert_eq!(shell_quote("/var/www"), "'/var/www'");
+        assert_eq!(shell_quote("/srv/my app"), "'/srv/my app'");
+        assert_eq!(shell_quote("/tmp/$HOME"), "'/tmp/$HOME'");
+        assert_eq!(shell_quote("/tmp/a;rm -rf b"), "'/tmp/a;rm -rf b'");
+        // The one character single quotes cannot hold: close, escape, reopen.
+        assert_eq!(shell_quote("/tmp/it's"), r"'/tmp/it'\''s'");
     }
 
     /// A host routed through itself must be rejected while the chain is being

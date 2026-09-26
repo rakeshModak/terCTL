@@ -25,6 +25,7 @@ import {
   settingsAtom,
 } from '../store/settings';
 import { sshService } from '../services/ssh.service';
+import { LOCAL_HOST_ID, openForwardedPortAtom } from '../store/app';
 import { IS_MAC } from '../lib/platform';
 import { readableOn } from '../lib/color';
 import { readClipboard, writeClipboard } from '../lib/clipboard';
@@ -54,12 +55,19 @@ interface TermClosedEvent {
 
 interface TerminalProps {
   sessionId: string;
+  /** Whose shell this is, so loopback links resolve against the right machine. */
+  hostId: string;
   onClosed: (error: string | null) => void;
   scheme?: string | null;
   /** Opens a second session against the same host. Omitted = item hidden. */
   onDuplicate?: () => void;
   /** Same, but lands the new session as a split pane beside this one. */
   onDuplicateSplit?: () => void;
+  /**
+   * Opens the port picker for this host. Omitted for a local shell, which has
+   * nothing to forward.
+   */
+  onOpenPort?: () => void;
   /** Disconnects and removes this session. Omitted = item hidden. */
   onCloseSession?: () => void;
 }
@@ -76,8 +84,43 @@ const findToggle = (on: boolean) =>
 const WHEEL_ZOOM_STEP = 40;
 const isLinkActivation = (e: MouseEvent) => e.ctrlKey || (IS_MAC && e.metaKey);
 
-function openTerminalLink(uri: string) {
+/**
+ * A loopback URL printed by a *remote* process names the server's own
+ * loopback, not this machine's. Handing it to the system browser opens the
+ * wrong box — the port has to be forwarded first.
+ */
+function loopbackTarget(uri: string): { port: number; path: string } | null {
+  let url: URL;
+  try {
+    url = new URL(uri);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'http:') return null;
+  const host = url.hostname.replace(/^\[|\]$/g, '');
+  if (host !== 'localhost' && host !== '127.0.0.1' && host !== '::1') {
+    return null;
+  }
+  return { port: Number(url.port || 80), path: `${url.pathname}${url.search}` };
+}
+
+/**
+ * `hostId` is the session's host: a loopback link from a remote shell is
+ * forwarded and opened in a browser pane, while one from a local shell means
+ * this machine and goes to the system browser as before.
+ */
+function openTerminalLink(uri: string, hostId: string) {
   if (!/^https?:\/\//i.test(uri)) return;
+  const local = hostId === LOCAL_HOST_ID ? null : loopbackTarget(uri);
+  if (local) {
+    void getDefaultStore().set(
+      openForwardedPortAtom,
+      hostId,
+      local.port,
+      local.path,
+    );
+    return;
+  }
   void openUrl(uri).catch((e) => debugLog(`could not open ${uri}: ${e}`));
 }
 
@@ -164,11 +207,13 @@ function handleClipboardChord(term: XTerm, e: KeyboardEvent): boolean {
 
 export function Terminal({
   sessionId,
+  hostId,
   onClosed,
   scheme,
   onDuplicate,
   onDuplicateSplit,
   onCloseSession,
+  onOpenPort,
 }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onClosedRef = useRef(onClosed);
@@ -209,7 +254,7 @@ export function Terminal({
       allowProposedApi: true,
       linkHandler: {
         activate: (event, text) => {
-          if (isLinkActivation(event)) openTerminalLink(text);
+          if (isLinkActivation(event)) openTerminalLink(text, hostId);
         },
         allowNonHttpProtocols: false,
       },
@@ -218,7 +263,7 @@ export function Terminal({
     term.loadAddon(fitAddon);
     term.loadAddon(
       new WebLinksAddon((event, uri) => {
-        if (isLinkActivation(event)) openTerminalLink(uri);
+        if (isLinkActivation(event)) openTerminalLink(uri, hostId);
       }),
     );
     termRef.current = term;
@@ -404,7 +449,8 @@ export function Terminal({
       fitRef.current = null;
       matchesRef.current = [];
     };
-  }, [sessionId]);
+    // `hostId` never changes for a given session, so it costs no rebuilds.
+  }, [sessionId, hostId]);
 
   useEffect(() => {
     const term = termRef.current;
@@ -604,31 +650,38 @@ export function Terminal({
         },
       ];
 
+      if (onOpenPort) {
+        items.push({
+          label: 'Open a Port in the Browser…',
+          separatorBefore: true,
+          onSelect: onOpenPort,
+        });
+      }
       if (onDuplicate) {
         items.push({
           label: 'Duplicate Session',
-          separatorBefore: true,
+          separatorBefore: !onOpenPort,
           onSelect: onDuplicate,
         });
       }
       if (onDuplicateSplit) {
         items.push({
           label: 'Duplicate and Split',
-          separatorBefore: !onDuplicate,
+          separatorBefore: !onOpenPort && !onDuplicate,
           onSelect: onDuplicateSplit,
         });
       }
       if (onCloseSession) {
         items.push({
           label: 'Close Session',
-          separatorBefore: !onDuplicate && !onDuplicateSplit,
+          separatorBefore: !onOpenPort && !onDuplicate && !onDuplicateSplit,
           onSelect: onCloseSession,
         });
       }
 
       setMenu({ x: e.clientX, y: e.clientY, items });
     },
-    [onDuplicate, onDuplicateSplit, onCloseSession],
+    [onOpenPort, onDuplicate, onDuplicateSplit, onCloseSession],
   );
 
   const closeContextMenu = useCallback(() => {

@@ -7,8 +7,13 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect } from 'react';
 import { applyTheme, watchSystemMode } from '../lib/theme';
 import { settingsAtom } from '../store/settings';
-import { refreshAllAtom, setHostOsAtom } from '../store/app';
+import {
+  markTunnelClosedAtom,
+  refreshAllAtom,
+  setHostOsAtom,
+} from '../store/app';
 import { applyTransferProgressAtom } from '../store/transfer';
+import { browserService } from '../services/browser.service';
 import { hostsService } from '../services/hosts.service';
 import { sftpService } from '../services/sftp.service';
 import { checkForUpdateAtom } from '../store/updater';
@@ -21,6 +26,7 @@ import { Dialogs } from '../components/Dialogs';
 import { Toaster } from '../components/ui/sonner';
 import { UpdateBanner } from '../components/UpdateBanner';
 import SessionsView from '../modules/sessions';
+import EditorView from '../modules/editor';
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -33,8 +39,13 @@ function RootLayout() {
   const loadVersion = useSetAtom(loadAppVersionAtom);
   const applyTransferProgress = useSetAtom(applyTransferProgressAtom);
   const setHostOs = useSetAtom(setHostOsAtom);
+  const markTunnelClosed = useSetAtom(markTunnelClosedAtom);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Both of these own live SSH shells, so they are mounted for the life of the
+  // app and merely hidden when you navigate away. Rendering them through the
+  // Outlet would unmount them, and a terminal cannot survive that.
   const onSessions = pathname === '/sessions';
+  const onEditor = pathname === '/editor';
 
   useEffect(() => {
     void refreshAll();
@@ -68,6 +79,15 @@ function RootLayout() {
   }, [setHostOs]);
 
   useEffect(() => {
+    const unlisten = browserService.onTunnelClosed(({ tunnelId }) =>
+      markTunnelClosed(tunnelId),
+    );
+    return () => {
+      void unlisten.then((off) => off());
+    };
+  }, [markTunnelClosed]);
+
+  useEffect(() => {
     const choice = { accent, theme, mode };
     applyTheme(choice);
     if (mode !== 'system') return;
@@ -86,6 +106,12 @@ function RootLayout() {
           style={{ display: onSessions ? 'flex' : 'none' }}
         >
           <SessionsView />
+        </div>
+        <div
+          className="min-w-0 flex-1"
+          style={{ display: onEditor ? 'flex' : 'none' }}
+        >
+          <EditorView />
         </div>
         <Outlet />
       </div>

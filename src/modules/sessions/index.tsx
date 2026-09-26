@@ -14,6 +14,7 @@ import {
   draggingPaneSessionIdAtom,
   draggingTabIdAtom,
   hostsAtom,
+  LOCAL_HOST_ID,
   markDisconnectedAtom,
   openLocalTerminalAtom,
   newTabPickerAtom,
@@ -34,6 +35,8 @@ import Inspector from './inspector';
 import PaneDividers from './pane-dividers';
 import SessionPane from './session-pane';
 import StatusOverlay from './status-overlay';
+import PortPicker from '../browser/port-picker';
+import { openPortPickerAtom } from '../../store/browser';
 import { useSessionLayout } from '@/hooks/useSessionLayout';
 
 export default function SessionsView() {
@@ -61,7 +64,12 @@ export default function SessionsView() {
   const openLocalTerminal = useSetAtom(openLocalTerminalAtom);
   const dismissConnectError = useSetAtom(dismissConnectErrorAtom);
   const toggleInspector = useSetAtom(toggleInspectorAtom);
+  const openPortPicker = useSetAtom(openPortPickerAtom);
   const navigate = useNavigate();
+
+  /** A local shell has nothing between here and there to forward. */
+  const openPort = (hostId: string) =>
+    hostId === LOCAL_HOST_ID ? undefined : () => openPortPicker(hostId);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
   const layout = activeTab?.layout ?? null;
@@ -143,6 +151,7 @@ export default function SessionsView() {
               onDuplicateSplit={() =>
                 void duplicateIntoSplit(session.id, 'right')
               }
+              onOpenPort={openPort(session.hostId)}
               onDragStart={() => setDraggingPane(session.id)}
               onDragEnd={() => setDraggingPane(null)}
               onSplit={(edge) =>
@@ -183,8 +192,13 @@ export default function SessionsView() {
             void (activeHost ? connect(activeHost) : openLocalTerminal())
           }
           onOpenSftp={() => navigate({ to: '/transfer' })}
+          onForwardPort={
+            activeHost ? () => openPortPicker(activeHost.id) : undefined
+          }
         />
       )}
+
+      <PortPicker />
     </div>
   );
 }
