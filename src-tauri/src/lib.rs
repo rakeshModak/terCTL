@@ -11,6 +11,7 @@ mod osinfo;
 mod session;
 mod sftp;
 mod ssh;
+mod sshconfig;
 mod store;
 mod tunnel;
 mod vault;
@@ -69,6 +70,8 @@ pub fn run() {
             backup::inspect_backup,
             backup::export_config,
             backup::import_config,
+            sshconfig::ssh_config_preview,
+            sshconfig::ssh_config_import,
             ssh::ssh_connect,
             local_term::local_connect,
             session::term_send_input,

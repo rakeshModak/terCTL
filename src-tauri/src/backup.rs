@@ -48,14 +48,14 @@ const KEY_LEN: usize = 32;
 
 const MAX_FILE_BYTES: u64 = 32 * 1024 * 1024;
 
-const MAX_HOSTS: usize = 10_000;
+pub(crate) const MAX_HOSTS: usize = 10_000;
 const MAX_GROUPS: usize = 2_000;
-const MAX_LABEL_LEN: usize = 200;
-const MAX_HOSTNAME_LEN: usize = 255;
-const MAX_USERNAME_LEN: usize = 64;
+pub(crate) const MAX_LABEL_LEN: usize = 200;
+pub(crate) const MAX_HOSTNAME_LEN: usize = 255;
+pub(crate) const MAX_USERNAME_LEN: usize = 64;
 const MAX_TAGS: usize = 50;
 const MAX_TAG_LEN: usize = 64;
-const MAX_PATH_LEN: usize = 4096;
+pub(crate) const MAX_PATH_LEN: usize = 4096;
 const MAX_SECRET_LEN: usize = 4096;
 const MAX_PRIVATE_KEY_LEN: usize = 64 * 1024;
 
@@ -233,7 +233,7 @@ pub struct ImportSummary {
 // Validation
 // ---------------------------------------------------------------------------
 
-fn check_text(value: &str, max: usize, field: &str) -> Result<(), String> {
+pub(crate) fn check_text(value: &str, max: usize, field: &str) -> Result<(), String> {
     if value.chars().count() > max {
         return Err(format!("{field} exceeds {max} characters"));
     }
@@ -243,7 +243,7 @@ fn check_text(value: &str, max: usize, field: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn check_required(value: &str, max: usize, field: &str) -> Result<(), String> {
+pub(crate) fn check_required(value: &str, max: usize, field: &str) -> Result<(), String> {
     if value.trim().is_empty() {
         return Err(format!("{field} is empty"));
     }
