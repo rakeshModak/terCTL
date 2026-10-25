@@ -1,23 +1,30 @@
 mod backup;
+mod browserview;
 mod commands;
 mod editor;
 mod langserver;
 mod local_term;
+mod lsp;
 mod metrics;
 mod models;
 mod osinfo;
 mod session;
 mod sftp;
 mod ssh;
+mod sshconfig;
 mod store;
+mod tunnel;
 mod vault;
+mod webframe;
 
 use langserver::LangServerManager;
+use lsp::LspManager;
 use metrics::MetricsManager;
 use session::SessionManager;
 use sftp::SftpManager;
 use store::Store;
 use tauri::Manager;
+use tunnel::TunnelManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -40,6 +47,8 @@ pub fn run() {
             app.manage(SftpManager::default());
             app.manage(MetricsManager::default());
             app.manage(LangServerManager::default());
+            app.manage(TunnelManager::default());
+            app.manage(LspManager::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -61,6 +70,8 @@ pub fn run() {
             backup::inspect_backup,
             backup::export_config,
             backup::import_config,
+            sshconfig::ssh_config_preview,
+            sshconfig::ssh_config_import,
             ssh::ssh_connect,
             local_term::local_connect,
             session::term_send_input,
@@ -87,8 +98,27 @@ pub fn run() {
             langserver::lsp_install,
             langserver::lsp_uninstall,
             langserver::lsp_disconnect,
+            lsp::lsp_start,
+            lsp::lsp_send,
+            lsp::lsp_stop,
+            lsp::lsp_stop_host,
             metrics::ssh_metrics,
             metrics::metrics_disconnect,
+            tunnel::tunnel_open,
+            tunnel::tunnel_close,
+            tunnel::tunnel_list,
+            tunnel::tunnel_disconnect,
+            tunnel::tunnel_listening_ports,
+            tunnel::tunnel_probe,
+            browserview::browser_view_open,
+            browserview::browser_view_set_rect,
+            browserview::browser_view_show,
+            browserview::browser_view_hide,
+            browserview::browser_view_close,
+            browserview::browser_view_reload,
+            browserview::browser_view_back,
+            browserview::browser_view_forward,
+            browserview::browser_view_navigate,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

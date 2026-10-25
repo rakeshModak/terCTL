@@ -47,9 +47,22 @@ function replaceBuffer(
 export const openWorkspaceAtom = atom(
   null,
   (get, set, hostId: string, root: string) => {
-    if (get(editorHostIdAtom) !== hostId) {
+    const previous = get(editorHostIdAtom);
+    if (previous !== hostId) {
       set(buffersAtom, []);
       set(activePathAtom, null);
+      // Language servers are processes on someone's machine; leaving them
+      // running for a host nobody is editing any more is a leak on their box.
+      //
+      // Imported here rather than at the top: this store is loaded during
+      // boot, and reaching the LSP client statically would drag it — and the
+      // editor with it — in front of every launch. Changing workspace is rare
+      // enough to pay for the fetch.
+      if (previous) {
+        void import('@/lib/lsp').then((lsp) =>
+          lsp.releaseLanguageServers(previous),
+        );
+      }
     }
     set(editorHostIdAtom, hostId);
     set(editorRootAtom, root);

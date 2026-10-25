@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { Edge, Rect } from '../../lib/layout';
 import type { SessionType } from '../../store/app';
 import PaneDropZones from './pane-drop-zones';
+import BrowserPane from '../browser/browser-pane';
 import { Terminal } from '@/components/Terminal';
 import { TerctlLogo } from '@/components/chrome/TerctlLogo';
 
@@ -22,6 +23,8 @@ interface SessionPaneProps {
   onClosed: () => void;
   onDuplicate: () => void;
   onDuplicateSplit: () => void;
+  /** Opens the port picker for this pane's host. Omitted for a local shell. */
+  onOpenPort?: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onSplit: (edge: Edge) => void;
@@ -41,6 +44,7 @@ export default function SessionPane({
   onClosed,
   onDuplicate,
   onDuplicateSplit,
+  onOpenPort,
   onDragStart,
   onDragEnd,
   onSplit,
@@ -135,14 +139,18 @@ export default function SessionPane({
                 Connecting to {session.label}…
               </span>
             </div>
+          ) : session.kind === 'browser' ? (
+            <BrowserPane session={session} />
           ) : (
             <Terminal
               sessionId={session.id}
+              hostId={session.hostId}
               scheme={termScheme}
               onClosed={onClosed}
               onDuplicate={onDuplicate}
               onDuplicateSplit={onDuplicateSplit}
               onCloseSession={onClose}
+              onOpenPort={onOpenPort}
             />
           )}
         </div>

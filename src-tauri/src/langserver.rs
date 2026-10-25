@@ -366,3 +366,67 @@ pub async fn lsp_disconnect(
     manager.drop_host(&host_id).await;
     Ok(())
 }
+
+/// How to launch a server in LSP mode, for the ones that are wired up.
+///
+/// Installing a server and *speaking* to one are different problems: several
+/// of these need a flag before they will talk LSP over stdio at all, and two
+/// of them need more than a command line. Returning `None` is how a server
+/// that can be installed but not yet driven says so.
+///
+/// Kept beside `SERVERS` deliberately — the test below fails if the two drift.
+pub fn lsp_command(id: &str) -> Option<&'static str> {
+    Some(match id {
+        "python" => "pyright-langserver --stdio",
+        "clangd" => "clangd",
+        "go" => "gopls",
+        "rust" => "rust-analyzer",
+        "bash" => "bash-language-server start",
+        "yaml" => "yaml-language-server --stdio",
+        // typescript-language-server wants its own flags and jdtls needs a
+        // workspace bootstrapped before it will start. Both install fine.
+        _ => return None,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every launch command must name a server that exists, and must start
+    /// with that server's binary — otherwise a rename in `SERVERS` would
+    /// leave the editor invoking something that is no longer installed.
+    #[test]
+    fn launch_commands_match_the_installed_binaries() {
+        for spec in SERVERS {
+            let Some(command) = lsp_command(spec.id) else {
+                continue;
+            };
+            assert!(
+                command == spec.bin || command.starts_with(&format!("{} ", spec.bin)),
+                "{}: launch command {command:?} does not start with {:?}",
+                spec.id,
+                spec.bin
+            );
+        }
+    }
+
+    /// A command for an id that is not in the catalogue could never be run.
+    #[test]
+    fn every_launch_command_has_a_catalogue_entry() {
+        for id in ["python", "clangd", "go", "rust", "bash", "yaml"] {
+            assert!(
+                SERVERS.iter().any(|s| s.id == id),
+                "{id} has a launch command but no entry in SERVERS"
+            );
+            assert!(lsp_command(id).is_some(), "{id} lost its launch command");
+        }
+    }
+
+    #[test]
+    fn servers_that_are_not_wired_up_say_so() {
+        assert_eq!(lsp_command("java"), None);
+        assert_eq!(lsp_command("typescript"), None);
+        assert_eq!(lsp_command("nonsense"), None);
+    }
+}

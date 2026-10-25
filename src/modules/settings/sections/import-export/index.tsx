@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, ShieldAlert, Upload } from 'lucide-react';
+import { Download, FileCode, ShieldAlert, Upload } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { backupService } from '@/services/backup.service';
@@ -9,11 +9,13 @@ import ExportDialog from '@/modules/settings/sections/import-export/export-dialo
 import ImportDialog, {
   type PendingImport,
 } from '@/modules/settings/sections/import-export/import-dialog';
+import SshConfigDialog from '@/modules/settings/sections/import-export/ssh-config-dialog';
 
 export default function ImportExportSection() {
   const [exporting, setExporting] = useState(false);
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [pickError, setPickError] = useState<string | null>(null);
+  const [importingSshConfig, setImportingSshConfig] = useState(false);
 
   async function handleImportClick() {
     setPickError(null);
@@ -65,6 +67,19 @@ export default function ImportExportSection() {
             </Button>
           }
         />
+        <SettingRow
+          title="Import from SSH config"
+          description="Add the hosts from ~/.ssh/config, including their jump hosts"
+          action={
+            <Button
+              variant="outline"
+              onClick={() => setImportingSshConfig(true)}
+            >
+              <FileCode />
+              Import
+            </Button>
+          }
+        />
       </SettingRowList>
 
       {pickError && (
@@ -73,6 +88,10 @@ export default function ImportExportSection() {
 
       <ExportDialog open={exporting} onOpenChange={setExporting} />
       <ImportDialog pending={pending} onClose={() => setPending(null)} />
+      <SshConfigDialog
+        open={importingSshConfig}
+        onClose={() => setImportingSshConfig(false)}
+      />
     </SettingsSection>
   );
 }

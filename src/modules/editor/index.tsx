@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { useRouterState } from '@tanstack/react-router';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
   ChevronDown,
@@ -36,7 +37,6 @@ import {
   reloadBufferAtom,
   saveBufferAtom,
 } from '@/store/editor';
-import CodeEditor from './code-editor';
 import FileTree from './file-tree';
 import LanguageServerButton from './language-server-button';
 import TabBar from './tab-bar';
@@ -53,6 +53,13 @@ const MIN_MAIN_WIDTH = 320;
 const GRAB =
   "relative shrink-0 after:absolute after:bg-transparent after:transition-colors after:content-[''] hover:after:bg-primary";
 
+// Monaco is ~3.5 MB, and this view is mounted from launch so its terminal can
+// outlive a navigation. Reaching it statically — directly, or through the
+// language tables, which fall back to Monaco's own registry — would put the
+// whole editor in front of every cold start, including the many that never
+// open a file. Both edges are cut, so it arrives when a file does.
+const CodeEditor = lazy(() => import('./code-editor'));
+
 export default function EditorView() {
   const hosts = useAtomValue(hostsAtom);
   const hostId = useAtomValue(editorHostIdAtom);
@@ -65,6 +72,9 @@ export default function EditorView() {
   const save = useSetAtom(saveBufferAtom);
   const reload = useSetAtom(reloadBufferAtom);
   const prompt = useSetAtom(promptAtom);
+  const onEditor = useRouterState({
+    select: (s) => s.location.pathname === '/editor',
+  });
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showTerminal, setShowTerminal] = useState(true);
@@ -76,9 +86,16 @@ export default function EditorView() {
   const host = hosts.find((h) => h.id === hostId);
   const path = buffer?.path ?? null;
   const shownSize = editorFontSize(fontSize, zoom);
+
+  // A plain table lookup now that the language map carries no editor code of
+  // its own — nothing here reaches the editor bundle.
   const language = buffer ? languageForFile(buffer.name) : null;
 
+  // This view now stays mounted while you are elsewhere in the app, so its
+  // shortcuts have to be bound only while it is the one on screen — otherwise
+  // Ctrl+S would save a file from the Hosts page.
   useEffect(() => {
+    if (!onEditor) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey && !e.altKey && e.code === 'Backquote') {
         e.preventDefault();
@@ -92,7 +109,7 @@ export default function EditorView() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [path, save]);
+  }, [onEditor, path, save]);
 
   const startTerminalResize = useDragSize({
     axis: 'y',
@@ -269,7 +286,15 @@ export default function EditorView() {
           <div className="flex min-h-0 flex-1 flex-col">
             <TabBar />
             {buffer ? (
-              <CodeEditor />
+              <Suspense
+                fallback={
+                  <div className="text-muted-foreground flex min-h-0 flex-1 items-center justify-center text-xs">
+                    Loading the editor…
+                  </div>
+                }
+              >
+                <CodeEditor />
+              </Suspense>
             ) : (
               <div className="text-muted-foreground flex min-h-0 flex-1 items-center justify-center px-6 text-center text-xs">
                 {hostId
@@ -309,7 +334,7 @@ export default function EditorView() {
                 </Button>
               </div>
               <div className="relative min-h-0 flex-1">
-                <TerminalPanel key={hostId} hostId={hostId} />
+                <TerminalPanel key={hostId} hostId={hostId} cwd={root} />
               </div>
             </div>
           )}

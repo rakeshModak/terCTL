@@ -4,17 +4,26 @@ import { Terminal } from '@/components/Terminal';
 import { sshService } from '@/services/ssh.service';
 import { settingsAtom } from '@/store/settings';
 
-export default function TerminalPanel({ hostId }: { hostId: string }) {
+interface TerminalPanelProps {
+  hostId: string;
+  /** The workspace folder, so the shell starts where the file tree is. */
+  cwd: string | null;
+}
+
+export default function TerminalPanel({ hostId, cwd }: TerminalPanelProps) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { termScheme } = useAtomValue(settingsAtom);
+  // Frozen at mount. Opening a different folder later must not reach into a
+  // shell that may have a program running in it and type a `cd` at it.
+  const [startDir] = useState(cwd);
 
   useEffect(() => {
     let cancelled = false;
     let created: string | null = null;
 
     sshService
-      .connect(hostId)
+      .connect(hostId, startDir)
       .then((id) => {
         created = id;
         if (cancelled) {
@@ -31,7 +40,7 @@ export default function TerminalPanel({ hostId }: { hostId: string }) {
       cancelled = true;
       if (created) void sshService.disconnect(created);
     };
-  }, [hostId]);
+  }, [hostId, startDir]);
 
   if (error) {
     return (
@@ -52,6 +61,7 @@ export default function TerminalPanel({ hostId }: { hostId: string }) {
   return (
     <Terminal
       sessionId={sessionId}
+      hostId={hostId}
       scheme={termScheme}
       onClosed={(err) => setError(err ?? 'The shell closed.')}
     />

@@ -1,5 +1,6 @@
 import { atom } from 'jotai';
 import type { Getter, Setter } from 'jotai';
+import { browserService } from '../services/browser.service';
 import { hostsService } from '../services/hosts.service';
 import { sshService } from '../services/ssh.service';
 import type { GroupType, HostType } from '@/types/host';
@@ -17,14 +18,11 @@ import {
   splitTreeAt,
 } from '../lib/layout';
 
-// Re-exported so existing imports of these domain types from the store keep
-// resolving; they are defined in @/types/session.
 export type { SessionType, TabType };
 
 /** Sentinel hostId for a local shell — it has no Host record. */
 export const LOCAL_HOST_ID = '__local__';
 
-// ---- state atoms ----
 export const hostsAtom = atom<HostType[]>([]);
 export const groupsAtom = atom<GroupType[]>([]);
 export const allTagsAtom = atom<string[]>([]);
@@ -44,6 +42,8 @@ export const connectErrorAtom = atom<{ label: string; message: string } | null>(
   null,
 );
 
+export const contextMenuOpenAtom = atom(false);
+
 export const sidebarCollapsedAtom = atom(false);
 export const showInspectorAtom = atom(true);
 export const newTabPickerAtom = atom(false);
@@ -51,7 +51,6 @@ export const setNewTabPickerAtom = atom(null, (_get, set, v: boolean) => {
   set(newTabPickerAtom, v);
 });
 
-// ---- simple UI action atoms ----
 export const setDraggingPaneAtom = atom(
   null,
   (_get, set, sessionId: string | null) => {
@@ -259,6 +258,7 @@ export const connectAtom = atom(null, async (get, set, host: HostType) => {
       id: sessionId,
       hostId: host.id,
       label: host.label,
+      kind: 'terminal',
       status: 'connected',
     });
     set(connectingAtom, null);
@@ -280,6 +280,7 @@ export const openLocalTerminalAtom = atom(null, async (get, set) => {
       id: sessionId,
       hostId: LOCAL_HOST_ID,
       label,
+      kind: 'terminal',
       status: 'connected',
     });
   } catch (e) {
@@ -299,7 +300,8 @@ export const duplicateIntoSplitAtom = atom(
     const tab = get(tabsAtom).find((t) =>
       hasSession(t.layout, targetSessionId),
     );
-    if (!session || !tab) return;
+    // A browser pane has no shell to duplicate; it is re-pointed instead.
+    if (!session || !tab || session.kind !== 'terminal') return;
 
     const isLocal = session.hostId === LOCAL_HOST_ID;
     const host = isLocal
@@ -314,7 +316,13 @@ export const duplicateIntoSplitAtom = atom(
     addPaneToTab(
       get,
       set,
-      { id: pendingId, hostId: session.hostId, label, status: 'connecting' },
+      {
+        id: pendingId,
+        hostId: session.hostId,
+        label,
+        kind: 'terminal',
+        status: 'connecting',
+      },
       tab.id,
       targetSessionId,
       edge,
@@ -347,8 +355,154 @@ export const duplicateIntoSplitAtom = atom(
   },
 );
 
+let browserPaneCounter = 0;
+
+/**
+ * Open a remote port as a browser pane.
+ *
+ * Lands beside the pane you were looking at, because watching a page and the
+ * shell serving it at the same time is the entire point; only with nothing
+ * open does it start its own tab.
+ */
+export const openForwardedPortAtom = atom(
+  null,
+  async (get, set, hostId: string, remotePort: number, path?: string) => {
+    const host = get(hostsAtom).find((h) => h.id === hostId);
+    const label = `${host?.label ?? 'Forward'}:${remotePort}`;
+    set(newTabPickerAtom, false);
+    set(connectErrorAtom, null);
+
+    try {
+      const tunnel = await browserService.openTunnel(hostId, remotePort);
+
+      // The backend hands back the existing forward when one already points
+      // here; if a pane is already showing it, focus that instead of stacking
+      // a second identical view.
+      const shown = get(sessionsAtom).find((s) => s.tunnel?.id === tunnel.id);
+      if (shown) {
+        set(setActiveSessionAtom, shown.id);
+        return;
+      }
+
+      const session: SessionType = {
+        id: `browser-${++browserPaneCounter}`,
+        hostId,
+        label,
+        kind: 'browser',
+        status: 'connected',
+        tunnel,
+        initialPath: path?.startsWith('/') ? path : undefined,
+      };
+
+      const activeId = get(activeSessionIdAtom);
+      const tab = activeId
+        ? get(tabsAtom).find((t) => hasSession(t.layout, activeId))
+        : undefined;
+      if (tab && activeId) {
+        addPaneToTab(get, set, session, tab.id, activeId, 'right');
+      } else {
+        addTab(get, set, session);
+      }
+    } catch (e) {
+      set(connectErrorAtom, { label, message: String(e) });
+    }
+  },
+);
+
+/**
+ * Aim an open browser pane at a different target without disturbing the
+ * layout. `remoteHost` is resolved by the *server*, so it can name a machine
+ * only the server can reach.
+ */
+export const repointBrowserPaneAtom = atom(
+  null,
+  async (
+    get,
+    set,
+    sessionId: string,
+    remotePort: number,
+    remoteHost: string,
+  ) => {
+    const session = get(sessionsAtom).find((s) => s.id === sessionId);
+    if (!session || session.kind !== 'browser' || !session.tunnel) return;
+    const previous = session.tunnel;
+    if (
+      previous.remotePort === remotePort &&
+      previous.remoteHost === remoteHost
+    ) {
+      return;
+    }
+
+    const tunnel = await browserService.openTunnel(
+      session.hostId,
+      remotePort,
+      remoteHost,
+    );
+    const host = get(hostsAtom).find((h) => h.id === session.hostId);
+    set(
+      sessionsAtom,
+      get(sessionsAtom).map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              tunnel,
+              status: 'connected',
+              label: `${host?.label ?? 'Forward'}:${remotePort}`,
+            }
+          : s,
+      ),
+    );
+
+    // Retire the forward we just left, unless another pane is still on it.
+    const stillUsed = get(sessionsAtom).some(
+      (s) => s.tunnel?.id === previous.id,
+    );
+    if (!stillUsed) void browserService.closeTunnel(previous.id);
+  },
+);
+
+/** A forward died on its own (the SSH connection under it dropped). */
+export const markTunnelClosedAtom = atom(null, (get, set, tunnelId: string) => {
+  set(
+    sessionsAtom,
+    get(sessionsAtom).map((s) =>
+      s.tunnel?.id === tunnelId && s.status === 'connected'
+        ? { ...s, status: 'disconnected' }
+        : s,
+    ),
+  );
+});
+
+/**
+ * Tear down whatever backend the given panes were holding — a PTY for a
+ * terminal, a port forward for a browser.
+ *
+ * Takes the whole set at once because forwards are shared: opening :3000 twice
+ * reuses one forward, so it may only be closed when no *surviving* pane still
+ * points at it. Releasing one pane at a time would see the tab's other doomed
+ * panes as survivors and leak the forward.
+ */
+function releasePanes(get: Getter, sessionIds: string[]): void {
+  const closing = new Set(sessionIds);
+  const sessions = get(sessionsAtom);
+  const surviving = sessions.filter((s) => !closing.has(s.id));
+
+  sessionIds.forEach((id) => {
+    if (isPendingPaneId(id)) return;
+    const session = sessions.find((s) => s.id === id);
+    if (!session || session.kind === 'terminal') {
+      void sshService.disconnect(id);
+      return;
+    }
+    const tunnelId = session.tunnel?.id;
+    if (tunnelId && !surviving.some((s) => s.tunnel?.id === tunnelId)) {
+      void browserService.closeTunnel(tunnelId);
+    }
+  });
+}
+
 export const closeSessionAtom = atom(null, (get, set, sessionId: string) => {
-  if (!isPendingPaneId(sessionId)) void sshService.disconnect(sessionId);
+  releasePanes(get, [sessionId]);
   set(
     sessionsAtom,
     get(sessionsAtom).filter((s) => s.id !== sessionId),
@@ -368,9 +522,7 @@ export const closeTabAtom = atom(null, (get, set, tabId: string) => {
   const tab = get(tabsAtom).find((t) => t.id === tabId);
   if (!tab) return;
   const ids = paneSessionIds(tab.layout);
-  ids.forEach((id) => {
-    if (!isPendingPaneId(id)) void sshService.disconnect(id);
-  });
+  releasePanes(get, ids);
   set(
     sessionsAtom,
     get(sessionsAtom).filter((s) => !ids.includes(s.id)),
@@ -402,6 +554,35 @@ export const reconnectAtom = atom(null, async (get, set, sessionId: string) => {
       s.id === sessionId ? { ...s, status: 'reconnecting' } : s,
     ),
   );
+
+  // A browser pane reopens its forward against the same target. Its id is its
+  // own, not the forward's, so nothing in the layout has to be rewritten.
+  if (session.kind === 'browser') {
+    const target = session.tunnel;
+    if (!target) return;
+    try {
+      const tunnel = await browserService.openTunnel(
+        target.hostId,
+        target.remotePort,
+        target.remoteHost,
+      );
+      set(
+        sessionsAtom,
+        get(sessionsAtom).map((s) =>
+          s.id === sessionId ? { ...s, tunnel, status: 'connected' } : s,
+        ),
+      );
+    } catch {
+      set(
+        sessionsAtom,
+        get(sessionsAtom).map((s) =>
+          s.id === sessionId ? { ...s, status: 'disconnected' } : s,
+        ),
+      );
+    }
+    return;
+  }
+
   try {
     const newId =
       session.hostId === LOCAL_HOST_ID

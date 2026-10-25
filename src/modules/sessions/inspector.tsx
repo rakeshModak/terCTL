@@ -9,7 +9,6 @@ import {
   SquareTerminal,
   Unplug,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -26,6 +25,8 @@ interface InspectorProps {
   onDisconnect: () => void;
   onDuplicate: () => void;
   onOpenSftp: () => void;
+  /** Opens the port picker. Absent for a local shell, which forwards nothing. */
+  onForwardPort?: () => void;
 }
 
 const STATUS_LABEL: Record<SessionType['status'], string> = {
@@ -98,6 +99,7 @@ export default function Inspector({
   onDisconnect,
   onDuplicate,
   onOpenSftp,
+  onForwardPort,
 }: InspectorProps) {
   const connected = session.status === 'connected';
   const isLocal = host === null;
@@ -106,6 +108,8 @@ export default function Inspector({
     <aside className="border-border bg-sidebar flex w-64 shrink-0 flex-col gap-2.5 overflow-y-auto border-l p-3">
       <Card size="sm" className="shrink-0 gap-2 px-3 py-3">
         <div className="flex items-center gap-2.5">
+          {/* The dot carries the status on its own; a spelled-out badge beside
+              it cost the host label most of its width for no extra meaning. */}
           <span
             className={cn(
               'size-2.5 shrink-0 rounded-full',
@@ -114,6 +118,7 @@ export default function Inspector({
             style={{
               boxShadow: `0 0 9px ${connected ? 'var(--green)' : 'var(--red)'}`,
             }}
+            title={STATUS_LABEL[session.status]}
           />
           <span
             className="min-w-0 flex-1 truncate text-sm font-semibold"
@@ -121,15 +126,6 @@ export default function Inspector({
           >
             {host?.label ?? session.label}
           </span>
-          <Badge
-            variant="secondary"
-            className={cn(
-              'shrink-0',
-              connected ? 'text-chart-4' : 'text-destructive',
-            )}
-          >
-            {STATUS_LABEL[session.status]}
-          </Badge>
           <Button
             variant="ghost"
             size="icon-xs"
@@ -178,7 +174,13 @@ export default function Inspector({
               <FolderSymlink />
               SFTP
             </Button>
-            <Button variant="outline" size="sm" disabled title="Coming soon">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onForwardPort}
+              disabled={!onForwardPort || !connected}
+              title="Open one of this host's ports in a browser pane"
+            >
               <Network />
               Forward
             </Button>
