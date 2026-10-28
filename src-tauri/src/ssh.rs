@@ -242,12 +242,22 @@ fn pin_on_first_sight(
     Ok(())
 }
 
-fn connect_err(host: &Host, e: russh::Error) -> String {
+/// `observed` is the key the server actually presented — `check_server_key`
+/// records it before rejecting — so a mismatch can say what changed, which is
+/// what lets the user check it against the server before trusting it.
+fn connect_err(host: &Host, observed: &Arc<StdMutex<Option<String>>>, e: russh::Error) -> String {
     match e {
-        russh::Error::UnknownKey => format!(
-            "host key mismatch for {} — the server's identity may have changed. Refusing to connect.",
-            host.label
-        ),
+        russh::Error::UnknownKey => {
+            let presented = observed.lock().unwrap().clone();
+            format!(
+                "host key mismatch for {} — the server now presents {}, not the key saved on \
+                 first connect. If it was rebuilt or moved, use Forget host key on {}; \
+                 otherwise don't connect.",
+                host.label,
+                presented.as_deref().unwrap_or("a different key"),
+                host.label
+            )
+        }
         other => other.to_string(),
     }
 }
@@ -260,7 +270,7 @@ async fn open_direct(store: &Store, host: &Host) -> Result<Handle<ClientHandler>
         handler,
     )
     .await
-    .map_err(|e| connect_err(host, e))?;
+    .map_err(|e| connect_err(host, &observed, e))?;
 
     pin_on_first_sight(store, host, expected, &observed)?;
     authenticate(&mut session, host).await?;
@@ -276,7 +286,7 @@ where
     let (handler, expected, observed) = handler_for(store, host)?;
     let mut session = client::connect_stream(client_config(), stream, handler)
         .await
-        .map_err(|e| connect_err(host, e))?;
+        .map_err(|e| connect_err(host, &observed, e))?;
 
     pin_on_first_sight(store, host, expected, &observed)?;
     authenticate(&mut session, host).await?;
@@ -540,6 +550,21 @@ mod tests {
 
         let err = expect_rejected(&store, &a).await;
         assert!(err.contains("jump host not found"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn a_key_mismatch_names_the_host_and_the_key_it_now_presents() {
+        let store = test_store();
+        let id = host_named(&store, "web");
+        let host = store.list_hosts().unwrap().into_iter().find(|h| h.id == id).unwrap();
+        let observed = Arc::new(StdMutex::new(Some("SHA256:newkey".to_string())));
+
+        let err = connect_err(&host, &observed, russh::Error::UnknownKey);
+        assert!(err.contains("host key mismatch for web"), "unexpected error: {err}");
+        // The fingerprint is what lets the user check the change before
+        // trusting it, and the fix has to be findable from the message alone.
+        assert!(err.contains("SHA256:newkey"), "unexpected error: {err}");
+        assert!(err.contains("Forget host key"), "unexpected error: {err}");
     }
 
     #[tokio::test]

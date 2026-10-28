@@ -24,6 +24,11 @@ pub fn set_host_starred(store: State<Store>, id: String, starred: bool) -> Resul
 }
 
 #[tauri::command]
+pub fn forget_host_key(store: State<Store>, id: String) -> Result<(), String> {
+    store.clear_known_host_key(&id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub fn delete_host(store: State<Store>, id: String) -> Result<(), String> {
     store.delete_host(&id).map_err(|e| e.to_string())?;
     vault::delete_all_secrets(&id).map_err(|e| e.to_string())
