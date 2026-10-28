@@ -5,6 +5,7 @@ import {
   Lock,
   MoreHorizontal,
   Pencil,
+  RotateCcwKey,
   Star,
   StarOff,
   Trash2,
@@ -31,6 +32,7 @@ interface HostCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onToggleStar: () => void;
+  onForgetHostKey: () => void;
   jumpLabel?: string | null;
   /** Tighter card for the Starred shortcut row: same information hierarchy,
       less of the detail that the main grid has room for. */
@@ -44,6 +46,7 @@ export default function HostCard({
   onEdit,
   onDelete,
   onToggleStar,
+  onForgetHostKey,
   jumpLabel,
   compact = false,
 }: HostCardProps) {
@@ -155,6 +158,10 @@ export default function HostCard({
                 <DropdownMenuItem onClick={onEdit}>
                   <Pencil />
                   Edit server
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onForgetHostKey}>
+                  <RotateCcwKey />
+                  Forget host key
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" onClick={onDelete}>

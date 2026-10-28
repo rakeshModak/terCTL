@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Star } from 'lucide-react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { toast } from 'sonner';
 import {
   allTagsAtom,
   connectAtom,
@@ -14,6 +15,7 @@ import {
   setTagFilterAtom,
   tagFilterAtom,
 } from '../../store/app';
+import { confirmAtom } from '../../store/dialog';
 import { hostsService } from '../../services/hosts.service';
 import type { GroupType, HostType } from '@/types/host';
 import ActiveSessions from './active-sessions';
@@ -53,6 +55,7 @@ export default function HostsPage() {
   const refreshAll = useSetAtom(refreshAllAtom);
   const setActiveSession = useSetAtom(setActiveSessionAtom);
   const setTagFilter = useSetAtom(setTagFilterAtom);
+  const confirm = useSetAtom(confirmAtom);
   const navigate = useNavigate();
 
   const [path, setPath] = useState<string[]>([]);
@@ -111,6 +114,29 @@ export default function HostsPage() {
   const askDelete = (target: DeleteTarget) => {
     setDeleteTarget(target);
     setDeleteOpen(true);
+  };
+
+  // Forgetting the key disarms the mismatch check until the next connect
+  // re-pins it, so the prompt says when that's the right call and when it isn't.
+  const forgetHostKey = async (host: HostType) => {
+    const ok = await confirm({
+      title: `Forget the host key for “${host.label}”?`,
+      message:
+        'TerCTL will trust whatever key the server presents on the next connect. ' +
+        'Only do this if you know why it changed — the server was rebuilt or ' +
+        'moved. An unexpected change can mean the connection is being intercepted.',
+      confirmLabel: 'Forget key',
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await hostsService.forgetHostKey(host.id);
+      toast.success(`Host key forgotten for ${host.label}`, {
+        description: 'The next connect will learn the server’s key.',
+      });
+    } catch (e) {
+      toast.error(String(e));
+    }
   };
 
   const submitGroupDialog = async (name: string) => {
@@ -217,6 +243,7 @@ export default function HostsPage() {
                   onEdit={() => openEditHost(host)}
                   onDelete={() => askDelete({ kind: 'host', host })}
                   onToggleStar={() => void toggleStar(host.id)}
+                  onForgetHostKey={() => void forgetHostKey(host)}
                   compact
                 />
               ))}
@@ -241,6 +268,7 @@ export default function HostsPage() {
                   onEdit={() => openEditHost(host)}
                   onDelete={() => askDelete({ kind: 'host', host })}
                   onToggleStar={() => void toggleStar(host.id)}
+                  onForgetHostKey={() => void forgetHostKey(host)}
                   jumpLabel={
                     host.jumpHostId
                       ? (hostLabelById.get(host.jumpHostId) ?? 'unknown host')

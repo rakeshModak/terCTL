@@ -16,6 +16,8 @@ export const hostsService = {
   remove: (id: string) => call<void>('delete_host', { id }),
   setStarred: (id: string, starred: boolean) =>
     call<void>('set_host_starred', { id, starred }),
+  /** Drops the pinned host key; the next connect learns the server's key afresh. */
+  forgetHostKey: (id: string) => call<void>('forget_host_key', { id }),
 
   listGroups: () => call<GroupType[]>('list_groups'),
   addGroup: (name: string, parentId: string | null = null) =>

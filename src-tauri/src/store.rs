@@ -103,6 +103,17 @@ impl Store {
         Ok(())
     }
 
+    /// Drop the pinned host key so the next connection learns it afresh. The
+    /// way out of a mismatch the user expected, e.g. a rebuilt server.
+    pub fn clear_known_host_key(&self, host_id: &str) -> rusqlite::Result<()> {
+        let conn = self.0.lock().unwrap();
+        conn.execute(
+            "UPDATE hosts SET host_key_fingerprint = NULL WHERE id = ?1",
+            params![host_id],
+        )?;
+        Ok(())
+    }
+
     pub fn list_hosts(&self) -> rusqlite::Result<Vec<Host>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
@@ -269,10 +280,22 @@ impl Store {
             // `starred` is deliberately absent: it is owned by set_host_starred.
             // Listing it here would let any caller that rebuilds a Host without
             // carrying the flag silently clear it.
+            //
+            // A pinned host key vouches for the old address. Changing hostname
+            // or port points the entry at a different endpoint, so the pin no
+            // longer applies and is cleared — the same outcome as deleting the
+            // host and adding it again, without losing its settings. The CASE
+            // compares against the row's values *before* this update, which is
+            // what SQLite's SET expressions see. Hostnames compare
+            // case-insensitively because DNS does.
             "UPDATE hosts
              SET label = ?2, hostname = ?3, port = ?4, username = ?5, auth_kind = ?6,
                  key_ref = ?7, group_id = ?8, tags = ?9, accent = ?10, term_scheme = ?11,
-                 jump_host_id = ?12
+                 jump_host_id = ?12,
+                 host_key_fingerprint = CASE
+                     WHEN lower(hostname) IS NOT lower(?3) OR port IS NOT ?4 THEN NULL
+                     ELSE host_key_fingerprint
+                 END
              WHERE id = ?1",
             params![
                 host.id,
@@ -521,5 +544,77 @@ mod tests {
         assert_eq!(groups[0].id, dbs.id);
         assert_eq!(groups[0].parent_id, None, "subgroup should reparent to root");
         assert_eq!(store.list_hosts().unwrap().len(), 1, "hosts survive group delete");
+    }
+
+    /// A host with a pinned key, as it is after its first successful connect.
+    fn pinned_host(store: &Store) -> Host {
+        let host = store.add_host(sample_host()).unwrap();
+        store.set_known_host_key(&host.id, "SHA256:old").unwrap();
+        host
+    }
+
+    #[test]
+    fn changing_the_hostname_forgets_the_pinned_key() {
+        let store = test_store();
+        let mut host = pinned_host(&store);
+        host.hostname = "192.0.2.10".into();
+        store.update_host(host.clone()).unwrap();
+        assert_eq!(store.get_known_host_key(&host.id).unwrap(), None);
+    }
+
+    #[test]
+    fn changing_the_port_forgets_the_pinned_key() {
+        let store = test_store();
+        let mut host = pinned_host(&store);
+        host.port = 2222;
+        store.update_host(host.clone()).unwrap();
+        assert_eq!(store.get_known_host_key(&host.id).unwrap(), None);
+    }
+
+    #[test]
+    fn other_edits_keep_the_pinned_key() {
+        // The pin is the whole point of the mismatch check; an ordinary save —
+        // renaming, retagging, switching key file — must never drop it.
+        let store = test_store();
+        let mut host = pinned_host(&store);
+        host.label = "Renamed".into();
+        host.username = "admin".into();
+        host.tags = vec!["prod".into()];
+        host.key_ref = Some("other-key".into());
+        store.update_host(host.clone()).unwrap();
+        assert_eq!(
+            store.get_known_host_key(&host.id).unwrap().as_deref(),
+            Some("SHA256:old")
+        );
+    }
+
+    #[test]
+    fn a_hostname_case_change_keeps_the_pinned_key() {
+        let store = test_store();
+        let mut host = store.add_host(NewHost {
+            hostname: "box.example.com".into(),
+            ..sample_host()
+        })
+        .unwrap();
+        store.set_known_host_key(&host.id, "SHA256:old").unwrap();
+        host.hostname = "Box.Example.COM".into();
+        store.update_host(host.clone()).unwrap();
+        assert_eq!(
+            store.get_known_host_key(&host.id).unwrap().as_deref(),
+            Some("SHA256:old")
+        );
+    }
+
+    #[test]
+    fn forgetting_a_key_clears_only_that_host() {
+        let store = test_store();
+        let a = pinned_host(&store);
+        let b = pinned_host(&store);
+        store.clear_known_host_key(&a.id).unwrap();
+        assert_eq!(store.get_known_host_key(&a.id).unwrap(), None);
+        assert_eq!(
+            store.get_known_host_key(&b.id).unwrap().as_deref(),
+            Some("SHA256:old")
+        );
     }
 }
