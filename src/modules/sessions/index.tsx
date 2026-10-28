@@ -83,6 +83,14 @@ export default function SessionsView() {
 
   const idle = !connecting && !connectError;
   const showEmpty = (tabs.length === 0 || newTabPicker) && idle;
+  // Anything drawn over the panes. The dividers sit at z-20 so they stay
+  // grabbable above the terminals — which also put them above these covers,
+  // painted through the card and still draggable on panes nobody can see.
+  const panesCovered =
+    showEmpty ||
+    !!connecting ||
+    !!connectError ||
+    activeSession?.status === 'reconnecting';
 
   return (
     <div className="flex min-w-0 flex-1">
@@ -162,7 +170,9 @@ export default function SessionsView() {
             />
           ))}
 
-          <PaneDividers layout={layout} onDragStart={startDivider} />
+          {!panesCovered && (
+            <PaneDividers layout={layout} onDragStart={startDivider} />
+          )}
 
           {activeSession?.status === 'disconnected' && (
             <DisconnectedBar
