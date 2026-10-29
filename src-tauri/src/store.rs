@@ -50,6 +50,7 @@ impl Store {
         // group deletion already detaches its members.
         Self::add_column_if_missing(conn, "hosts", "jump_host_id", "TEXT")?;
         Self::add_column_if_missing(conn, "hosts", "starred", "INTEGER NOT NULL DEFAULT 0")?;
+        Self::add_column_if_missing(conn, "hosts", "production", "INTEGER NOT NULL DEFAULT 0")?;
         Self::add_column_if_missing(conn, "groups", "parent_id", "TEXT")?;
         Ok(())
     }
@@ -117,7 +118,7 @@ impl Store {
     pub fn list_hosts(&self) -> rusqlite::Result<Vec<Host>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, os, jump_host_id, starred
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, os, jump_host_id, starred, production
              FROM hosts ORDER BY label",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -136,6 +137,7 @@ impl Store {
                 os: row.get(11)?,
                 jump_host_id: row.get(12)?,
                 starred: row.get::<_, i64>(13)? != 0,
+                production: row.get::<_, i64>(14)? != 0,
             })
         })?;
         rows.collect()
@@ -144,7 +146,7 @@ impl Store {
     pub fn list_host_records(&self) -> rusqlite::Result<Vec<HostRecord>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id, starred
+            "SELECT id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id, starred, production
              FROM hosts ORDER BY label",
         )?;
         let rows = stmt.query_map([], |row| {
@@ -164,6 +166,7 @@ impl Store {
                     os: row.get(12)?,
                     jump_host_id: row.get(13)?,
                     starred: row.get::<_, i64>(14)? != 0,
+                    production: row.get::<_, i64>(15)? != 0,
                 },
                 host_key_fingerprint: row.get(11)?,
             })
@@ -190,8 +193,8 @@ impl Store {
         }
         for (host, fingerprint) in hosts {
             tx.execute(
-                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id, starred)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+                "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, host_key_fingerprint, os, jump_host_id, starred, production)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
                 params![
                     host.id,
                     host.label,
@@ -208,6 +211,7 @@ impl Store {
                     host.os,
                     host.jump_host_id,
                     host.starred as i64,
+                    host.production as i64,
                 ],
             )?;
         }
@@ -228,8 +232,8 @@ impl Store {
         let id = Uuid::new_v4().to_string();
         let conn = self.0.lock().unwrap();
         conn.execute(
-            "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, jump_host_id)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+            "INSERT INTO hosts (id, label, hostname, port, username, auth_kind, key_ref, group_id, tags, accent, term_scheme, jump_host_id, production)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
                 id,
                 new_host.label,
@@ -243,6 +247,7 @@ impl Store {
                 new_host.accent,
                 new_host.term_scheme,
                 new_host.jump_host_id,
+                new_host.production as i64,
             ],
         )?;
         Ok(Host {
@@ -261,6 +266,7 @@ impl Store {
             os: None,
             jump_host_id: new_host.jump_host_id,
             starred: false,
+            production: new_host.production,
         })
     }
 
@@ -291,7 +297,7 @@ impl Store {
             "UPDATE hosts
              SET label = ?2, hostname = ?3, port = ?4, username = ?5, auth_kind = ?6,
                  key_ref = ?7, group_id = ?8, tags = ?9, accent = ?10, term_scheme = ?11,
-                 jump_host_id = ?12,
+                 jump_host_id = ?12, production = ?13,
                  host_key_fingerprint = CASE
                      WHEN lower(hostname) IS NOT lower(?3) OR port IS NOT ?4 THEN NULL
                      ELSE host_key_fingerprint
@@ -310,6 +316,7 @@ impl Store {
                 host.accent,
                 host.term_scheme,
                 host.jump_host_id,
+                host.production as i64,
             ],
         )?;
         Ok(())
@@ -449,6 +456,7 @@ mod tests {
             accent: None,
             term_scheme: None,
             jump_host_id: None,
+            production: false,
         }
     }
 
@@ -616,5 +624,48 @@ mod tests {
             store.get_known_host_key(&b.id).unwrap().as_deref(),
             Some("SHA256:old")
         );
+    }
+
+    fn production_of(store: &Store, id: &str) -> bool {
+        store
+            .list_hosts()
+            .unwrap()
+            .into_iter()
+            .find(|h| h.id == id)
+            .unwrap()
+            .production
+    }
+
+    #[test]
+    fn the_production_flag_is_set_on_add_and_changed_by_edit() {
+        let store = test_store();
+        let host = store
+            .add_host(NewHost {
+                production: true,
+                ..sample_host()
+            })
+            .unwrap();
+        assert!(production_of(&store, &host.id));
+
+        store
+            .update_host(Host {
+                production: false,
+                ..host.clone()
+            })
+            .unwrap();
+        assert!(!production_of(&store, &host.id));
+    }
+
+    #[test]
+    fn starring_leaves_the_production_flag_alone() {
+        let store = test_store();
+        let host = store
+            .add_host(NewHost {
+                production: true,
+                ..sample_host()
+            })
+            .unwrap();
+        store.set_host_starred(&host.id, true).unwrap();
+        assert!(production_of(&store, &host.id));
     }
 }

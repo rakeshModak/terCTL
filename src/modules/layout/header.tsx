@@ -5,11 +5,13 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { Columns2, Minus, PanelRight, Square, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TerctlLogo } from '../../components/chrome/TerctlLogo';
+import { ProductionChip } from '../../components/chrome/ProductionChip';
 import { ThemeArt } from '../../components/chrome/ThemeArt';
 import NewSessionMenu from '../sessions/new-session-menu';
 import {
   activeTabIdAtom,
   closeTabAtom,
+  hostsAtom,
   sessionsAtom,
   setActiveTabAtom,
   setDraggingTabAtom,
@@ -34,6 +36,10 @@ function Header() {
   const onSessions = pathname === '/sessions';
   const tabs = useAtomValue(tabsAtom);
   const sessions = useAtomValue(sessionsAtom);
+  const hosts = useAtomValue(hostsAtom);
+  const productionHostIds = new Set(
+    hosts.filter((h) => h.production).map((h) => h.id),
+  );
   const activeTabId = useAtomValue(activeTabIdAtom);
   const showInspector = useAtomValue(showInspectorAtom);
   const setActiveTab = useSetAtom(setActiveTabAtom);
@@ -143,6 +149,10 @@ function Header() {
                 <span className="overflow-hidden text-ellipsis">
                   {tab.label}
                 </span>
+                {!isWorkspace &&
+                  productionHostIds.has(
+                    sessions.find((s) => s.id === ids[0])?.hostId ?? '',
+                  ) && <ProductionChip />}
                 {active && !isWorkspace && tabs.length > 1 && (
                   <button
                     type="button"

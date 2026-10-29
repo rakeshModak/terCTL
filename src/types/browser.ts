@@ -42,6 +42,8 @@ export interface PaneRectType {
   y: number;
   width: number;
   height: number;
+  /** Bottom-corner radius for the native view, in CSS pixels. 0 = square. */
+  radius?: number;
 }
 
 export interface ViewNavigatedType {

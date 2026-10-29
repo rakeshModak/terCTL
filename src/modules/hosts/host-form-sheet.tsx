@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { TerminalSquare } from 'lucide-react';
+import { ShieldAlert, TerminalSquare } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -99,6 +101,7 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
   const [jumpHostId, setJumpHostId] = useState<string | null>(
     host?.jumpHostId ?? null,
   );
+  const [production, setProduction] = useState(host?.production ?? false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
@@ -128,6 +131,7 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
         accent: null,
         termScheme,
         jumpHostId,
+        production,
       };
 
       let savedId: string;
@@ -326,12 +330,53 @@ function HostFormBody({ host, defaultGroupId, onDone }: HostFormBodyProps) {
               </SelectContent>
             </Select>
             <p className="text-muted-foreground text-xs">
-              Reach this host through a bastion, the way <code>ssh -J</code>
-              {' '}does. Each hop authenticates on its own.
+              Reach this host through a bastion, the way <code>ssh -J</code>{' '}
+              does. Each hop authenticates on its own.
             </p>
           </div>
 
           <TermSchemeSelect value={termScheme} onChange={setTermScheme} />
+
+          {/* Boxed, and tinted red once on, because unlike the settings above
+              it changes how the terminal behaves — it shouldn't read as one
+              more field to skim past. */}
+          <div
+            className={cn(
+              'flex items-start gap-3 rounded-lg border p-3 transition-colors',
+              production
+                ? 'border-destructive/45 bg-destructive/8'
+                : 'bg-muted/40',
+            )}
+          >
+            <span
+              className={cn(
+                'flex size-8 shrink-0 items-center justify-center rounded-md transition-colors',
+                production
+                  ? 'bg-destructive/12 text-destructive'
+                  : 'bg-muted text-muted-foreground',
+              )}
+            >
+              <ShieldAlert className="size-4" />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <Label
+                htmlFor="host-production"
+                className={cn(production && 'text-destructive')}
+              >
+                Production server
+              </Label>
+              <p className="text-muted-foreground text-xs">
+                Outlines its terminal in red and asks before running commands
+                like <code>rm -rf</code>, <code>reboot</code> or{' '}
+                <code>DROP TABLE</code>.
+              </p>
+            </div>
+            <Switch
+              id="host-production"
+              checked={production}
+              onCheckedChange={setProduction}
+            />
+          </div>
 
           {error && <p className="text-destructive text-sm">{error}</p>}
         </div>

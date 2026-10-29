@@ -25,7 +25,10 @@ import {
   settingsAtom,
 } from '../store/settings';
 import { sshService } from '../services/ssh.service';
-import { LOCAL_HOST_ID, openForwardedPortAtom } from '../store/app';
+import { hostsAtom, LOCAL_HOST_ID, openForwardedPortAtom } from '../store/app';
+import { confirmAtom } from '../store/dialog';
+import { createInputGuard, type HeldCommand } from '../lib/prodGuard';
+import type { HostType } from '@/types/host';
 import { IS_MAC } from '../lib/platform';
 import { readableOn } from '../lib/color';
 import { readClipboard, writeClipboard } from '../lib/clipboard';
@@ -205,6 +208,28 @@ function handleClipboardChord(term: XTerm, e: KeyboardEvent): boolean {
   return true;
 }
 
+/** The production-guard dialog: names the server in red and shows the exact
+ *  command, so "which tab am I in" is answered before anything runs. */
+function confirmHeld(host: HostType, held: HeldCommand): Promise<boolean> {
+  return getDefaultStore().set(confirmAtom, {
+    title: (
+      <>
+        Run this on <span className="text-destructive">{host.label}</span>?
+      </>
+    ),
+    message: (
+      <>
+        {held.reason}:{' '}
+        <code className="text-foreground font-mono">{held.line}</code>.{' '}
+        <strong className="text-foreground font-semibold">{host.label}</strong>{' '}
+        is marked as a production server.
+      </>
+    ),
+    confirmLabel: 'Run it',
+    danger: true,
+  });
+}
+
 export function Terminal({
   sessionId,
   hostId,
@@ -243,6 +268,15 @@ export function Terminal({
   const globalScheme = settings.termScheme;
   const termScheme = hasTermScheme(scheme) ? scheme : globalScheme;
   const mode = useResolvedMode();
+  const hosts = useAtomValue(hostsAtom);
+  const guardedHost =
+    hosts.find((h) => h.id === hostId && h.production) ?? null;
+  // Read by the input handler at keystroke time, so toggling the flag takes
+  // effect in open sessions without rebuilding the terminal.
+  const guardedHostRef = useRef(guardedHost);
+  useEffect(() => {
+    guardedHostRef.current = guardedHost;
+  }, [guardedHost]);
 
   useEffect(() => {
     const term = new XTerm({
@@ -351,12 +385,21 @@ export function Terminal({
       onClosedRef.current(event.payload.error);
     });
 
-    const dataDisposable = term.onData((data) => {
-      void sshService.sendInput(
-        sessionId,
-        Array.from(new TextEncoder().encode(data)),
-      );
-    });
+    const guard = createInputGuard(
+      term,
+      (data) =>
+        void sshService.sendInput(
+          sessionId,
+          Array.from(new TextEncoder().encode(data)),
+        ),
+      () => guardedHostRef.current !== null,
+      (held) => {
+        const host = guardedHostRef.current;
+        const answer = host ? confirmHeld(host, held) : Promise.resolve(true);
+        return answer.finally(() => term.focus());
+      },
+    );
+    const dataDisposable = term.onData(guard.input);
 
     const resizeDisposable = term.onResize(({ cols, rows }) => {
       void sshService.resize(sessionId, cols, rows);
@@ -437,6 +480,7 @@ export function Terminal({
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       dataDisposable.dispose();
+      guard.dispose();
       resizeDisposable.dispose();
       void outputUnlisten.then((unlisten) => unlisten());
       void closedUnlisten.then((unlisten) => unlisten());
@@ -731,7 +775,7 @@ export function Terminal({
             className="w-39 bg-transparent text-xs text-(--text) no-underline outline-none [text-decoration:none] placeholder:text-[var(--text-faint)]"
           />
           <span
-            className={`min-w-11.5 shrink-0 text-right text-2xs tabular-nums ${
+            className={`text-2xs min-w-11.5 shrink-0 text-right tabular-nums ${
               findQuery && matchCount === 0
                 ? 'text-(--red)'
                 : 'text-(--text-faint)'
@@ -794,6 +838,19 @@ export function Terminal({
         onContextMenu={openContextMenu}
         className="absolute top-1.5 right-1 bottom-1 left-2"
       />
+      {guardedHost && (
+        // A soft red wash fading in from all four edges. No hard line, which
+        // inside a split pane would fight with the pane's own rounded border,
+        // and no label: that sits in the pane header and tab, off the text.
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-10"
+          style={{
+            boxShadow:
+              'inset 0 0 44px -14px color-mix(in srgb, var(--destructive) 32%, transparent)',
+          }}
+        ></div>
+      )}
       {menu && (
         <TerminalContextMenu
           x={menu.x}

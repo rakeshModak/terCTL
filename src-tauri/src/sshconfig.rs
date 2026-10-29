@@ -671,6 +671,7 @@ fn plan(
             os: None,
             jump_host_id: None,
             starred: false,
+            production: false,
         });
     }
 
@@ -978,6 +979,7 @@ mod tests {
             os: None,
             jump_host_id: None,
             starred: false,
+            production: false,
         }
     }
 

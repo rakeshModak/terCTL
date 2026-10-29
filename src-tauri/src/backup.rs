@@ -151,6 +151,8 @@ struct BackupHost {
     #[serde(default)]
     starred: bool,
     #[serde(default)]
+    production: bool,
+    #[serde(default)]
     password: Option<String>,
     #[serde(default)]
     passphrase: Option<String>,
@@ -469,6 +471,7 @@ fn export_blocking(
             host_key_fingerprint: record.host_key_fingerprint,
             jump_host_id: host.jump_host_id,
             starred: host.starred,
+            production: host.production,
             password,
             passphrase: passphrase_secret,
             private_key,
@@ -877,6 +880,7 @@ fn plan_import(
                 os: None,
                 jump_host_id: host.jump_host_id.clone(),
                 starred: host.starred,
+                production: host.production,
             },
             host.host_key_fingerprint.clone(),
         ));
@@ -936,6 +940,7 @@ mod tests {
                 private_key: None,
                 jump_host_id: None,
                 starred: false,
+                production: false,
             }],
             groups: vec![],
         }
@@ -1080,6 +1085,7 @@ mod tests {
                 os: None,
                 jump_host_id: None,
                 starred: false,
+                production: false,
             },
             host_key_fingerprint: Some("SHA256:different".into()),
         }];
