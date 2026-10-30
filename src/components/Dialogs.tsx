@@ -70,8 +70,13 @@ export function Dialogs() {
                     <TriangleAlert />
                   </AlertDialogMedia>
                 )}
-                <AlertDialogTitle>{confirmReq.title}</AlertDialogTitle>
-                <AlertDialogDescription>
+                {/* overflow-wrap: anywhere lets an unbroken run — a long host
+                    label, a path in a command — wrap instead of pushing the
+                    dialog wider than the screen. */}
+                <AlertDialogTitle className="[overflow-wrap:anywhere]">
+                  {confirmReq.title}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="[overflow-wrap:anywhere]">
                   {confirmReq.message}
                 </AlertDialogDescription>
               </AlertDialogHeader>

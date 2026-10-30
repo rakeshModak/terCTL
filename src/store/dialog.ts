@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { atom } from 'jotai';
 
 // Tauri's macOS WebView doesn't implement window.prompt() (it returns null),
@@ -13,8 +14,10 @@ export interface PromptRequest {
 }
 
 export interface ConfirmRequest {
-  title: string;
-  message: string;
+  // Nodes rather than strings so a caller can emphasise part of the text,
+  // e.g. the server a destructive command is about to run on.
+  title: ReactNode;
+  message: ReactNode;
   confirmLabel: string;
   danger: boolean;
   resolve: (value: boolean) => void;
@@ -52,16 +55,20 @@ export const promptAtom = atom(
 export const confirmAtom = atom(
   null,
   (
-    _get,
+    get,
     set,
     opts: {
-      title: string;
-      message: string;
+      title: ReactNode;
+      message: ReactNode;
       confirmLabel?: string;
       danger?: boolean;
     },
   ) =>
     new Promise<boolean>((resolve) => {
+      // One dialog at a time: a request that replaces a pending one answers
+      // it with "no" rather than leaving its caller waiting forever — a
+      // production terminal holding a command would stop taking input.
+      get(confirmReqAtom)?.resolve(false);
       set(confirmReqAtom, {
         title: opts.title,
         message: opts.message,

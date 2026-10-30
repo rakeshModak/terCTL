@@ -30,6 +30,10 @@ pub struct PaneRect {
     y: f64,
     width: f64,
     height: f64,
+    /// Bottom-corner radius, so the view follows a rounded split pane's
+    /// corners instead of painting square ones over them. 0 = square.
+    #[serde(default)]
+    radius: f64,
 }
 
 /// Payload of both `browser://navigated` (the pane moved to a new page) and
@@ -56,8 +60,41 @@ fn place(view: &Webview, rect: PaneRect) -> Result<(), String> {
     // Some platforms reject a zero-sized webview outright, and a pane can
     // measure zero for a frame mid-transition.
     view.set_size(LogicalSize::new(rect.width.max(1.0), rect.height.max(1.0)))
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    round_bottom_corners(view, rect.radius);
+    Ok(())
 }
+
+/// CSS can't clip a native view, so the rounding is done on the view's own
+/// backing layer. Only the bottom corners: the top edge meets the pane's
+/// toolbar, not its border, and rounding it would show notches there.
+#[cfg(target_os = "macos")]
+fn round_bottom_corners(view: &Webview, radius: f64) {
+    use objc2_app_kit::NSView;
+    use objc2_quartz_core::CACornerMask;
+
+    let _ = view.with_webview(move |platform| {
+        // SAFETY: on macOS `inner()` is the WKWebView, an NSView subclass,
+        // and with_webview runs this on the main thread AppKit requires.
+        let ns_view: &NSView = unsafe { &*platform.inner().cast() };
+        ns_view.setWantsLayer(true);
+        let Some(layer) = ns_view.layer() else { return };
+        layer.setCornerRadius(radius);
+        layer.setMasksToBounds(radius > 0.0);
+        // Which edge is "min Y" depends on whether the layer's geometry is
+        // flipped, and WKWebView's is. Ask rather than assume.
+        let bottom = if layer.contentsAreFlipped() {
+            CACornerMask::LayerMinXMaxYCorner | CACornerMask::LayerMaxXMaxYCorner
+        } else {
+            CACornerMask::LayerMinXMinYCorner | CACornerMask::LayerMaxXMinYCorner
+        };
+        layer.setMaskedCorners(bottom);
+    });
+}
+
+/// WebView2 and WebKitGTK expose no layer to round; the corners stay square.
+#[cfg(not(target_os = "macos"))]
+fn round_bottom_corners(_view: &Webview, _radius: f64) {}
 
 /// Open (or re-point) the webview behind one browser pane.
 ///
@@ -119,6 +156,9 @@ pub async fn browser_view_open(
             LogicalSize::new(rect.width.max(1.0), rect.height.max(1.0)),
         )
         .map_err(|e| format!("could not open the browser view: {e}"))?;
+    if let Some(created) = view(&app, &label) {
+        round_bottom_corners(&created, rect.radius);
+    }
     Ok(())
 }
 

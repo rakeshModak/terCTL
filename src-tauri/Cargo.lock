@@ -10,6 +10,9 @@ dependencies = [
  "base64 0.22.1",
  "chacha20poly1305",
  "keyring",
+ "objc2",
+ "objc2-app-kit",
+ "objc2-quartz-core",
  "portable-pty",
  "rand 0.9.5",
  "rusqlite",
@@ -3301,6 +3304,7 @@ dependencies = [
  "objc2-core-foundation",
  "objc2-core-graphics",
  "objc2-foundation",
+ "objc2-quartz-core",
 ]
 
 [[package]]

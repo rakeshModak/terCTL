@@ -48,6 +48,10 @@ pub struct Host {
     /// written before the column existed still deserialize.
     #[serde(default)]
     pub starred: bool,
+    /// Marks a host where a slip is costly: its terminal is outlined and asks
+    /// before running commands that destroy data or take the box down.
+    #[serde(default)]
+    pub production: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -65,6 +69,8 @@ pub struct NewHost {
     pub term_scheme: Option<String>,
     #[serde(default)]
     pub jump_host_id: Option<String>,
+    #[serde(default)]
+    pub production: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

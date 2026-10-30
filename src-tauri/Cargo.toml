@@ -53,3 +53,11 @@ tokio = { version = "1.52.3", features = ["rt-multi-thread", "io-util", "sync", 
 portable-pty = "0.8.1"
 russh-sftp = "2.3.0"
 tauri-plugin-clipboard-manager = "2.3.2"
+
+# Rounds the corners of the browser panes' native webviews to match the
+# rounded split panes they sit in (see browserview.rs). Already in the tree
+# through Tauri; listed here to reach NSView's backing CALayer directly.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSResponder", "NSView", "objc2-quartz-core"] }
+objc2-quartz-core = { version = "0.3", default-features = false, features = ["std", "CALayer", "objc2-core-foundation"] }

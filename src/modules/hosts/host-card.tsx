@@ -103,6 +103,16 @@ export default function HostCard({
         </span>
 
         <div className="relative z-10 -mr-1 flex shrink-0 items-center gap-1.5">
+          {/* In the header row, which has room to spare, so marking a host
+              as production never makes its card taller. */}
+          {host.production && (
+            <Badge
+              variant="destructive"
+              title="Production server — risky commands ask first"
+            >
+              Production
+            </Badge>
+          )}
           <span
             className={cn(
               'size-2 rounded-full',

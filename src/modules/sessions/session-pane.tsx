@@ -6,7 +6,10 @@ import type { Edge, Rect } from '../../lib/layout';
 import type { SessionType } from '../../store/app';
 import PaneDropZones from './pane-drop-zones';
 import BrowserPane from '../browser/browser-pane';
+import { useAtomValue } from 'jotai';
+import { hostsAtom } from '../../store/app';
 import { Terminal } from '@/components/Terminal';
+import { ProductionChip } from '@/components/chrome/ProductionChip';
 import { TerctlLogo } from '@/components/chrome/TerctlLogo';
 
 interface SessionPaneProps {
@@ -49,6 +52,9 @@ export default function SessionPane({
   onDragEnd,
   onSplit,
 }: SessionPaneProps) {
+  const production = useAtomValue(hostsAtom).some(
+    (h) => h.id === session.hostId && h.production,
+  );
   const position: CSSProperties = rect
     ? {
         left: `${rect.left}%`,
@@ -108,6 +114,7 @@ export default function SessionPane({
           <span className="overflow-hidden text-ellipsis whitespace-nowrap">
             {session.label}
           </span>
+          {production && <ProductionChip />}
           <span className="flex-1" />
           <Button
             variant="ghost"
@@ -140,7 +147,7 @@ export default function SessionPane({
               </span>
             </div>
           ) : session.kind === 'browser' ? (
-            <BrowserPane session={session} />
+            <BrowserPane session={session} rounded={isSplit} />
           ) : (
             <Terminal
               sessionId={session.id}

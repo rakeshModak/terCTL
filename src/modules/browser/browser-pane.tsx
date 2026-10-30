@@ -30,6 +30,12 @@ import { usePaneRect } from './use-pane-rect';
 
 interface BrowserPaneProps {
   session: SessionType;
+  /**
+   * The pane has rounded corners (it's one of several in a Deck). The native
+   * webview is a plain rectangle that CSS can't clip, so the radius is handed
+   * to the native side to round its bottom corners to match.
+   */
+  rounded?: boolean;
 }
 
 /** The answer to the last probe, tagged with the request it answers. */
@@ -43,7 +49,11 @@ interface ProbeState {
 const NOT_PROBED: ProbeState = { request: '', result: null, error: null };
 
 const rectKey = (rect: PaneRectType) =>
-  `${rect.x},${rect.y},${rect.width},${rect.height}`;
+  `${rect.x},${rect.y},${rect.width},${rect.height},${rect.radius ?? 0}`;
+
+/** A split pane's `rounded-lg` border is 10px on the outside; the page sits
+ *  inside its 1px border, so its own corners want 9. */
+const PANE_INNER_RADIUS = 9;
 
 /**
  * A page served from a remote port, rendered next to the shell serving it.
@@ -58,7 +68,10 @@ const rectKey = (rect: PaneRectType) =>
  * layer rather than inside it — so this component spends most of its length
  * telling it where to be and when to get out of the way.
  */
-export default function BrowserPane({ session }: BrowserPaneProps) {
+export default function BrowserPane({
+  session,
+  rounded = false,
+}: BrowserPaneProps) {
   const tunnel = session.tunnel;
   const repoint = useSetAtom(repointBrowserPaneAtom);
   const reconnect = useSetAtom(reconnectAtom);
@@ -93,9 +106,12 @@ export default function BrowserPane({ session }: BrowserPaneProps) {
   /** What the webview was last told, so nothing is sent twice. */
   const settled = useRef({ shown: false, rect: '' });
 
+  const radius = rounded ? PANE_INNER_RADIUS : 0;
+  const radiusRef = useRef(radius);
+
   const sync = useCallback(() => {
     const label = session.id;
-    const box = rect.current;
+    const box = rect.current && { ...rect.current, radius: radiusRef.current };
 
     if (!wanted.current || !box) {
       if (settled.current.shown) {
@@ -128,6 +144,11 @@ export default function BrowserPane({ session }: BrowserPaneProps) {
   // The webview must also stand down for anything drawn over it, and while the
   // pane is showing a notice instead of a page.
   const visible = live && !failed && !suppressed;
+  // Splitting or unsplitting changes the corners without moving the box.
+  useEffect(() => {
+    radiusRef.current = radius;
+    sync();
+  }, [radius, sync]);
   useEffect(() => {
     wanted.current = visible;
     sync();
@@ -156,6 +177,7 @@ export default function BrowserPane({ session }: BrowserPaneProps) {
           height: Math.round(box.height),
         }
       : { x: 0, y: 0, width: 1, height: 1 };
+    at.radius = radiusRef.current;
     rect.current = at;
     settled.current = { shown: true, rect: rectKey(at) };
     void browserService.view

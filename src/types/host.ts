@@ -16,6 +16,8 @@ export interface HostType {
   jumpHostId: string | null;
   /** Pinned to the Starred section. Not on NewHostType: new hosts start off. */
   starred: boolean;
+  /** Outlines the terminal and confirms destructive commands. See lib/prodGuard. */
+  production: boolean;
 }
 
 export interface NewHostType {
@@ -30,6 +32,7 @@ export interface NewHostType {
   accent: string | null;
   termScheme: string | null;
   jumpHostId: string | null;
+  production: boolean;
 }
 
 export interface GroupType {

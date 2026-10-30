@@ -460,6 +460,7 @@ mod tests {
                 accent: None,
                 term_scheme: None,
                 jump_host_id: None,
+                production: false,
             })
             .unwrap()
             .id
@@ -611,6 +612,7 @@ mod tests {
             os: None,
             jump_host_id: None,
             starred: false,
+            production: false,
         };
 
         let handler = ClientHandler {
