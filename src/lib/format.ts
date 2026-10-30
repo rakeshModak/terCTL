@@ -6,6 +6,11 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
 }
 
+/** Same as formatBytes, for sizes reported in KiB (du, df). */
+export function formatKb(kb: number): string {
+  return formatBytes(kb * 1024);
+}
+
 export function formatSize(bytes: number, isDir: boolean): string {
   return isDir ? '—' : formatBytes(bytes);
 }

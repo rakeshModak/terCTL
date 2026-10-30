@@ -3,8 +3,16 @@ import { metricsService } from '../../services/metrics.service';
 import type { MetricsType } from '@/types/metrics';
 import { TerctlLoader } from '../../components/chrome/TerctlLogo';
 import { uuid } from '@/utils/uuid';
+import { HardDrive, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import DiskUsageDialog from '../disk/disk-usage-dialog';
 
 const HIST = 34;
+
+/** Disk use at which the explore button becomes a "free up space" nudge:
+    late enough not to nag, early enough to act before the meter goes red. */
+const LOW_SPACE_PCT = 80;
 const BLOCKS = 20;
 
 const BLOCK_IDS = Array.from({ length: BLOCKS }, () => uuid());
@@ -49,13 +57,23 @@ function Section({
   index,
   name,
   children,
+  onClick,
 }: {
   index: number;
   name: string;
   children: ReactNode;
+  /** Makes the whole box a click target, with a hover hint that it is one. */
+  onClick?: () => void;
 }) {
   return (
-    <fieldset className="border-border rounded-md border px-2 pt-0 pb-2">
+    <fieldset
+      onClick={onClick}
+      className={cn(
+        'border-border rounded-md border px-2 pt-0 pb-2',
+        onClick &&
+          'hover:border-primary/50 hover:bg-primary/[0.03] cursor-pointer transition-colors',
+      )}
+    >
       <legend className="text-3xs px-1 font-mono tracking-wide">
         <span className="text-primary">{index}</span>
         <span className="text-muted-foreground">{name}</span>
@@ -156,12 +174,15 @@ function MeterRow({ pct }: { pct: number }) {
 
 export default function MetricsPanel({
   hostId,
+  hostLabel,
   connected,
 }: {
   hostId: string;
+  hostLabel: string;
   connected: boolean;
 }) {
   const [m, setM] = useState<MetricsType | null>(null);
+  const [diskOpen, setDiskOpen] = useState(false);
   const [err, setErr] = useState(false);
   const histRef = useRef<Sample[]>([]);
   const [hist, setHist] = useState<Sample[]>([]);
@@ -242,13 +263,40 @@ export default function MetricsPanel({
         </div>
       </Section>
 
-      <Section index={3} name="disk">
+      <Section index={3} name="disk" onClick={() => setDiskOpen(true)}>
         <Row label="root" value={fmtGib(m.diskTotalKb)} />
         <MeterRow pct={diskPct} />
         <div className="mt-1">
           <Row label="Used" value={fmtGib(m.diskUsedKb)} muted />
         </div>
+        {/* A real button rather than a text link: the map and cleanup are
+            easy to miss otherwise. Past LOW_SPACE_PCT it turns into a nudge,
+            so it stands out exactly when space is running out. */}
+        <Button
+          variant="outline"
+          size="xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDiskOpen(true);
+          }}
+          className={cn(
+            'mt-2 w-full',
+            diskPct >= LOW_SPACE_PCT &&
+              'border-(--amber)/50 bg-(--amber)/10 text-(--amber) hover:bg-(--amber)/15 hover:text-(--amber)',
+          )}
+        >
+          {diskPct >= LOW_SPACE_PCT ? <Sparkles /> : <HardDrive />}
+          {diskPct >= LOW_SPACE_PCT ? 'Free up space' : 'Explore disk'}
+        </Button>
       </Section>
+      {/* Outside the section: React bubbles clicks from a portal through its
+          tree, so closing the dialog from inside the box would reopen it. */}
+      <DiskUsageDialog
+        open={diskOpen}
+        onClose={() => setDiskOpen(false)}
+        hostId={hostId}
+        hostLabel={hostLabel}
+      />
 
       <Section index={4} name="net">
         <History data={hist.map((s) => s.net)} max={netPeak} height={28} />

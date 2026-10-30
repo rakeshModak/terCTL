@@ -1,6 +1,8 @@
 mod backup;
 mod browserview;
+mod cleanup;
 mod commands;
+mod diskusage;
 mod editor;
 mod langserver;
 mod local_term;
@@ -105,6 +107,9 @@ pub fn run() {
             lsp::lsp_stop_host,
             metrics::ssh_metrics,
             metrics::metrics_disconnect,
+            diskusage::disk_usage,
+            cleanup::disk_cleanup_scan,
+            cleanup::disk_cleanup_run,
             tunnel::tunnel_open,
             tunnel::tunnel_close,
             tunnel::tunnel_list,

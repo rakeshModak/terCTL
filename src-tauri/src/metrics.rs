@@ -40,7 +40,7 @@ pub struct MetricsManager {
 }
 
 impl MetricsManager {
-    async fn get(&self, store: &Store, host_id: &str) -> Result<Arc<SshConnection>, String> {
+    pub(crate) async fn connection(&self, store: &Store, host_id: &str) -> Result<Arc<SshConnection>, String> {
         if let Some(h) = self.conns.lock().await.get(host_id) {
             return Ok(h.clone());
         }
@@ -86,7 +86,7 @@ pub async fn ssh_metrics(
     host_id: String,
 ) -> Result<Metrics, String> {
     let run = || async {
-        let handle = metrics.get(&store, &host_id).await?;
+        let handle = metrics.connection(&store, &host_id).await?;
         let mut channel = handle
             .channel_open_session()
             .await

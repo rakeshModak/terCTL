@@ -163,6 +163,7 @@ export default function Inspector({
         <MetricsPanel
           key={`${host.id}-${connected}`}
           hostId={host.id}
+          hostLabel={host.label}
           connected={connected}
         />
       )}
